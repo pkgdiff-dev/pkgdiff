@@ -263,7 +263,8 @@ public class PackageCacheService : IPackageCacheService
             cached.Authors = metadata.Authors;
             cached.IconUrl = metadata.IconUrl;
             cached.ProjectUrl = metadata.ProjectUrl;
-            cached.GitHubRepositoryUrl = metadata.GitHubRepositoryUrl;
+            // A repository found while scraping release notes is kept when the registry names none
+            cached.GitHubRepositoryUrl = metadata.GitHubRepositoryUrl ?? cached.GitHubRepositoryUrl;
             cached.AllVersionsJson = JsonSerializer.Serialize(metadata.Versions.Select(v => v.Version));
             cached.CachedAt = DateTime.UtcNow;
             cached.ExpiresAt = DateTime.UtcNow.AddDays(14); // Extended from 7 to 14 days

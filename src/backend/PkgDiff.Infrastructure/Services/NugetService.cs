@@ -8,6 +8,9 @@ using PkgDiff.Application.Interfaces;
 using PkgDiff.Application.Services;
 using PkgDiff.Domain.Interfaces;
 using PkgDiff.Shared.DTOs;
+using PkgDiff.Shared.Validation;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace PkgDiff.Infrastructure.Services;
 
@@ -16,14 +19,19 @@ public class NugetService : INugetService
     private readonly SourceRepository _repository;
     private readonly SourceCacheContext _cache;
     private readonly IVersionFilterService _versionFilterService;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<NugetService> _logger;
 
-    public NugetService(IVersionFilterService versionFilterService, ILogger<NugetService> logger)
+    public NugetService(
+        IVersionFilterService versionFilterService,
+        IHttpClientFactory httpClientFactory,
+        ILogger<NugetService> logger)
     {
         var packageSource = new PackageSource("https://api.nuget.org/v3/index.json");
         _repository = Repository.Factory.GetCoreV3(packageSource);
         _cache = new SourceCacheContext();
         _versionFilterService = versionFilterService;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -148,6 +156,7 @@ public class NugetService : INugetService
 
         // Use filtered metadata for latest version
         var latest = filteredMetadata.OrderByDescending(m => m.Identity.Version).First();
+        var projectUrl = latest.ProjectUrl?.ToString();
 
         return new PackageMetadata
         {
@@ -156,7 +165,9 @@ public class NugetService : INugetService
             Description = latest.Description,
             Authors = latest.Authors,
             IconUrl = latest.IconUrl?.ToString(),
-            ProjectUrl = latest.ProjectUrl?.ToString(),
+            ProjectUrl = projectUrl,
+            GitHubRepositoryUrl = await GetNuspecRepositoryUrlAsync(packageId, latest.Identity.Version)
+                ?? GitHubRepositoryUrl(projectUrl),
             Versions = filteredMetadata
                 .Select(m => new { m.Identity.Version, m.Published })
                 .DistinctBy(x => x.Version.ToString())
@@ -170,4 +181,27 @@ public class NugetService : INugetService
                 .ToList()
         };
     }
+
+    // The nuspec's <repository>, which the metadata API leaves out
+    private async Task<string?> GetNuspecRepositoryUrlAsync(string packageId, NuGetVersion version)
+    {
+        var id = PackageUrlEncoder.EscapeSegment(packageId.ToLowerInvariant());
+        var normalized = PackageUrlEncoder.EscapeSegment(version.ToNormalizedString().ToLowerInvariant());
+        try
+        {
+            var nuspec = await _httpClientFactory.CreateClient()
+                .GetStringAsync($"https://api.nuget.org/v3-flatcontainer/{id}/{normalized}/{id}.nuspec");
+            var repository = XDocument.Parse(nuspec).Descendants().FirstOrDefault(e => e.Name.LocalName == "repository");
+            return GitHubRepositoryUrl(repository?.Attribute("url")?.Value);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or XmlException
+            || (ex is TaskCanceledException && !WorkCancellation.Token.IsCancellationRequested))
+        {
+            _logger.LogWarning(ex, "Could not read the nuspec of {PackageId} {Version}", packageId, version);
+            return null;
+        }
+    }
+
+    private static string? GitHubRepositoryUrl(string? url) =>
+        GitHubUrls.IsGitHub(url) ? GitHubUrls.FromRepositoryField(url) : null;
 }
