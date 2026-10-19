@@ -233,11 +233,27 @@ public class PackageCacheService : IPackageCacheService
         };
     }
 
+    private async Task ForgetEmptyReleaseNotesAsync(int cachedPackageId, string registry, string packageId)
+    {
+        var emptyNotes = (await _unitOfWork.CachedReleaseNotes
+            .FindAsync(rn => rn.CachedPackageId == cachedPackageId && rn.IsEmpty && rn.ReleaseNotesSource != null))
+            .ToList();
+        if (emptyNotes.Count == 0)
+            return;
+
+        foreach (var note in emptyNotes)
+            note.ReleaseNotesSource = null;
+        await _unitOfWork.SaveChangesAsync();
+
+        _jobs.Enqueue<IPackageAnalysisService>(service => service.ScrapePackageReleaseNotesAsync(packageId, registry));
+    }
+
     private async Task SaveFreshMetadataToCache(
         CachedPackage? cached, PackageMetadata metadata, string registry, string packageId)
     {
         var registryId = await ResolveRegistryIdAsync(registry);
 
+        var repositoryChanged = false;
         if (cached == null)
         {
             cached = new CachedPackage
@@ -263,6 +279,8 @@ public class PackageCacheService : IPackageCacheService
             cached.Authors = metadata.Authors;
             cached.IconUrl = metadata.IconUrl;
             cached.ProjectUrl = metadata.ProjectUrl;
+            repositoryChanged = metadata.GitHubRepositoryUrl != null
+                && !string.Equals(metadata.GitHubRepositoryUrl, cached.GitHubRepositoryUrl, StringComparison.OrdinalIgnoreCase);
             // A repository found while scraping release notes is kept when the registry names none
             cached.GitHubRepositoryUrl = metadata.GitHubRepositoryUrl ?? cached.GitHubRepositoryUrl;
             cached.AllVersionsJson = JsonSerializer.Serialize(metadata.Versions.Select(v => v.Version));
@@ -272,6 +290,9 @@ public class PackageCacheService : IPackageCacheService
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        if (repositoryChanged)
+            await ForgetEmptyReleaseNotesAsync(cached.Id, registry.ToLowerInvariant(), packageId);
 
         var latestVersion = metadata.LatestVersion ?? string.Empty;
         var latestPublished = metadata.Versions.FirstOrDefault(v => v.Version == latestVersion)?.PublishedDate;

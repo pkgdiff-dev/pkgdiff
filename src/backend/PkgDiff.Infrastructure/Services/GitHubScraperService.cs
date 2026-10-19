@@ -336,6 +336,7 @@ public partial class GitHubScraperService : IGitHubScraperService
         }
         yield return $"release-{version}";
         yield return $"release/{version}";
+        yield return $"rel_{version.Replace('.', '_')}";
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"^[vV]?\d")]

@@ -265,7 +265,7 @@ public class NpmService : INpmService
                         var propName = reader.GetString();
                         reader.Read();
                         if (propName == "name") author.Name = reader.GetString();
-                        else reader.Skip();
+                        else reader.TrySkip();
                     }
                 }
                 return author;
@@ -299,7 +299,7 @@ public class NpmService : INpmService
                 return new NpmRepository { Url = reader.GetString() };
             if (reader.TokenType != JsonTokenType.StartObject)
             {
-                reader.Skip();
+                reader.TrySkip();
                 return null;
             }
 
@@ -312,7 +312,7 @@ public class NpmService : INpmService
                 reader.Read();
                 var value = reader.TokenType == JsonTokenType.String ? reader.GetString() : null;
                 if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
-                    reader.Skip();
+                    reader.TrySkip();
                 switch (propName)
                 {
                     case "type": repository.Type = value; break;
@@ -349,11 +349,11 @@ public class NpmService : INpmService
                         if (reader.TokenType == JsonTokenType.String)
                             first ??= reader.GetString();
                         else if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
-                            reader.Skip();
+                            reader.TrySkip();
                     }
                     return first;
                 case JsonTokenType.StartObject:
-                    reader.Skip();
+                    reader.TrySkip();
                     return null;
                 default:
                     return null;
