@@ -87,7 +87,6 @@ public static class Permissions
         public const string Manage = "Permissions.SocialMedia.Manage";
     }
 
-    // Helper to get all permissions
     public static List<string> GetAllPermissions()
     {
         var permissions = new List<string>();

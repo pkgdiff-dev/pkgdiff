@@ -97,7 +97,6 @@ describe('AdminUsersComponent', () => {
     expect(dialog.querySelector('h2')?.textContent?.trim()).toBe('Edit User');
     expect(dialog.querySelector<HTMLInputElement>('#user-email')?.value).toBe('ada@example.com');
     expect(dialog.querySelector('label[for="user-email"]')?.textContent).toBe('Email');
-    // The name and the password are only asked for a new user
     expect(dialog.querySelector('#user-username')).toBeNull();
     expect(Array.from(dialog.querySelectorAll('[aria-pressed="true"]')).map(b => b.textContent?.trim())).toEqual(['Editor']);
 
@@ -135,7 +134,6 @@ describe('AdminUsersComponent', () => {
     const save = lastCallTo('put', 'admin/users/u1');
     expect(save.body).toEqual({ email: 'ada@pkgdiff.dev', roles: ['Editor'] });
     expect(page.saving()).toBe(true);
-    // Nothing closes the dialog or sends the form twice while the answer is outstanding
     expect(buttonNamed('Update').disabled).toBe(true);
     expect(element().querySelector<HTMLButtonElement>('app-modal button[aria-label="Close dialog"]')?.disabled).toBe(true);
     buttonNamed('Update').click();

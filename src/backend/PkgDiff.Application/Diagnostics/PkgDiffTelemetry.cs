@@ -4,10 +4,8 @@ using PkgDiff.Shared.Constants;
 
 namespace PkgDiff.Application.Diagnostics;
 
-// The application's own metrics and traces, through the .NET APIs that OpenTelemetry collects:
-// one Meter and one ActivitySource, both named "PkgDiff". The /metrics endpoint publishes the meter
-// as it is; an OpenTelemetry SDK added to the host only has to subscribe to this name.
-// Tags are kept to small fixed sets. A package id goes on a trace, never on a metric.
+// The app's own metrics and traces: one Meter and one ActivitySource, both named "PkgDiff".
+// Tags stay small fixed sets: a package id goes on a trace, never on a metric.
 public static class PkgDiffTelemetry
 {
     public const string Name = "PkgDiff";

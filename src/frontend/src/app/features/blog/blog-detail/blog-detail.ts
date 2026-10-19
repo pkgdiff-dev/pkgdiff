@@ -44,7 +44,6 @@ export class BlogDetailComponent {
         this.post.set(null);
         this.seo.clearPageData();
       }),
-      // A post the visitor has already left never overwrites the one on screen
       switchMap(slug => this.load(slug)),
       takeUntilDestroyed(),
     ).subscribe(loaded => this.show(loaded));

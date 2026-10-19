@@ -2,12 +2,11 @@ using PkgDiff.Domain.Common;
 
 namespace PkgDiff.Domain.Entities;
 
-// Security data of one package as the background job last collected it. The data itself is one
-// JSON document (the PackageTrust DTO): it is always read and written whole.
+// The PackageTrust DTO as one JSON document, always read and written whole
 public class PackageSecurityInfo : BaseEntity
 {
     public string Registry { get; set; } = string.Empty;
-    // Lower-case, so "Newtonsoft.Json" and "newtonsoft.json" share one row
+    // Lower-cased so ids differing only in case share one row
     public string PackageKey { get; set; } = string.Empty;
     // The spelling the package was first asked for with, which is how its cache row is found
     public string PackageId { get; set; } = string.Empty;

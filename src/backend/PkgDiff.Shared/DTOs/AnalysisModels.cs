@@ -67,7 +67,6 @@ public class PackageMetadata
     public string? IconUrl { get; set; }
     public string? ProjectUrl { get; set; }
     public string? GitHubRepositoryUrl { get; set; }
-    // The folder of the package inside its repository, for a package of a monorepo
     public string? SourceDirectory { get; set; }
     public List<VersionSummary> Versions { get; set; } = new();
     public PackageTrust? Trust { get; set; }
@@ -81,7 +80,6 @@ public class VersionSummary
     public string ReleaseNotes { get; set; } = string.Empty;
     public string ReleaseNotesHtml { get; set; } = string.Empty;
     public string? ReleaseNotesSource { get; set; }
-    // Set when pkgdiff compiled the notes itself (CompiledReleaseNotes)
     public CompiledNotesSource? CompiledFrom { get; set; }
     public List<ReleaseNoteEntry> Entries { get; set; } = new();
     public bool IsEmpty { get; set; } = true;
@@ -94,7 +92,6 @@ public class VersionInfo
     public string ReleaseNotes { get; set; } = string.Empty;
     public string ReleaseNotesHtml { get; set; } = string.Empty;
     public string? ReleaseNotesSource { get; set; }
-    // Set when pkgdiff compiled the notes itself (CompiledReleaseNotes)
     public CompiledNotesSource? CompiledFrom { get; set; }
     public List<ReleaseNoteEntry> Entries { get; set; } = new();
     public List<ChangeCategory> Categories { get; set; } = new();
@@ -102,7 +99,6 @@ public class VersionInfo
     public bool IsPrerelease { get; set; }
 }
 
-// Where notes pkgdiff compiled itself come from, e.g. "18.3.0 milestone" and its GitHub URL
 public class CompiledNotesSource
 {
     public string Label { get; set; } = string.Empty;

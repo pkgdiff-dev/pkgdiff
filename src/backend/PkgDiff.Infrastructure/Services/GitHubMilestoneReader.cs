@@ -8,9 +8,8 @@ using PkgDiff.Shared.Validation;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Release notes from GitHub milestones, for projects that publish neither releases nor a changelog: hapi's
-// packages (joi, hapi, boom...) close one milestone per version, named after it, and its closed issues and
-// pull requests are the changes of that version (https://joi.dev/resources/changelog is built from them)
+// Release notes from closed GitHub milestones named after versions, for projects with neither
+// releases nor a changelog
 public class GitHubMilestoneReader
 {
     private const int PerPage = 100;
@@ -76,7 +75,7 @@ public class GitHubMilestoneReader
         return CompiledReleaseNotes.WithNotice(notes, $"{version.TrimStart('v', 'V')} milestone", milestoneUrl);
     }
 
-    // Closed milestones by version ("v18.3.0" and "18.3.0" alike); an empty map for a repository without any
+    // Closed milestones by version, with or without a "v"; an empty map for a repository without any
     private async Task<Dictionary<string, int>> MilestonesAsync(string owner, string repo)
     {
         var repoKey = $"{owner}/{repo}".ToLowerInvariant();
@@ -87,8 +86,7 @@ public class GitHubMilestoneReader
         for (var page = 1; ; page++)
         {
             using var document = await GetJsonAsync($"{RepoApi(owner, repo)}/milestones?state=closed&per_page={PerPage}&page={page}");
-            // A failed page leaves the map unknown rather than empty: it is asked again soon, but not
-            // once for every version of the package
+            // A failed page leaves the map unknown: retried soon, but not for every version
             if (document is null || document.RootElement.ValueKind != JsonValueKind.Array)
             {
                 _cache.SetMilestones(repoKey, milestones, answered: false);

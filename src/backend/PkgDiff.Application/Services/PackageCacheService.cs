@@ -88,7 +88,7 @@ public class PackageCacheService : IPackageCacheService
             GitHubRepositoryUrl = pkgMeta?.GitHubRepositoryUrl,
             AllVersionsJson = JsonSerializer.Serialize(versionStrings),
             CachedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(14) // Extended from 7 to 14 days
+            ExpiresAt = DateTime.UtcNow.AddDays(14)
         };
 
         await _unitOfWork.CachedPackages.AddAsync(cachedPackage);
@@ -266,19 +266,17 @@ public class PackageCacheService : IPackageCacheService
             cached.GitHubRepositoryUrl = metadata.GitHubRepositoryUrl;
             cached.AllVersionsJson = JsonSerializer.Serialize(metadata.Versions.Select(v => v.Version));
             cached.CachedAt = DateTime.UtcNow;
-            cached.ExpiresAt = DateTime.UtcNow.AddDays(14); // Extended from 7 to 14 days
+            cached.ExpiresAt = DateTime.UtcNow.AddDays(14);
             await _unitOfWork.CachedPackages.UpdateAsync(cached);
         }
 
         await _unitOfWork.SaveChangesAsync();
 
-        // What the registry itself calls latest: stored with its publish date, and pushed to connected visitors when it is new
         var latestVersion = metadata.LatestVersion ?? string.Empty;
         var latestPublished = metadata.Versions.FirstOrDefault(v => v.Version == latestVersion)?.PublishedDate;
         await _liveUpdates.RecordLatestVersionAsync(cached, registry, latestVersion, latestPublished, authoritative: true);
 
-        // Seed CachedReleaseNotes with version metadata. A concurrent request may seed some of the same
-        // versions first; then the rows that are still missing are added in a second pass.
+        // A concurrent request may seed some versions first; the missing rows are added in a second pass
         for (var attempt = 0; ; attempt++)
         {
             var existingNotes = (await _unitOfWork.CachedReleaseNotes
@@ -299,7 +297,7 @@ public class PackageCacheService : IPackageCacheService
                     PublishedDate = v.PublishedDate,
                     IsEmpty = true,
                     CachedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddDays(90) // Extended from 30 to 90 days - release notes rarely change
+                    ExpiresAt = DateTime.UtcNow.AddDays(90)
                 });
             }
 

@@ -3,7 +3,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { PackageTrust } from '../../../../core/models/security.models';
 import { advisoriesOf, isChecked, severityClass, sortBySeverity } from '../../../../core/utils/trust.utils';
 
-// Security and health of a package, for the metadata tab
 @Component({
   selector: 'app-trust-panel',
   standalone: true,

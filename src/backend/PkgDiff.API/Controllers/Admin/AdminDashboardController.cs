@@ -19,8 +19,6 @@ public class AdminDashboardController : ControllerBase
         _logger = logger;
     }
 
-    // ───── Dashboard ─────
-
     [HttpGet("dashboard")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Health.View)]
     public async Task<ActionResult<DashboardStats>> GetDashboard()
@@ -36,8 +34,6 @@ public class AdminDashboardController : ControllerBase
             return StatusCode(500, new { error = "An error occurred while fetching dashboard stats" });
         }
     }
-
-    // ───── Search History ─────
 
     [HttpGet("search-history")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Security.ViewLogs)]

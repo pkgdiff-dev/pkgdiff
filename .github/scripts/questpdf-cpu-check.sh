@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-# QuestPDF CPU gate: renders the PDF export document inside a Linux container and reports
-# whether the QuestPDF native library works on a CPU without AVX2 (the production CPU is
-# an Ivy Bridge Xeon: AVX, but no AVX2, FMA or BMI2).
-#
-#   --native         render on the real CPU of this machine. Run it on the production
-#                    server before the backend is recreated with a new QuestPDF version.
-#   --emulate        render under QEMU with the IvyBridge CPU model, after a self-test
-#                    proves that the emulator really traps AVX2, FMA and BMI2.
-#   --version <x>    QuestPDF version to test (default: src/backend/Directory.Packages.props)
-#
-# Everything runs in containers; nothing is executed on the host itself.
+# Checks in containers that QuestPDF renders on a CPU without AVX2, FMA or BMI2 (production).
 # Exit status: 0 = PASS, 1 = FAIL, 2 = usage error.
 set -euo pipefail
 
@@ -67,8 +57,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONTEXT="$ROOT/.github/scripts/questpdf-cpu-check"
 
 if [ -z "$VERSION" ]; then
-  # sed stops at the first match itself. With `| head -n 1`, a second matching line could kill
-  # sed with SIGPIPE, and under `set -e -o pipefail` that ends the script without a message.
+  # sed quits itself: `| head -n 1` could SIGPIPE sed and silently abort under pipefail.
   VERSION="$(sed -n '/<PackageVersion Include="QuestPDF" Version="/{s/.*<PackageVersion Include="QuestPDF" Version="\([^"]*\)".*/\1/p;q;}' "$ROOT/src/backend/Directory.Packages.props")"
 fi
 
@@ -107,8 +96,6 @@ fi
 OUT=""
 STATUS=0
 
-# Runs a command in the harness image with a hard time limit, no network and capped memory.
-# The output lands in OUT and the exit status in STATUS.
 capture() {
   local seconds="$1"
   shift
@@ -146,8 +133,7 @@ if [ "$MODE" = "native" ]; then
   exit 0
 fi
 
-# 1. Detector self-test: a passing Ivy Bridge render only means something if the emulator
-#    kills a process that uses an instruction Ivy Bridge does not have.
+# A pass only means something if the emulator kills instructions Ivy Bridge lacks.
 for PROBE in avx2 fma bmi2; do
   MARKER="$(echo "$PROBE" | tr '[:lower:]' '[:upper:]')_EXECUTED"
 
@@ -167,14 +153,13 @@ for PROBE in avx2 fma bmi2; do
   fi
 done
 
-# 2. The emulator must be able to host .NET at all, otherwise a failure below says nothing.
+# The emulator must host .NET at all, or a failure below says nothing.
 capture 600 qemu-x86_64 -cpu max "$DOTNET" "$HARNESS"
 show "render under -cpu max"
 if [ "$STATUS" -ne 0 ] || ! has "^PDF_OK "; then
   fail "the emulator could not host the render under -cpu max (exit $STATUS); this says nothing about Ivy Bridge"
 fi
 
-# 3. The actual gate: no AVX2 and a valid PDF.
 capture 600 qemu-x86_64 -cpu IvyBridge "$DOTNET" "$HARNESS"
 show "render under -cpu IvyBridge"
 if ! has "AVX2=False"; then

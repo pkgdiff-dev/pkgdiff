@@ -3,7 +3,7 @@ using PkgDiff.Application.Interfaces;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// The NuGet package page first, then GitHub releases. Used for NuGet packages without a known repository.
+// The NuGet package page first, then GitHub releases
 public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 {
     private readonly IScraperService _scraperService;
@@ -34,7 +34,6 @@ public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 
         string? discoveredUrl = null;
 
-        // Try NuGet first
         _logger.LogDebug("[NuGetFirstStrategy] Trying NuGet scraping for {PackageId} v{Version}", packageId, version);
         var releaseNotes = await _scraperService.GetReleaseNotesAsync(packageId, version);
         if (!string.IsNullOrWhiteSpace(releaseNotes))
@@ -42,7 +41,6 @@ public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
             _logger.LogDebug("[NuGetFirstStrategy] NuGet returned notes for {PackageId} v{Version} (length: {Length}): {Preview}...",
                 packageId, version, releaseNotes.Length, releaseNotes[..Math.Min(150, releaseNotes.Length)]);
 
-            // Check if release notes are URL-dominated and try to resolve actual content
             var resolved = await _urlResolver.ResolveAsync(releaseNotes, packageId, version, githubRepoUrl);
             if (resolved.WasResolved)
             {
@@ -59,7 +57,6 @@ public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 
         _logger.LogWarning("[NuGetFirstStrategy] NuGet returned empty for {PackageId} v{Version}", packageId, version);
 
-        // NuGet empty, try to discover GitHub URL if not known
         if (string.IsNullOrWhiteSpace(githubRepoUrl))
         {
             _logger.LogDebug("[NuGetFirstStrategy] Discovering GitHub URL for {PackageId}", packageId);
@@ -75,7 +72,6 @@ public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
             }
         }
 
-        // Fallback to GitHub
         if (!string.IsNullOrWhiteSpace(githubRepoUrl))
         {
             _logger.LogDebug("[NuGetFirstStrategy] Trying GitHub fallback for {PackageId} v{Version} from {GitHubUrl}",
@@ -92,7 +88,6 @@ public class NuGetFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 
         _logger.LogWarning("[NuGetFirstStrategy] ALL SOURCES EMPTY for {PackageId} v{Version}", packageId, version);
 
-        // Persist failure to scrape logs for admin review
         var attemptedSources = !string.IsNullOrWhiteSpace(githubRepoUrl) ? "NuGet, GitHub" : "NuGet";
         string? availableVersions = null;
 

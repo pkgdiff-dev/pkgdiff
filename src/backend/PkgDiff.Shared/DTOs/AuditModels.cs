@@ -15,9 +15,8 @@ public static class AuditItemStatus
 {
     public const string Vulnerable = "vulnerable";
     public const string Clean = "clean";
-    // The registry does not know the package (a private or misspelled one)
     public const string NotFound = "not-found";
-    // The version could not be checked (the registry could not be reached)
+    // The registry could not be reached
     public const string Unchecked = "unchecked";
 }
 
@@ -26,7 +25,6 @@ public class ManifestParseRequest
     [Required]
     public string Registry { get; set; } = string.Empty;
 
-    // The pasted file; 1 MB is far more than any real manifest or lock file of 200 packages needs
     [Required]
     [StringLength(AuditLimits.MaxContentLength)]
     public string Content { get; set; } = string.Empty;
@@ -47,13 +45,11 @@ public class AuditDependency
 {
     public string Name { get; set; } = string.Empty;
 
-    // The version that is checked; null means "the latest version the registry has"
+    // null means the latest version the registry has
     public string? Version { get; set; }
 
-    // What the file says, e.g. "^4.17.1" or ">=2.0,<3"
     public string? Requirement { get; set; }
 
-    // True when the file pins exactly this version (lock files, "==1.2.3", "[1.2.3]")
     public bool IsExact { get; set; }
 
     // "dev", "optional" or null for a normal dependency
@@ -64,7 +60,6 @@ public class ManifestParseResult
 {
     public string Registry { get; set; } = string.Empty;
 
-    // The detected file type, e.g. "package.json" or "requirements.txt"
     public string Format { get; set; } = string.Empty;
 
     public List<AuditDependency> Dependencies { get; set; } = new();
@@ -163,7 +158,6 @@ public class AuditItem
     public string? Scope { get; set; }
     public bool IsExact { get; set; }
 
-    // The version that was checked
     public string? Version { get; set; }
 
     // True when the file named no usable version and the latest one was checked instead
@@ -173,11 +167,9 @@ public class AuditItem
     public string? LatestVersion { get; set; }
     public List<SecurityAdvisory> Advisories { get; set; } = new();
 
-    // The lowest version that fixes every advisory of the checked version; null when one of them
-    // has no fixed version yet (or there is nothing to fix)
+    // null when an advisory has no fixed version yet, or there is nothing to fix
     public string? SafeVersion { get; set; }
 
-    // True when at least one advisory has no fixed version published
     public bool HasUnfixedAdvisory { get; set; }
 
     public bool IsMalicious { get; set; }

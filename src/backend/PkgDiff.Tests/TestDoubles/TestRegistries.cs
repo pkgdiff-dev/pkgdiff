@@ -7,8 +7,6 @@ using PkgDiff.Infrastructure.Services;
 
 namespace PkgDiff.Tests.TestDoubles;
 
-// The four real registry clients over whatever a test supplies. A test that only needs a registry's
-// rules (its version scheme, its label, its range) supplies nothing.
 public static class TestRegistries
 {
     public static RegistryServiceFactory Create(
@@ -22,7 +20,6 @@ public static class TestRegistries
         NuGetFirstScrapingStrategy? nugetFirst = null,
         PubDevScrapingStrategy? pubDevStrategy = null)
     {
-        // Metadata is cut by the exclude patterns, so a client always needs a filter; by default one without patterns
         versionFilter ??= new VersionFilterService(
             new FakeUnitOfWork(), new MemoryCache(new MemoryCacheOptions()), NullLogger<VersionFilterService>.Instance);
 

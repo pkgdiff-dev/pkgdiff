@@ -1,15 +1,14 @@
-# Builds backend and frontend from this checkout instead of pulling them from GHCR.
-# Always used together with the main file, with PKGDIFF_IMAGE_TAG=local in .env:
+# Builds backend and frontend from source; use with PKGDIFF_IMAGE_TAG=local in .env:
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 services:
   backend:
     build:
       context: ./src/backend
       dockerfile: Dockerfile
-    # A local build runs on the defaults in the image and on .env; no server settings file is mounted
+    # Local builds mount no server settings file
     volumes: !reset []
 
-  # The ssr service runs this same image; it is built once, here
+  # The ssr service runs this same image
   frontend:
     build:
       context: ./src/frontend

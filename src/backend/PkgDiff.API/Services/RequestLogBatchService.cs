@@ -32,7 +32,6 @@ public class RequestLogBatchService : BackgroundService
 
             try
             {
-                // Wait for the next item or flush interval
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
                 cts.CancelAfter(_flushInterval);
 
@@ -57,7 +56,7 @@ public class RequestLogBatchService : BackgroundService
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Error processing log batch");
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Backoff
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
 

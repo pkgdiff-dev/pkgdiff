@@ -5,8 +5,7 @@ namespace PkgDiff.Infrastructure.Services;
 
 public static class GitHubRateLimitResponse
 {
-    // A 403 or 429 with no requests left is GitHub refusing because of the limit, not an answer about
-    // the repository: the caller must not take it for "no releases" or "no milestones"
+    // A rate-limit refusal says nothing about the repository: not "no releases" or "no milestones"
     public static void ThrowIfLimited(HttpResponseMessage response)
     {
         if (response.StatusCode is not (HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests))

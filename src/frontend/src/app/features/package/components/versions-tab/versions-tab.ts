@@ -36,7 +36,6 @@ interface VersionRow {
   security: VersionSecurity | null;
   clean: boolean;
   isLatest: boolean;
-  // Only versions older than the latest one can be upgraded from
   canCompare: boolean;
 }
 
@@ -62,7 +61,6 @@ export class VersionsTabComponent {
   latestVersion = input<string | null>(null);
   gitHubUrl = input<string | null>(null);
   trust = input<PackageTrust | null>(null);
-  // The version the page URL points at, if any
   selectedVersion = input<string | undefined>(undefined);
 
   compare = output<string>();
@@ -171,7 +169,6 @@ export class VersionsTabComponent {
     return counts;
   });
 
-  // Version order keeps a major's versions together, so they get a heading; release-date order does not
   groups = computed((): VersionGroup[] => {
     const visible = this.filtered().slice(0, this.displayCount());
     if (this.sort() === 'date-desc') return visible.length ? [{ major: null, rows: visible }] : [];
@@ -198,7 +195,6 @@ export class VersionsTabComponent {
     return version ? this.rows().find(r => r.info.version === version) ?? null : null;
   });
 
-  // Previous and next follow the list as filtered and sorted, so stepping through stays inside what is shown
   private openIndex = computed(() => {
     const version = this.openVersion();
     return version ? this.filtered().findIndex(r => r.info.version === version) : -1;
@@ -338,7 +334,6 @@ export class VersionsTabComponent {
       : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-900 dark:hover:text-gray-200';
   }
 
-  // "/" jumps to the filter box; with release notes open, the arrow keys step through the list
   onKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
     const typing = !!target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);

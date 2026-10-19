@@ -17,8 +17,6 @@ public class AdminPackageService : IAdminPackageService
         _unitOfWork = unitOfWork;
     }
 
-    // ───── Packages ─────
-
     public async Task<PaginatedResult<AdminPackageInfo>> GetPackagesAsync(int page = 1, int pageSize = 20, string? search = null)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
@@ -48,14 +46,11 @@ public class AdminPackageService : IAdminPackageService
         var entity = await _unitOfWork.CachedPackages.GetByIdAsync(id);
         if (entity == null) throw new KeyNotFoundException($"Package with id {id} not found");
 
-        // Delete related release notes first
         await _unitOfWork.CachedReleaseNotes.DeleteWhereAsync(r => r.CachedPackageId == id);
 
         await _unitOfWork.CachedPackages.DeleteAsync(entity);
         await _unitOfWork.SaveChangesAsync();
     }
-
-    // ───── Registries ─────
 
     public async Task<List<AdminRegistryInfo>> GetRegistriesAsync()
     {
@@ -147,8 +142,6 @@ public class AdminPackageService : IAdminPackageService
         }
         await _unitOfWork.SaveChangesAsync();
     }
-
-    // ───── Sitemap ─────
 
     public async Task<List<SitemapEntry>> GetPackagesForSitemapAsync()
     {

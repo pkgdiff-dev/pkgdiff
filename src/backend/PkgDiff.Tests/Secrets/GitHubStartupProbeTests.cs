@@ -8,7 +8,7 @@ namespace PkgDiff.Tests.Secrets;
 
 public class GitHubStartupProbeTests
 {
-    // Distinctive head and tail so any partial disclosure (old "abcd****wxyz" masking) is detectable.
+    // Distinctive head and tail so any partial disclosure is detectable
     private const string TokenHead = "Qz7K";
     private const string TokenTail = "W3rY";
     private const string Token = TokenHead + "fake0test0token0value0only" + TokenTail;

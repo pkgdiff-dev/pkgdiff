@@ -104,7 +104,7 @@ export class RouteLoaderComponent {
   private readonly MIN_DISPLAY_MS = 350;
 
   constructor() {
-    // An overlay over a page that is rendered on the server would only hide it until the browser takes over
+    // On a server-rendered page the overlay would only hide content until hydration
     if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
 
     inject(DestroyRef).onDestroy(() => {
@@ -126,7 +126,6 @@ export class RouteLoaderComponent {
         const remaining = Math.max(0, this.MIN_DISPLAY_MS - elapsed);
         this.hideTimer = setTimeout(() => {
           this.fadeOut.set(true);
-          // Remove from DOM after fade-out finishes
           setTimeout(() => { this.visible.set(false); this.fadeOut.set(false); }, 220);
           this.hideTimer = null;
         }, remaining);

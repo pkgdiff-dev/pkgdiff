@@ -2,9 +2,7 @@ using PkgDiff.Domain.Common;
 
 namespace PkgDiff.Domain.Entities;
 
-// One dependency audit: the packages a visitor pasted and, once the background job is done, the
-// report. Found by PublicId (a random GUID) so a report link cannot be guessed. The pasted file
-// itself is never stored, only the package names and versions taken from it.
+// Found by random PublicId so report links cannot be guessed; the pasted file is never stored
 public class DependencyAudit : BaseEntity
 {
     public Guid PublicId { get; set; }

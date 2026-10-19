@@ -9,9 +9,8 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Project health: deps.dev for npm, PyPI and NuGet (licenses, provenance, OpenSSF Scorecard of the
-// source repository); the Scorecard API for a GitHub repository deps.dev does not cover, which is
-// how pub.dev packages get theirs. deps.dev data is CC BY 4.0, so its attribution travels with it.
+// Project health from deps.dev, or the Scorecard API for repositories deps.dev does not cover.
+// deps.dev data is CC BY 4.0, so its attribution travels with it.
 public partial class PackageHealthClient : IPackageHealthClient
 {
     private const string DepsDevAttribution = "Data from deps.dev, licensed under CC BY 4.0";

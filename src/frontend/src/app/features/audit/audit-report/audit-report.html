@@ -32,7 +32,6 @@
     }
   </header>
 
-  <!-- Running -->
   @if (!done()) {
   <section class="py-12" aria-live="polite">
     <p class="text-sm font-medium mb-3">
@@ -49,7 +48,6 @@
   <p role="alert" class="py-12 text-sm text-red-600 dark:text-red-400">{{ r.error || 'The audit could not be completed.' }}</p>
   } @else {
 
-  <!-- Summary -->
   <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" aria-label="Summary">
     <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
       <div class="text-2xl font-bold">{{ r.summary.packages }}</div>
@@ -83,7 +81,6 @@
   </div>
   }
 
-  <!-- Filter -->
   <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Show">
     @for (option of [['all', 'All'], ['vulnerable', 'Vulnerable'], ['clean', 'No known issues'], ['not-found', 'Not checked']]; track option[0]) {
     <button type="button" (click)="filter.set($any(option[0]))" [attr.aria-pressed]="filter() === option[0]"
@@ -94,7 +91,6 @@
     }
   </div>
 
-  <!-- Packages -->
   <ul class="space-y-3">
     @for (item of visibleItems(); track item.name) {
     <li class="p-4 rounded-xl border"

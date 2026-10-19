@@ -1,14 +1,11 @@
 <div class="flex min-h-screen relative">
-  <!-- Mobile Sidebar Backdrop -->
   @if (sidebarOpen()) {
   <div class="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm" (click)="toggleSidebar()"></div>
   }
 
-  <!-- Sidebar -->
   <aside
     class="w-60 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col fixed md:relative h-full z-50 transition-transform duration-300 md:translate-x-0"
     [class.-translate-x-full]="!sidebarOpen()" [class.translate-x-0]="sidebarOpen()">
-    <!-- Logo -->
     <div class="p-5 border-b border-gray-100 dark:border-gray-800">
       <a href="/admin/dashboard">
         <app-logo size="sm" />
@@ -17,9 +14,7 @@
         Panel</span>
     </div>
 
-    <!-- Navigation -->
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-      <!-- Main -->
       <span
         class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-2 pb-1">Main</span>
 
@@ -36,7 +31,6 @@
         <span>Health Monitoring</span>
       </a>
 
-      <!-- Management -->
       @if (hasAnyPermission(['Permissions.Packages.View', 'Permissions.Registries.View'])) {
       <span
         class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Management</span>
@@ -77,7 +71,6 @@
         <span>Contributors</span>
       </a>
 
-      <!-- Monitoring -->
       @if (hasAnyPermission(['Permissions.Jobs.View', 'Permissions.Security.ViewLogs', 'Permissions.ScrapeLogs.View']))
       {
       <span
@@ -105,7 +98,6 @@
         <span>Scrape Logs</span>
       </a>
 
-      <!-- Configuration -->
       @if (hasAnyPermission(['Permissions.Settings.View', 'Permissions.VersionExcludePatterns.View'])) {
       <span
         class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Configuration</span>
@@ -126,7 +118,6 @@
         <span>Version Filters</span>
       </a>
 
-      <!-- Security -->
       @if (hasAnyPermission(['Permissions.Security.ManageIps'])) {
       <span
         class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Security</span>
@@ -139,7 +130,6 @@
         <span>IP Blocking</span>
       </a>
 
-      <!-- Access Control -->
       @if (hasAnyPermission(['Permissions.Users.View', 'Permissions.Roles.View'])) {
       <span
         class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Access
@@ -161,7 +151,6 @@
       </a>
     </nav>
 
-    <!-- Go to Site -->
     <div class="p-3 border-t border-gray-100 dark:border-gray-800">
       <a href="/"
         class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -171,13 +160,10 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <div class="flex-1 flex flex-col min-h-screen">
-    <!-- Top Bar -->
     <header
       class="h-14 flex items-center justify-between px-4 md:px-6 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#111]/80 backdrop-blur-sm sticky top-0 z-40">
 
-      <!-- Mobile Sidebar Toggle -->
       <div class="flex items-center">
         <button (click)="toggleSidebar()"
           class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -187,7 +173,6 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- Theme Toggle -->
         <button (click)="toggleTheme()"
           class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           type="button" aria-label="Switch between light and dark mode" title="Switch between light and dark mode">
@@ -195,10 +180,8 @@
           <lucide-icon [img]="SunIcon" [size]="18" class="hidden dark:block" aria-hidden="true"></lucide-icon>
         </button>
 
-        <!-- Divider -->
         <div class="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
 
-        <!-- Profile Dropdown -->
         <div class="relative profile-dropdown">
           <button (click)="toggleProfile()"
             class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -216,7 +199,6 @@
               [class.rotate-180]="profileOpen()"></lucide-icon>
           </button>
 
-          <!-- Dropdown Menu -->
           @if (profileOpen()) {
           <div
             class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 z-50">
@@ -241,7 +223,6 @@
       </div>
     </header>
 
-    <!-- Page Content -->
     <main class="flex-1 p-6 bg-gray-50/50 dark:bg-[#0a0a0a]">
       <router-outlet></router-outlet>
     </main>

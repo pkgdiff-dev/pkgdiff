@@ -110,8 +110,7 @@ public class NpmService : INpmService
     {
         try
         {
-            // Read as a stream: the packument of a package with thousands of versions (@prisma/client,
-            // 68 MB) is larger than the client's buffer cap, while the fields kept from it are small
+            // Streamed: large packuments exceed the client's buffer cap and only small fields are kept
             using var response = await _httpClient.GetAsync(
                 PackageUrlEncoder.EscapeNpmPackagePath(packageId), HttpCompletionOption.ResponseHeadersRead);
             if (!response.IsSuccessStatusCode)
@@ -130,7 +129,6 @@ public class NpmService : INpmService
         }
     }
 
-    // Still a cap, only a higher one than the buffered read had
     private const long MaxPackumentBytes = 256L * 1024 * 1024;
 
     private static bool IsPrerelease(string version) =>
@@ -144,11 +142,6 @@ public class NpmService : INpmService
         return GitHubUrls.IsGitHub(url);
     }
 
-    // ==================== HELPER METHODS ====================
-
-    /// <summary>
-    /// Cleans npm repository URL format (removes git+, git://, .git suffixes).
-    /// </summary>
     private static string? CleanRepositoryUrl(string? repositoryUrl)
     {
         if (string.IsNullOrEmpty(repositoryUrl))
@@ -157,9 +150,6 @@ public class NpmService : INpmService
         return GitHubUrls.FromRepositoryField(repositoryUrl);
     }
 
-    /// <summary>
-    /// Maps npm package data to PackageMetadata DTO.
-    /// </summary>
     private PackageMetadata MapToPackageMetadata(string packageId, NpmPackageData packageData)
     {
         var latestVersion = packageData.DistTags?.Latest ?? packageData.Versions?.Keys.LastOrDefault();
@@ -167,7 +157,6 @@ public class NpmService : INpmService
             ? packageData.Versions[latestVersion]
             : null;
 
-        // Get repository/homepage URL
         string? repositoryUrl = latestVersionData?.Repository?.Url;
         repositoryUrl = CleanRepositoryUrl(repositoryUrl);
         // A monorepo names the folder of this package, where its changelog usually is
@@ -182,24 +171,23 @@ public class NpmService : INpmService
             LatestVersion = latestVersion ?? "unknown",
             Description = latestVersionData?.Description ?? packageData.Description ?? "",
             Authors = latestVersionData?.Author?.Name ?? packageData.Author?.Name ?? "Unknown",
-            IconUrl = null, // npm doesn't provide icon URLs in registry
+            IconUrl = null,
             ProjectUrl = homepage ?? repositoryUrl,
             GitHubRepositoryUrl = IsGitHubUrl(repositoryUrl) ? repositoryUrl : null,
             SourceDirectory = IsGitHubUrl(repositoryUrl) ? directory : null,
             Versions = packageData.Versions?
-                .Where(v => !IsPrerelease(v.Key)) // Filter out prerelease versions by default
+                .Where(v => !IsPrerelease(v.Key))
                 .Select(v => new VersionSummary
                 {
                     Version = v.Key,
                     PublishedDate = packageData.Time?.ContainsKey(v.Key) == true ? packageData.Time[v.Key] : null,
-                    IsPrerelease = false, // Already filtered
+                    IsPrerelease = false,
                 })
                 .OrderByDescending(v => TryParseVersion(v.Version))
                 .ToList() ?? new List<VersionSummary>()
         };
     }
 
-    // NPM API response models
     private class NpmPackageData
     {
         [JsonPropertyName("name")]
@@ -339,9 +327,7 @@ public class NpmService : INpmService
             => JsonSerializer.Serialize(writer, value, new JsonSerializerOptions());
     }
 
-    // A string field an author wrote as a list (fs-extra 0.0.1: "homepage": [...]) or a number: the first
-    // string of a list, the text of a scalar, nothing for anything else. One odd old version must not make
-    // the whole package unreadable.
+    // Lenient for odd old versions: first string of a list, text of a scalar, else null
     private class LooseStringConverter : JsonConverter<string?>
     {
         public override bool HandleNull => true;

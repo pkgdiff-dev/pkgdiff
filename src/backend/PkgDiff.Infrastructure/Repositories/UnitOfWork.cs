@@ -62,8 +62,7 @@ public class UnitOfWork : IUnitOfWork
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
-            // The whole batch was rolled back. The rows it tried to insert are forgotten, or the next
-            // save of this context would send them again and fail the same way.
+            // The batch was rolled back: forget its inserts, or the next save would resend them and fail
             foreach (var entry in _context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).ToList())
                 entry.State = EntityState.Detached;
 

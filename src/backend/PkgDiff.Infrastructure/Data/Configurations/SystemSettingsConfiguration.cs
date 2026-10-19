@@ -24,7 +24,6 @@ public class SystemSettingsConfiguration : IEntityTypeConfiguration<SystemSettin
         builder.Property(x => x.DataType)
             .HasMaxLength(50);
             
-        // Unique index on Key
         builder.HasIndex(x => x.Key).IsUnique();
     }
 }

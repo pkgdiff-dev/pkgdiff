@@ -2,8 +2,7 @@ using PkgDiff.Application.Services;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Added to every HTTP client: an outbound request ends when the work it belongs to is cancelled,
-// whether or not the caller passed a token of its own.
+// Ends every outbound request when its work is cancelled, even without a caller token
 public sealed class WorkCancellationHandler : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

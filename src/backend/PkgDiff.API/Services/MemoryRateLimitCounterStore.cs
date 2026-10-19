@@ -2,8 +2,7 @@ using System.Collections.Concurrent;
 
 namespace PkgDiff.API.Services;
 
-// Fixed windows: the first request of a key starts its window, and the window ends when its time is up,
-// however many requests arrive in between
+// Fixed windows, each starting at the first request of its key
 public class MemoryRateLimitCounterStore : IRateLimitCounterStore
 {
     private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
@@ -54,7 +53,6 @@ public class MemoryRateLimitCounterStore : IRateLimitCounterStore
         }
     }
 
-    // Keeps the dictionary from growing with every address ever seen
     private void Sweep(DateTime now)
     {
         var due = Interlocked.Read(ref _nextSweepTicks);

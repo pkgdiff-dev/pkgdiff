@@ -29,10 +29,7 @@ namespace PkgDiff.Application.Jobs
 
             try
             {
-                // Get all cached packages with their registry info
-                // Only what the refresh request needs, not the cached version lists
-                // Only packages someone looked at in the last 30 days (before views were tracked: cached then).
-                // Anyone can add a package by opening it; one nobody visits is refreshed when it is opened again.
+                // Only packages viewed in the last 30 days; an unvisited one refreshes when it is opened again
                 var cutoff = DateTime.UtcNow - RefreshWindow;
                 var packages = await _unitOfWork.ToListAsync(_unitOfWork.CachedPackages.Query()
                     .Where(p => (p.LastViewedAt ?? p.CachedAt) > cutoff)
@@ -46,13 +43,12 @@ namespace PkgDiff.Application.Jobs
                     {
                         PackageId = package.PackageId,
                         Registry = package.Registry,
-                        CurrentVersion = string.Empty, // Will fetch latest
-                        TargetVersion = string.Empty,  // Will fetch latest
+                        CurrentVersion = string.Empty,
+                        TargetVersion = string.Empty,
                         IncludePrerelease = false
                     };
 
-                    // One job per package, run in parallel by the Hangfire workers; a package that cannot
-                    // be compared is skipped there instead of failing
+                    // One job per package; one that cannot be compared is skipped there instead of failing
                     _jobs.Enqueue<PackageRefreshJob>(x => x.RefreshAsync(request));
                 }
 

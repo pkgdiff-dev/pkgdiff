@@ -3,7 +3,6 @@ export interface InstallSnippet {
   code: string;
 }
 
-// What a developer pastes to pin this exact version: the CLI command first, then the manifest line
 export function installSnippets(registry: string, packageId: string, version: string): InstallSnippet[] {
   switch (registry.toLowerCase()) {
     case 'npm':

@@ -60,7 +60,6 @@ export class AdminSocialMediaComponent {
     constructor() {
         this.loadHistory();
 
-        // Handle OAuth callback: if ?code= is in the URL, complete the process
         this.route.queryParams.pipe(takeUntilDestroyed()).subscribe(params => {
             const code: string | undefined = params['code'];
             if (!code) return;
@@ -101,7 +100,6 @@ export class AdminSocialMediaComponent {
             next: (res) => {
                 this.connectingLinkedIn.set(false);
                 sessionStorage.setItem(this.LINKEDIN_STATE_KEY, res.state);
-                // Redirect the page to LinkedIn login; LinkedIn redirects back to the SPA
                 window.location.href = res.authUrl;
             },
             error: (error: unknown) => {
@@ -133,7 +131,7 @@ export class AdminSocialMediaComponent {
             return;
         }
 
-        // The platform can be switched while the request is under way; the messages name the one posted to
+        // Captured now: the platform can be switched while the request is under way
         const platform = this.sharePlatform();
         this.sharing.set(true);
         this.api.post('admin/social-media/share', {

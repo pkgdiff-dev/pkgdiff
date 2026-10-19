@@ -2,7 +2,6 @@
     <app-grid-pattern />
 
     <div class="relative z-10 space-y-6">
-        <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-xl font-bold text-[#111418] dark:text-white">Health Monitoring</h1>
@@ -34,7 +33,6 @@
             <div class="text-sm text-gray-500">Loading health status...</div>
         </div>
         } @else if (healthDetails(); as health) {
-        <!-- Overall Status Card -->
         <div [class]="getStatusBg(health.overallStatus)"
             class="border border-gray-200 dark:border-gray-700 rounded-xl p-5">
             <div class="flex items-center justify-between">
@@ -54,9 +52,7 @@
             </div>
         </div>
 
-        <!-- Service Status Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Database -->
             <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-2">
@@ -88,7 +84,6 @@
                 </div>
             </div>
 
-            <!-- NuGet API -->
             <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-2">
@@ -120,7 +115,6 @@
                 </div>
             </div>
 
-            <!-- GitHub API -->
             @let gitHubLimited = health.gitHub.isAvailable && isRateLimited(health.gitHub);
             <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div class="flex items-start justify-between mb-3">
@@ -168,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- Hangfire Status -->
             <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-2">
@@ -207,7 +200,6 @@
             </div>
         </div>
 
-        <!-- Package security data providers -->
         <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-8">
             <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Package security providers</h2>
             <p class="text-xs text-gray-500 mb-4">Switched on and off in Settings, category Security. They do not count towards the overall status.</p>
@@ -232,7 +224,6 @@
             </ul>
         </div>
 
-        <!-- Auto-refresh notice -->
         <div class="text-center">
             <p class="text-xs text-gray-400">
                 <lucide-icon [img]="RefreshIcon" [size]="12" class="inline"></lucide-icon>

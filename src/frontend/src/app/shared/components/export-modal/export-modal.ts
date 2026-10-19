@@ -37,7 +37,6 @@ export class ExportModalComponent {
         { format: 'pdf', label: 'PDF', description: 'Printable document', icon: FileType, tint: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' },
     ];
 
-    // The format being written; the dialog stays open, and cannot be closed, until the file is ready
     exporting = signal<ExportFormat | null>(null);
 
     private exportService = inject(ExportService);

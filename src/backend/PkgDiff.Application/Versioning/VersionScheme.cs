@@ -1,6 +1,5 @@
 namespace PkgDiff.Application.Versioning;
 
-// The rules a registry's versions are parsed and ordered by
 public enum VersionScheme
 {
     // NuGet's own rules; a version is spelled the way NuGet normalizes it

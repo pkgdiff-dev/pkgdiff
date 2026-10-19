@@ -20,8 +20,7 @@ using PkgDiff.Application.Interfaces;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Markdown is parsed once, here, and only the sanitized HTML leaves the server: no second parser can
-// disagree with this one about what is code and what is markup.
+// Only sanitized HTML leaves the server, so no second parser can disagree about code vs markup
 public sealed class ReleaseNotesRenderer : IReleaseNotesRenderer, IDisposable
 {
     private const string LinkRel = "noopener noreferrer nofollow";
@@ -38,8 +37,7 @@ public sealed class ReleaseNotesRenderer : IReleaseNotesRenderer, IDisposable
 
     private static readonly string[] AllowedSchemes = ["http", "https", "mailto"];
 
-    // An image loads from where the package author pointed it, telling that host who reads the notes.
-    // These hosts are trusted with that; an image anywhere else is shown as a link the reader may open.
+    // Images elsewhere become links: loading one tells that host who reads the notes
     private static readonly string[] TrustedImageHosts = ["github.com", "githubusercontent.com", "img.shields.io", "badgen.net"];
 
     internal static readonly HashSet<string> AllowedTagSet = new(AllowedTags, StringComparer.OrdinalIgnoreCase);
@@ -147,8 +145,7 @@ public sealed class ReleaseNotesRenderer : IReleaseNotesRenderer, IDisposable
         if (string.IsNullOrWhiteSpace(markdown))
             return string.Empty;
 
-        // Rendering costs milliseconds per note and a package page renders every cached note, so identical
-        // input is served from a size-bounded cache keyed by its hash
+        // A package page renders every cached note, so output is cached by input hash
         var key = Convert.ToHexString(SHA256.HashData(MemoryMarshal.AsBytes(markdown.AsSpan())));
         if (_cache.TryGetValue(key, out string? cached) && cached is not null)
             return cached;
@@ -157,8 +154,7 @@ public sealed class ReleaseNotesRenderer : IReleaseNotesRenderer, IDisposable
         var limit = MarkdownComplexityGuard.Check(markdown, out var measured);
         if (limit != MarkdownComplexityGuard.Limit.None)
         {
-            // A stack overflow in the parsers ends the process and no catch block can stop it, so input
-            // that could cause one is never parsed
+            // A stack overflow cannot be caught, so input that could cause one is never parsed
             _logger.LogWarning(
                 "Release notes exceed the {Limit} limit ({Measured}) at {Length} characters, showing them as plain text",
                 limit, measured, markdown.Length);
@@ -256,7 +252,7 @@ public sealed class ReleaseNotesRenderer : IReleaseNotesRenderer, IDisposable
                 continue;
             }
 
-            // Not allowlisted: the tag stays visible as text (e.g. the <T> of List<T>)
+            // Not allowlisted: the tag stays visible as text
             html.ReplaceBy(new LiteralInline(tag));
         }
     }

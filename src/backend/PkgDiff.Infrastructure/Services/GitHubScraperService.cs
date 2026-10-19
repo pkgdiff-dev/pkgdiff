@@ -42,20 +42,17 @@ public partial class GitHubScraperService : IGitHubScraperService
         _htmlDocumentLoader = htmlDocumentLoader;
         _cache = cache;
 
-        // Load GitHub settings from configuration
         var githubSettings = configuration.GetSection("GitHubSettings");
         var personalAccessToken = githubSettings.GetValue<string?>("PersonalAccessToken");
         _enableAuthentication = githubSettings.GetValue<bool>("EnableAuthentication", true);
-        _useGitHubApi = githubSettings.GetValue<bool>("UseGitHubApi", true); // New: prefer API over HTML scraping
-        var htmlScrapingTimeoutSeconds = githubSettings.GetValue<int>("HtmlScrapingTimeoutSeconds", 30); // Default: 30s timeout
+        _useGitHubApi = githubSettings.GetValue<bool>("UseGitHubApi", true);
+        var htmlScrapingTimeoutSeconds = githubSettings.GetValue<int>("HtmlScrapingTimeoutSeconds", 30);
         var userAgent = githubSettings.GetValue<string>("UserAgent", "PkgDiff/1.0");
         
-        // Create dedicated HttpClient for GitHub API calls using factory
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.GitHubApi);
         _httpClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
-        _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json"); // GitHub API v3
+        _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
         
-        // Add authentication if token is provided and enabled
         if (_enableAuthentication && !string.IsNullOrWhiteSpace(personalAccessToken))
         {
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {personalAccessToken}");
@@ -66,7 +63,6 @@ public partial class GitHubScraperService : IGitHubScraperService
         _releaseFiles = new GitHubReleaseFileReader(_httpClient, rateLimiter, rateLimitHandler, cache, _useGitHubApi && _enableAuthentication, logger);
         _milestones = new GitHubMilestoneReader(_httpClient, rateLimiter, rateLimitHandler, cache, _useGitHubApi && _enableAuthentication, logger);
 
-        // Polly retry policy: 3 attempts with exponential backoff, for transient failures only
         _retryPolicy = Policy
             .Handle<Exception>(TransientHttp.IsTransient)
             .WaitAndRetryAsync(3, retryAttempt =>
@@ -80,7 +76,6 @@ public partial class GitHubScraperService : IGitHubScraperService
             var url = $"https://www.nuget.org/packages/{PackageUrlEncoder.EscapeSegment(packageId)}";
             _logger.LogDebug("[GitHubScraper] Extracting GitHub repo URL for {PackageId} from {Url}", packageId, url);
 
-            // Use rate limiter for NuGet scraping
             using var document = await _rateLimiter.ExecuteAsync("nuget-scraping", () => _htmlDocumentLoader.LoadAsync(url));
             if (document == null)
             {
@@ -88,7 +83,6 @@ public partial class GitHubScraperService : IGitHubScraperService
                 return null;
             }
 
-            // Find GitHub repository link
             var links = document.QuerySelectorAll("aside a[href*='github.com']");
             var githubLink = links.FirstOrDefault();
 
@@ -121,7 +115,6 @@ public partial class GitHubScraperService : IGitHubScraperService
                 return cachedReleases;
             }
 
-            // Use GitHub API if enabled and authenticated, otherwise fall back to HTML scraping
             Dictionary<string, string> releases;
             bool answered;
             if (_useGitHubApi && _enableAuthentication)
@@ -134,7 +127,7 @@ public partial class GitHubScraperService : IGitHubScraperService
                 answered = releases.Count > 0;
             }
 
-            // Kept even when empty: the caller asks again for every version of the package
+            // Cached even when empty: the caller asks again for every version
             _cache.SetReleases(cleanUrl, releases, answered);
             _logger.LogDebug("[GitHubScraper] Cached {Count} releases for {RepoUrl} (answered: {Answered})",
                 releases.Count, cleanUrl, answered);
@@ -156,7 +149,7 @@ public partial class GitHubScraperService : IGitHubScraperService
         }
 
         int page = 1;
-        int perPage = 100; // GitHub API max per page
+        int perPage = 100;
         bool hasMorePages = true;
         bool answered = false;
 
@@ -168,17 +161,14 @@ public partial class GitHubScraperService : IGitHubScraperService
             
             try
             {
-                // Check rate limit before making request
                 await _rateLimitHandler.CanMakeRequestAsync();
                 
-                // Use github-api rate limiter (5000 req/hour)
                 using var response = await _rateLimiter.ExecuteAsync("github-api", async () =>
                 {
                     _logger.LogDebug("[GitHubScraper] API Request: GET {ApiUrl}", apiUrl);
                     return await _httpClient.GetAsync(apiUrl);
                 });
 
-                // Update rate limit from response headers
                 await _rateLimitHandler.UpdateFromHeadersAsync(response);
 
                 if (!response.IsSuccessStatusCode)
@@ -186,7 +176,7 @@ public partial class GitHubScraperService : IGitHubScraperService
                     GitHubRateLimitResponse.ThrowIfLimited(response);
                     _logger.LogWarning("[GitHubScraper] API returned {StatusCode} for {Url}", response.StatusCode, apiUrl);
 
-                    // A repository that does not exist (any more) will not have releases a minute later
+                    // A missing repository will not have releases a minute later
                     answered = response.StatusCode == System.Net.HttpStatusCode.NotFound;
                     break;
                 }
@@ -211,8 +201,6 @@ public partial class GitHubScraperService : IGitHubScraperService
                     {
                         var notes = GitHubReleasePage.CleanReleaseNotes(body);
 
-                        // Every tag under its own name ("socket.io@4.8.3"); a plain version tag also
-                        // without its "v", as it always was
                         releases.TryAdd(tagName, notes);
                         if (PlainVersionTag().IsMatch(tagName))
                             releases.TryAdd(tagName.TrimStart('v', 'V'), notes);
@@ -220,7 +208,6 @@ public partial class GitHubScraperService : IGitHubScraperService
                     }
                 }
 
-                // Check if there are more pages (GitHub returns less than perPage if it's the last page)
                 hasMorePages = releasesArray.GetArrayLength() == perPage;
                 answered = !hasMorePages;
                 page++;
@@ -256,40 +243,33 @@ public partial class GitHubScraperService : IGitHubScraperService
 
             string? notes = null;
 
-            // OPTIMIZATION: Use lazy loading for HTML scraping
-            // Instead of fetching ALL pages, fetch page-by-page until we find the version
             if (!_useGitHubApi || !_enableAuthentication)
             {
                 notes = await _htmlScraper.GetReleaseNotesForVersionAsync(githubRepoUrl, version);
             }
             else
             {
-                // For API mode, fetch all releases (it's fast with API)
                 var allReleases = await GetAllReleasesAsync(GitHubUrls.Clean(githubRepoUrl));
 
-                // Clean the version string for comparison
                 var cleanVersion = version.TrimStart('v', 'V');
 
-                // A monorepo tags each package on its own: its name decides which tag is this package's
+                // Monorepos tag each package separately; the package name picks its tag
                 var packageTag = TagCandidates(packageId, cleanVersion).FirstOrDefault(allReleases.ContainsKey);
                 if (packageTag is not null)
                 {
                     notes = allReleases[packageTag];
                     _logger.LogDebug("[GitHubScraper] Package tag {Tag} found for version {Version}", packageTag, cleanVersion);
                 }
-                // Try exact match first
                 else if (allReleases.TryGetValue(cleanVersion, out notes))
                 {
                     _logger.LogDebug("[GitHubScraper] Exact match found for version {Version}", cleanVersion);
                 }
-                // Try with 'v' prefix
                 else if (allReleases.TryGetValue($"v{cleanVersion}", out notes))
                 {
                     _logger.LogDebug("[GitHubScraper] Match found with 'v' prefix for version v{Version}", cleanVersion);
                 }
                 else
                 {
-                    // Try fuzzy match (in case of minor formatting differences)
                     var fuzzyMatch = allReleases.FirstOrDefault(kvp =>
                         kvp.Key.Replace(".", "").Replace("-", "").Replace("_", "")
                             .Equals(cleanVersion.Replace(".", "").Replace("-", "").Replace("_", ""),
@@ -308,7 +288,6 @@ public partial class GitHubScraperService : IGitHubScraperService
                 }
             }
 
-            // Check if notes are empty or redirection
             if (string.IsNullOrWhiteSpace(notes) || GitHubChangelogReader.IsRedirection(notes))
             {
                 _logger.LogDebug("[GitHubScraper] Notes are empty or redirection for version {Version}. Attempting to fetch from repository changelog files.", version);
@@ -319,8 +298,7 @@ public partial class GitHubScraperService : IGitHubScraperService
                 }
                 else
                 {
-                    // No release and no changelog: one file per version (Django's docs/releases), else the
-                    // project may track its versions as milestones (hapi, joi)
+                    // No release and no changelog: try per-version release files, then milestones
                     var cleanUrl = GitHubUrls.Clean(githubRepoUrl);
                     var otherNotes = await _releaseFiles.FetchAsync(cleanUrl, version)
                                      ?? await _milestones.FetchAsync(cleanUrl, version);
@@ -335,7 +313,7 @@ public partial class GitHubScraperService : IGitHubScraperService
         });
     }
 
-    // Tag spellings of monorepos and of projects that name their tags after the package, most specific first
+    // Tag spellings of monorepos and package-named tags, most specific first
     private static IEnumerable<string> TagCandidates(string? packageId, string version)
     {
         if (string.IsNullOrWhiteSpace(packageId))
@@ -360,7 +338,6 @@ public partial class GitHubScraperService : IGitHubScraperService
         yield return $"release/{version}";
     }
 
-    // "1.2.3", "v1.2.3", "V1.2.3-beta.1": a tag that is nothing but a version
     [System.Text.RegularExpressions.GeneratedRegex(@"^[vV]?\d")]
     private static partial System.Text.RegularExpressions.Regex PlainVersionTag();
 }

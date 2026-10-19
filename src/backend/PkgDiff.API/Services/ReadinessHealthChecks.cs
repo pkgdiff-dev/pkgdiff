@@ -54,7 +54,7 @@ public static class HealthResponses
 {
     public const string ReadyTag = "ready";
 
-    // Names and states only: a health endpoint is unauthenticated, so it never carries exception text
+    // Unauthenticated endpoint: names and states only, never exception text
     public static Task WriteAsync(HttpContext context, HealthReport report)
     {
         context.Response.ContentType = "application/json";

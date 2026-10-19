@@ -16,9 +16,6 @@ public class HealthController : ControllerBase
         _healthCheckService = healthCheckService;
     }
 
-    /// <summary>
-    /// Get overall health status (quick check)
-    /// </summary>
     [HttpGet("status")]
     public async Task<ActionResult<HealthStatus>> GetStatus()
     {
@@ -26,9 +23,6 @@ public class HealthController : ControllerBase
         return Ok(status);
     }
 
-    /// <summary>
-    /// Get detailed health information for all services
-    /// </summary>
     [HttpGet("details")]
     public async Task<ActionResult<HealthDetails>> GetDetails()
     {

@@ -6,9 +6,6 @@ import { PackageSuggestion } from '../../../../core/models/package.models';
 import { SecurityAdvisory } from '../../../../core/models/security.models';
 import { severityClass, sortBySeverity } from '../../../../core/utils/trust.utils';
 
-// A package the registry knows but that has no stable version to compare. Either the registry pulled it
-// for security reasons and left only a placeholder (npm's "0.0.1-security" for malware), or it has only
-// prereleases so far.
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-no-stable-versions',
@@ -35,7 +32,6 @@ export class NoStableVersionsComponent implements OnInit {
 
   readonly sortedAdvisories = computed(() => sortBySeverity(this.advisories()));
 
-  // Removed packages are mostly typosquats: the name they imitate is the useful way on
   suggestions = signal<PackageSuggestion[]>([]);
 
   ngOnInit(): void {

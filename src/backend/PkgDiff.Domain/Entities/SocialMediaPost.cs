@@ -24,7 +24,6 @@ public class SocialMediaPost : BaseEntity
     public string? ErrorMessage { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
-    // Optional reference to a blog post if it was auto-generated
     public int? BlogPostId { get; set; }
     public BlogPost? BlogPost { get; set; }
 }

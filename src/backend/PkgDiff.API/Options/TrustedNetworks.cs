@@ -21,8 +21,7 @@ public sealed class TrustedNetworks
             n.BaseAddress.AddressFamily == normalized.AddressFamily && n.Contains(normalized));
     }
 
-    // The Docker bridge gateway (e.g. 172.28.0.1) is where host-originated traffic appears from,
-    // so it must never count as an internal container peer.
+    // The bridge gateway carries host-originated traffic, so it is never an internal peer
     public bool IsGateway(IPAddress address)
     {
         var normalized = Normalize(address);

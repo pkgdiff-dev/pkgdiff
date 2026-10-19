@@ -1,9 +1,7 @@
 namespace PkgDiff.Application.Services;
 
-// The cancellation token of the work that is running on this async flow. An endpoint that starts
-// long work sets it from the request; the outbound HTTP handler, the repository reads and the rate
-// limiter honour it, so the work stops without every method in between taking a token parameter.
-// Outside such a scope (background jobs, short requests) the token is None.
+// Ambient cancellation token of the long work a request started; None outside such a scope.
+// Outbound HTTP, repository reads and the rate limiter honour it without a token parameter.
 public static class WorkCancellation
 {
     private static readonly AsyncLocal<CancellationToken> Current = new();

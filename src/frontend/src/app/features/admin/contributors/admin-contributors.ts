@@ -76,7 +76,6 @@ export class AdminContributorsComponent {
                 this.backfillStatus.set('done');
                 this.toast.success('Backfill job enqueued. Reloading results in 3s...');
                 if (this.reloadTimer) clearTimeout(this.reloadTimer);
-                // The job runs in the background; its first results are there a moment later
                 this.reloadTimer = setTimeout(() => {
                     this.reloadTimer = null;
                     this.backfillStatus.set('idle');

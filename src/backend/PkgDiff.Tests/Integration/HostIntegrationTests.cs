@@ -9,7 +9,6 @@ using PkgDiff.Tests.Postgres;
 
 namespace PkgDiff.Tests.Integration;
 
-// One host for the whole class: starting it migrates a database, seeds it and installs the job storage
 public sealed class HostFixture : IAsyncLifetime
 {
     public PkgDiffHost? Host { get; private set; }
@@ -30,8 +29,7 @@ public sealed class HostFixture : IAsyncLifetime
 
         await Host.DisposeAsync();
 
-        // The host must leave nothing of itself in the process: a Hangfire attribute asks Hangfire's
-        // static log provider for a logger when it is built, as every later test that reads one does
+        // Throws if Hangfire's static log provider still points at the disposed host
         _ = new global::Hangfire.AutomaticRetryAttribute();
     }
 }
@@ -112,7 +110,6 @@ public class HostIntegrationTests : IClassFixture<HostFixture>
         Assert.True((await ReadJsonAsync(dashboard)).TryGetProperty("cachedPackages", out _));
         Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("/api/admin/security/ip-statistics", TestContext.Current.CancellationToken)).StatusCode);
 
-        // The viewer may look at every list and change nothing
         using var viewer = await SignedInAsync("pkgdiff_viewer", PkgDiffHost.ViewerPassword);
         foreach (var path in new[] { "/api/admin/users", "/api/admin/roles", "/api/admin/packages", "/api/admin/registries", "/api/admin/settings", "/api/admin/scrape-logs", "/api/admin/security/request-logs" })
             Assert.Equal(HttpStatusCode.OK, (await viewer.GetAsync(path, TestContext.Current.CancellationToken)).StatusCode);
@@ -155,7 +152,6 @@ public class HostIntegrationTests : IClassFixture<HostFixture>
         Assert.Equal("1.1.0", package.LatestVersion);
         Assert.Equal(Published, package.LatestVersionDate);
 
-        // The notes are fetched in the background: queued once, not scraped inside the request
         Assert.Single(Host.Jobs.Enqueued, job => job == "IPackageAnalysisService.ScrapePackageReleaseNotesAsync");
 
         var feed = await ReadJsonAsync(await client.GetAsync("/api/package/live-updates", TestContext.Current.CancellationToken));
@@ -163,7 +159,6 @@ public class HostIntegrationTests : IClassFixture<HostFixture>
         Assert.Equal("1.1.0", entry.GetProperty("version").GetString());
         Assert.Equal(Published, entry.GetProperty("updatedAt").GetDateTime().ToUniversalTime());
 
-        // The analysis shows on the Prometheus endpoint, which only a scraper inside the compose network may read
         var metrics = await (await ScrapeMetricsAsync(client, "172.28.0.9")).Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Contains(metrics.Split('\n'), line =>
             line.StartsWith("pkgdiff_analyses{", StringComparison.Ordinal) && line.Contains("registry=\"npm\"") && line.Contains("outcome=\"ok\""));
@@ -195,7 +190,6 @@ public class HostIntegrationTests : IClassFixture<HostFixture>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("not found", (await ReadJsonAsync(response)).GetProperty("error").GetString());
 
-        // The request counts against the peer that really sent it, not against the address it claimed
         var counters = (MemoryRateLimitCounterStore)Host.Services.GetRequiredService<IRateLimitCounterStore>();
         Assert.Equal(1, counters.GetCount("rl:1m:198.51.100.20"));
         Assert.Null(counters.GetCount("rl:1m:203.0.113.77"));

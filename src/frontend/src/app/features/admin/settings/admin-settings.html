@@ -2,7 +2,6 @@
   <app-grid-pattern />
 
   <div class="relative z-10 space-y-6">
-    <!-- Header -->
     <div>
       <h1 class="text-xl font-bold text-[#111418] dark:text-white">Settings</h1>
       <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Configure system-wide settings for pkgdiff.</p>
@@ -23,7 +22,6 @@
       <div
         class="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-[#1a1a1a] shadow-sm">
 
-        <!-- Collapsible Category Header -->
         <button type="button" (click)="toggleCategory(group.name)" [attr.aria-expanded]="!isCollapsed(group.name)"
           class="w-full flex items-center justify-between gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-[#222] transition-colors group">
           <div class="flex items-center gap-2">
@@ -40,7 +38,6 @@
           </lucide-icon>
         </button>
 
-        <!-- Settings Cards (collapsible body) -->
         @if (!isCollapsed(group.name)) {
         <div class="border-t border-gray-100 dark:border-gray-800/60 divide-y divide-gray-100 dark:divide-gray-800/60">
           @for (setting of group.settings; track setting.id) {
@@ -48,7 +45,6 @@
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
 
-                <!-- Key + Type + Secret Badge -->
                 <div class="flex items-center gap-2 mb-1 flex-wrap">
                   <lucide-icon [img]="setting.isSecret ? LockIcon : SettingsIcon" [size]="13"
                     [ngClass]="setting.isSecret ? 'text-amber-500' : 'text-gray-400'"></lucide-icon>
@@ -63,7 +59,6 @@
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-500 mb-3">{{ setting.description }}</p>
 
-                <!-- Bool toggle -->
                 @if (setting.dataType === 'Bool') {
                 <div class="flex items-center gap-3">
                   <button *appHasPermission="'Permissions.Settings.Edit'" type="button"
@@ -79,7 +74,6 @@
                   </span>
                 </div>
 
-                <!-- Secret field: write-only, the stored value is never sent to the browser -->
                 } @else if (setting.isSecret) {
                 <div class="flex items-center gap-2 max-w-lg">
                   @if (setting.hasValue) {
@@ -105,7 +99,6 @@
                   }
                 </div>
 
-                <!-- Regular field with copy button -->
                 } @else {
                 <div class="flex items-center gap-2 max-w-lg">
                   <div class="flex-1">
@@ -123,7 +116,6 @@
                 }
               </div>
 
-              <!-- Save Button -->
               <app-button *appHasPermission="'Permissions.Settings.Edit'" (onClick)="saveSetting(setting)"
                 [disabled]="!isChanged(setting) || savingId() === setting.id" [loading]="savingId() === setting.id"
                 [variant]="isChanged(setting) ? 'primary' : 'secondary'" size="sm" class="flex-shrink-0 mt-1">

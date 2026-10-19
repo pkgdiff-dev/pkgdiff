@@ -6,12 +6,7 @@
 #   remote.sh rollback                  run the images again that ran before the last deploy
 #   remote.sh status                    show the configured tag and what is running
 #
-# It is meant to be the forced command of that key in ~/.ssh/authorized_keys (docs/ops/deploy-ghcr.md):
-#
-#   command="/opt/pkgdiff/src/deploy/remote.sh",no-pty,no-port-forwarding,no-agent-forwarding,no-X11-forwarding ssh-ed25519 AAAA... pkgdiff-actions-deploy
-#
-# sshd then runs this script whatever the client asked for and hands over what it asked for in
-# SSH_ORIGINAL_COMMAND. That text is only split into words and checked; nothing in it is evaluated.
+# Forced command of the deploy key: SSH_ORIGINAL_COMMAND is split and checked, never evaluated.
 set -euo pipefail
 
 usage() {
@@ -62,11 +57,9 @@ main() {
 
   cd "$root"
   if [ "$action" = deploy ]; then
-    # The compose file and the deploy script belong to the commit the images were built from.
-    # A fast-forward only: a checkout with local commits or changes in the way stops here.
     if [ -n "$commit" ]; then
       git fetch --quiet origin
-      # Only what was merged: a commit that is on no deployed branch is refused, whoever asks
+      # Refuse a commit that is on no deployed branch
       if ! git merge-base --is-ancestor "$commit" origin/develop 2>/dev/null \
         && ! git merge-base --is-ancestor "$commit" origin/master 2>/dev/null; then
         echo "deploy: $commit is not on develop or master; nothing was done" >&2

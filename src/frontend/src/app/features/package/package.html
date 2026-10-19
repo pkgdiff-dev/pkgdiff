@@ -17,26 +17,21 @@
 </div>
 }
 
-<!-- Not Found -->
 @if (state() === 'not-found') {
 <app-package-not-found [packageName]="packageId()" [registry]="registry()" />
 }
 
-<!-- Known to the registry, but nothing stable to compare -->
 @if (state() === 'no-versions' && metadata(); as meta) {
 <app-no-stable-versions [packageName]="meta.packageId" [registry]="registry()" [latestVersion]="meta.latestVersion"
   [advisories]="meta.trust?.advisories ?? []" />
 }
 
-<!-- Service Error -->
 @if (state() === 'error') {
 <app-service-unavailable (onRetry)="retry()" />
 }
 
-<!-- No Releases -->
 @if (state() === 'no-releases') {
 <div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-8">
-  <!-- Package info -->
   <div class="mb-6 md:mb-8 relative z-10">
     <div class="flex flex-wrap items-end gap-2 md:gap-3 mb-2">
       <h1 class="text-2xl md:text-3xl font-bold tracking-tight">{{ packageId() }}</h1>
@@ -45,7 +40,6 @@
     </div>
   </div>
 
-  <!-- Tabs -->
   <nav class="flex border-b border-gray-200 dark:border-gray-700 mb-6 md:mb-8 overflow-x-auto relative z-10">
     <button (click)="setTab('releases')"
       class="px-4 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
@@ -68,10 +62,8 @@
 </div>
 }
 
-<!-- Loaded -->
 @if (state() === 'loaded' && metadata()) {
 <div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-8">
-  <!-- Package info -->
   <div class="mb-6 md:mb-8 relative z-10">
     <div class="flex items-start gap-3 mb-2">
       <div class="flex flex-wrap items-end gap-2 md:gap-3 flex-1 min-w-0">
@@ -84,7 +76,6 @@
         }
       </div>
 
-      <!-- Phones: share and export sit in the top right corner and open a sheet from the bottom -->
       <div class="flex sm:hidden items-center gap-2 flex-shrink-0">
         <button type="button" (click)="shareOpen.set(true)" aria-haspopup="dialog" [attr.aria-label]="'Share ' + metadata()!.packageId"
           class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800">
@@ -126,7 +117,6 @@
     }
   </div>
 
-  <!-- Updating Banner with Progress Bar -->
   @if (isUpdating()) {
   <div
     class="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-sm">
@@ -144,12 +134,10 @@
           }
         </div>
 
-        <!-- Progress Bar -->
         <div class="relative w-full h-2 bg-blue-100 dark:bg-blue-900/40 rounded-full overflow-hidden mb-2">
           <div
             class="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-lg"
             [style.width.%]="progressInfo()?.percentage || 0">
-            <!-- Shimmer effect -->
             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer">
             </div>
           </div>
@@ -164,7 +152,6 @@
   </div>
   }
 
-  <!-- Tabs & Export -->
   <div
     class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-6 md:mb-8 relative z-10">
     <nav class="flex overflow-x-auto flex-1 min-w-0">
@@ -206,7 +193,6 @@
     </div>
   </div>
 
-  <!-- Tab content -->
   @if (activeTab() === 'releases') {
   <app-releases-tab [versions]="mappedVersions()" [packageId]="metadata()!.packageId" [registry]="registry()"
     [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [selectedVersion]="version()" />
@@ -245,7 +231,7 @@
   <app-trust-panel [trust]="trust()" [version]="metadata()!.latestVersion" [registry]="registry()" />
   }
 
-  <!-- Outside the layered header and tab bar, so the dialogs cover everything on the page -->
+  <!-- Outside the layered header and tab bar, so the dialogs cover the whole page -->
   @if (shareOpen()) {
   <app-share-modal [packageId]="metadata()!.packageId" [registry]="registry()" [version]="version()"
     (closed)="shareOpen.set(false)" />

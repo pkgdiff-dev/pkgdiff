@@ -84,7 +84,6 @@ public class PyPIService : IPyPIService
             var packageData = await GetPackageDataAsync(packageId);
             if (packageData?.Releases != null && packageData.Releases.TryGetValue(version, out var releaseFiles) && releaseFiles.Any())
             {
-                // Return the upload time of the first file for this version
                 return releaseFiles.First().UploadTime;
             }
             return null;
@@ -142,13 +141,12 @@ public class PyPIService : IPyPIService
     private static readonly string[] RepositoryKeys =
         { "Source", "Source Code", "Source code", "Code", "Repository", "GitHub", "Github", "Homepage", "Home" };
 
-    // Links that point at GitHub but not at the repository: sponsorship pages above all
+    // GitHub links that are not the repository, such as sponsorship pages
     private static readonly string[] NotRepositoryKeys = { "Funding", "Sponsor", "Sponsors", "Donate", "Donation" };
 
     private static readonly string[] NotRepositoryOwners = { "sponsors", "orgs", "users", "apps", "marketplace", "settings" };
 
-    // The repository among the links of a package: the ones labelled as the source first, then the home
-    // page, then any other GitHub link. "Funding" (github.com/sponsors/Kludex for uvicorn) never counts.
+    // Source-labelled links first, then the home page, then any other GitHub link; never funding
     private static string? ExtractGitHubUrl(PyPIPackageInfo? info)
     {
         if (info == null)
@@ -183,8 +181,7 @@ public class PyPIService : IPyPIService
     private static string NormalizeName(string name) =>
         System.Text.RegularExpressions.Regex.Replace(name, @"[-_.]+", "-").ToLowerInvariant();
 
-    // https://github.com/{owner}/{repo} of a GitHub link (issues, a changelog file, releases), keeping a
-    // /tree/{ref}/{folder} part that names the package folder of a monorepo; null for any other link
+    // The repository URL of a GitHub link, keeping a /tree/{ref}/{folder} part (monorepo folder)
     private static string? RepositoryRoot(string? url)
     {
         if (!IsGitHubUrl(url))
@@ -233,7 +230,6 @@ public class PyPIService : IPyPIService
         };
     }
 
-    // PyPI API response models
     private class PyPIPackageData
     {
         [JsonPropertyName("info")]

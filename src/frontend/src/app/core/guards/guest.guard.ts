@@ -7,10 +7,8 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.hasValidSession()) {
-    // Already logged in, redirect to dashboard
     return router.createUrlTree(['/admin/dashboard']);
   }
 
-  // Not logged in, allow access to login page
   return true;
 };

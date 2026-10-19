@@ -3,7 +3,6 @@ import { LucideAngularModule, ShieldCheck, ShieldAlert, Loader2 } from 'lucide-a
 import { PackageTrust } from '../../../../core/models/security.models';
 import { advisoriesOf, isChecked, severityClass, worstSeverity } from '../../../../core/utils/trust.utils';
 
-// Compact vulnerability status of one version, for the package header
 @Component({
   selector: 'app-trust-badge',
   standalone: true,

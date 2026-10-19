@@ -33,9 +33,7 @@ public class MetricsAccessMiddleware
         await _next(context);
     }
 
-    // ForwardedHeadersMiddleware records the original peer only when it applied X-Forwarded-For, so
-    // that header's presence means the request came through the proxy chain from a visitor. The bridge gateway is
-    // where host-originated traffic (docker-proxy) appears from, so it is not an internal container.
+    // X-Original-For means a proxied visitor; the bridge gateway carries host-originated traffic
     private bool IsInternalScrape(HttpContext context)
     {
         var peer = context.Connection.RemoteIpAddress;

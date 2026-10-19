@@ -18,7 +18,6 @@ using StackExchange.Redis;
 
 namespace PkgDiff.API.Extensions;
 
-// The registrations that make up the host: each method is one concern of Program.cs
 public static class HostingServiceCollectionExtensions
 {
     public const string DevelopmentCorsPolicy = "AllowAngularDev";
@@ -41,7 +40,6 @@ public static class HostingServiceCollectionExtensions
                 BearerFormat = "JWT"
             });
 
-            // Delegate-based API of Microsoft.OpenApi 2.x
             options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
             {
                 [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = []
@@ -73,8 +71,7 @@ public static class HostingServiceCollectionExtensions
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-        // Data Protection key ring in Postgres: dashboard tickets/cookies and progress tokens survive container recreation.
-        // Keys are encrypted with a key derived from SETTINGS_ENCRYPTION_KEY so a database dump alone cannot forge them.
+        // Kept in Postgres to survive recreation; encrypted so a database dump alone cannot forge tokens
         services.AddDataProtection()
             .SetApplicationName("pkgdiff")
             .PersistKeysToDbContext<ApplicationDbContext>()
@@ -99,7 +96,7 @@ public static class HostingServiceCollectionExtensions
             options.WorkerCount = 10;
         });
 
-        // Dependency audits get two workers of their own and nothing else runs them
+        // Dependency audits get two dedicated workers
         services.AddHangfireServer(options =>
         {
             options.ServerName = $"{Environment.MachineName}:audits";
@@ -112,14 +109,12 @@ public static class HostingServiceCollectionExtensions
         services.AddScoped<PackageRefreshJob>();
         services.AddScoped<DatabaseCleanupJob>();
 
-        // Hangfire dashboard access (ticket -> cookie, per-request Admin re-check)
         services.AddSingleton<HangfireDashboardAccess>();
         services.AddScoped<IAdminRoleChecker, IdentityAdminRoleChecker>();
 
         return services;
     }
 
-    // Cache backend: CacheSettings:Backend is "Redis" or "Memory"; Redis also holds the rate-limit counters
     public static IServiceCollection AddPkgDiffCaching(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMemoryCache();
@@ -145,7 +140,6 @@ public static class HostingServiceCollectionExtensions
             services.AddSingleton<IRateLimitCounterStore, MemoryRateLimitCounterStore>();
         }
 
-        // Inbound rate-limit tiers (RateLimiting section); the defaults apply when the section is absent
         services.AddOptions<InboundRateLimitOptions>()
             .Bind(configuration.GetSection(InboundRateLimitOptions.SectionName))
             .Validate(options => options.IsValid(), "RateLimiting: every PerMinute and PerFiveMinutes value must be greater than zero.")
@@ -156,16 +150,15 @@ public static class HostingServiceCollectionExtensions
 
     public static IServiceCollection AddPkgDiffDiagnostics(this IServiceCollection services)
     {
-        // Any exception no action caught becomes a ProblemDetails response; the detail goes to the log only
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
-        // /health is liveness (the process answers); /health/ready also needs the database and Redis
+        // /health is liveness; /health/ready also needs the database and Redis
         services.AddHealthChecks()
             .AddCheck<DatabaseHealthCheck>("database", tags: new[] { HealthResponses.ReadyTag })
             .AddCheck<RedisHealthCheck>("redis", tags: new[] { HealthResponses.ReadyTag });
 
-        // Bounded: when the database cannot keep up, the oldest pending log entries are dropped instead of memory growing
+        // Bounded: drops the oldest pending entries instead of growing memory when the DB lags
         services.AddSingleton(Channel.CreateBounded<RequestLog>(new BoundedChannelOptions(10_000)
         {
             FullMode = BoundedChannelFullMode.DropOldest,

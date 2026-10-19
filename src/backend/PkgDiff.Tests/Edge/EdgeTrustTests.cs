@@ -42,7 +42,7 @@ public class EdgeTrustTests
         {
             ctx.Request.Path = path;
             configure(ctx);
-            // TestServer treats a null peer as a trusted proxy, so a missing peer would let spoofing tests pass for the wrong reason.
+            // TestServer trusts a null peer, so a missing peer would let spoofing tests pass wrongly
             Assert.NotNull(ctx.Connection.RemoteIpAddress);
         }, TestContext.Current.CancellationToken);
     }
@@ -257,7 +257,6 @@ public class EdgeTrustTests
     {
         await using var app = await StartRateLimitHostAsync();
 
-        // More than the general tier allows in a minute, as the admin panel and the Hangfire dashboard do
         for (var i = 0; i < 100; i++)
             Assert.Equal(200, await SendFromVisitorAsync(app, i % 2 == 0 ? "/api/admin/stats" : "/hangfire/stats", signedIn: true));
 
@@ -296,7 +295,6 @@ public class EdgeTrustTests
         Assert.Equal(429, await SendFromVisitorAsync(app, "/api/package/analyze"));
     }
 
-    // signedIn: the request carries a bearer token, which only gives an admin address the admin tier
     private static async Task<int> SendFromVisitorAsync(WebApplication app, string path, bool signedIn = false)
     {
         var context = await SendRequestAsync(app, path, ctx =>
@@ -356,8 +354,7 @@ public class EdgeTrustTests
         var app = builder.Build();
         app.UseForwardedHeaders();
         app.UseMiddleware<RequestLoggingMiddleware>();
-        // No body write: TestServer.SendAsync returns once the response starts, which would race the
-        // middleware's post-response log write. An unstarted response completes after the pipeline.
+        // No body write: SendAsync returns once the response starts, racing the post-response log
         app.Run(_ => Task.CompletedTask);
         await app.StartAsync(TestContext.Current.CancellationToken);
         return (app, channel);

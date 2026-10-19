@@ -16,13 +16,10 @@ public class PackageController : ControllerBase
 {
     private const int MaxConcurrentAnalyses = 10;
 
-    // One visitor must not take every analysis slot: a few at once per address
     private const int MaxConcurrentAnalysesPerAddress = 2;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> AnalysesPerAddress = new();
 
-    // Opening a package nobody looked at before queues a scrape of its notes. Asking for one new name after
-    // another must not fill the job queue or use up the GitHub budget: scrapes queued this way are capped
-    // per address and in total, per hour. A package over the cap is still shown, and scraped on a later visit.
+    // Caps first-visit scrapes so a stream of new names cannot fill the queue or the GitHub budget
     private const int MaxScrapesPerAddressPerHour = 30;
     private const int MaxScrapesPerHour = 600;
     private const int ClientClosedRequest = 499;
@@ -129,7 +126,7 @@ public class PackageController : ControllerBase
         {
             var ipAddress = HttpContext.GetClientIpAddress();
 
-            // When this request is aborted and nobody else waits for the same analysis, the work behind it stops
+            // Aborting the request stops the work unless another request waits on the same analysis
             using var work = WorkCancellation.Use(cancellationToken);
             var result = await _analysisService.AnalyzePackageAsync(request, ipAddress);
             await MarkViewedAsync(request.Registry, request.PackageId);
@@ -211,7 +208,6 @@ public class PackageController : ControllerBase
             var metadata = WithTrust(await _analysisService.GetPackageMetadataAsync(registry, packageId), await TrustOfAsync(registry, packageId));
             await MarkViewedAsync(registry, packageId);
 
-            // Trigger background scraping if we have unscraped versions and no job is already running
             var hasUnscrapedVersions = metadata.Versions.Any(v => string.IsNullOrEmpty(v.ReleaseNotesSource));
             var cacheKey = $"scrape-attempt-{registry}-{packageId}";
             
@@ -277,7 +273,6 @@ public class PackageController : ControllerBase
     {
         try
         {
-            // The same list for every visitor: built at most every few minutes
             var cachedPackages = await _memory.GetOrCreateAsync("cached-packages", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
@@ -306,7 +301,6 @@ public class PackageController : ControllerBase
         {
             var metadata = WithTrust(await _analysisService.GetPackageMetadataAsync(registry, packageId), await TrustOfAsync(registry, packageId));
 
-            // Generate PDF
             var fileContent = await _exportService.ExportToPdfAsync(metadata);
             var fileName = $"{packageId}-release-notes.pdf";
             
@@ -336,13 +330,11 @@ public class PackageController : ControllerBase
 
         try
         {
-            // Perform analysis
             var ipAddress = HttpContext.GetClientIpAddress();
             using var work = WorkCancellation.Use(cancellationToken);
             var diff = await _analysisService.AnalyzePackageAsync(request, ipAddress);
             diff.Trust = await TrustOfAsync(request.Registry, request.PackageId);
 
-            // Generate PDF
             var fileContent = await _exportService.ExportDiffToPdfAsync(diff);
             var fileName = $"{request.PackageId}-diff-{request.CurrentVersion}-to-{request.TargetVersion}.pdf";
             

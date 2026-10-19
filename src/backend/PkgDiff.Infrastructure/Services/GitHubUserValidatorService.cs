@@ -7,11 +7,6 @@ using PkgDiff.Shared.Validation;
 
 namespace PkgDiff.Infrastructure.Services;
 
-/// <summary>
-/// Validates GitHub usernames by calling the GitHub API users endpoint.
-/// Filters out Organizations (only real User accounts are valid contributors).
-/// Uses the same authenticated HTTP client as GitHubScraperService.
-/// </summary>
 public class GitHubUserValidatorService
 {
     private static readonly TimeSpan SharedLifetime = TimeSpan.FromHours(6);
@@ -22,7 +17,6 @@ public class GitHubUserValidatorService
     private readonly IGitHubRateLimitHandler? _rateLimitHandler;
     private readonly IMemoryCache? _sharedCache;
 
-    // In-process cache so repeated mentions of same username don't hit API twice
     private readonly Dictionary<string, bool> _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public GitHubUserValidatorService(
@@ -51,10 +45,6 @@ public class GitHubUserValidatorService
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
     }
 
-    /// <summary>
-    /// Returns true only if the username is a real GitHub <b>User</b> (not an Organization or Bot).
-    /// Results are cached in-memory for the lifetime of the scoped service.
-    /// </summary>
     public async Task<bool> IsValidGitHubUserAsync(string username)
     {
         if (_cache.TryGetValue(username, out var cached))
@@ -65,7 +55,7 @@ public class GitHubUserValidatorService
 
         try
         {
-            // Through the same budget as every other GitHub call: mentions are written by package authors
+            // Shares the GitHub budget: mentions are written by package authors
             var url = $"https://api.github.com/users/{PackageUrlEncoder.EscapeSegment(username)}";
             if (_rateLimitHandler != null)
                 await _rateLimitHandler.CanMakeRequestAsync();
@@ -83,12 +73,11 @@ public class GitHubUserValidatorService
 
             if (!response.IsSuccessStatusCode)
             {
-                // Rate limited or failing: not known yet, so not accepted now and asked again on a later scrape
+                // Rate limited or failing: not accepted now, asked again on a later scrape
                 _logger.LogDebug("[GitHubValidator] @{Username} could not be checked ({Status})", username, (int)response.StatusCode);
                 return false;
             }
 
-            // Parse the response body to check the account type
             var body = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(body);
 
@@ -96,7 +85,6 @@ public class GitHubUserValidatorService
                 ? typeProp.GetString()
                 : null;
 
-            // Only accept real User accounts — reject Organizations and Bots
             var isUser = string.Equals(accountType, "User", StringComparison.OrdinalIgnoreCase);
 
             Remember(username, sharedKey, isUser);
@@ -107,7 +95,7 @@ public class GitHubUserValidatorService
         }
         catch (Exception ex)
         {
-            // Not accepted: a name that cannot be checked is not shown as a contributor; a later scrape asks again
+            // A name that cannot be checked is not shown; a later scrape asks again
             _logger.LogWarning(ex, "[GitHubValidator] Could not validate @{Username}", username);
             return false;
         }

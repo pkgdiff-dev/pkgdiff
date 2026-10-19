@@ -9,8 +9,7 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// OSV.dev: which known vulnerabilities affect which version. One batch query names the advisories
-// per version; the details of each advisory are then read once. https://google.github.io/osv.dev/api/
+// OSV.dev: one batch query names the advisories per version, then each advisory is read once
 public class OsvClient : IOsvClient
 {
     private const int BatchSize = 1000;
@@ -191,8 +190,7 @@ public class OsvClient : IOsvClient
         return text.Length <= MaxSummaryLength ? text : text[..MaxSummaryLength] + "…";
     }
 
-    // GitHub advisories carry a word (CRITICAL, HIGH, MODERATE, LOW); other databases may give only a
-    // CVSS vector, whose score is not computed here, so they stay "unknown"
+    // Only GitHub advisories carry a severity word; a bare CVSS vector is not scored, so stays unknown
     private static string SeverityOf(Vulnerability vuln)
     {
         var word = vuln.DatabaseSpecific is { ValueKind: JsonValueKind.Object } specific

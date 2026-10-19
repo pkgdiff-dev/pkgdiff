@@ -104,7 +104,6 @@ describe('AuthService', () => {
     expect(auth.isAuthenticated()).toBe(false);
     expect(router.navigate).toHaveBeenCalledWith(['/admin/login']);
 
-    // The old expiry timer is gone with the session
     vi.advanceTimersByTime(120_000);
     expect(router.navigate).toHaveBeenCalledTimes(1);
   });

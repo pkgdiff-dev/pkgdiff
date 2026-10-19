@@ -6,24 +6,6 @@
 #   bash deploy/deploy.sh --status     show the configured tag and what is running
 #
 # <tag> is one the publish workflow pushed: sha-<7 hex> (never moves), develop, master or a version.
-#
-# A deploy pulls both images first and changes nothing when a pull fails. It then tags the images
-# that run now as ":rollback", writes the tag to .env, recreates the containers without building
-# and waits until the backend and the frontend answer on their loopback ports and, for an image
-# that renders on the server, until a page arrives rendered. When they do not, it switches back
-# to the ":rollback" images by itself and exits 1.
-#
-# The database and the volumes are never changed by this script. Before a deploy it takes a dump of
-# the database, because a rollback switches images only: it does not undo a migration that the new
-# backend applied on start, and that dump is the way back.
-#
-# Environment:
-#   PKGDIFF_GHCR_TOKEN_FILE   file with a read-only GHCR token (default ~/.pkgdiff-ghcr-token);
-#                             when it exists, the script logs in to ghcr.io before it pulls
-#   PKGDIFF_GHCR_USER         GitHub user the token belongs to (default fleizean)
-#   PKGDIFF_HEALTH_TIMEOUT    seconds to wait for a healthy stack (default 180)
-#   PKGDIFF_BACKUP_DIR        where the dumps go (default ~/pkgdiff-backups)
-#   PKGDIFF_BACKUP_KEEP       how many dumps to keep (default 10)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,7 +25,6 @@ LEGACY_BACKEND_URL="${PKGDIFF_LEGACY_BACKEND_URL:-http://127.0.0.1:8080/api/pack
 FRONTEND_URL="${PKGDIFF_FRONTEND_URL:-http://127.0.0.1:8090/}"
 HEALTH_TIMEOUT="${PKGDIFF_HEALTH_TIMEOUT:-180}"
 HEALTH_INTERVAL="${PKGDIFF_HEALTH_INTERVAL:-5}"
-# What Angular writes on the root element of a page it rendered on the server
 RENDERED_MARKER='ng-server-context="ssr"'
 
 BACKUP_DIR="${PKGDIFF_BACKUP_DIR:-$HOME/pkgdiff-backups}"
@@ -69,7 +50,6 @@ revision() {
   docker image inspect "$1" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || true
 }
 
-# Image ID that the container of a service runs; empty when there is no such container.
 running_image() { docker inspect "pkgdiff-$1" --format '{{.Image}}' 2>/dev/null || true; }
 
 # The shell value wins over the one in .env, so compose sees the tag before .env is written.
@@ -86,7 +66,6 @@ configured_tag() {
   sed -n 's/^PKGDIFF_IMAGE_TAG=//p' "$ENV_FILE" | tail -n 1 | tr -d '\r"'"'"
 }
 
-# Replaces (or appends) the one PKGDIFF_IMAGE_TAG line; every other line of .env stays as it is.
 write_tag() {
   local tag="$1" tmp
   tmp="$(mktemp "$ENV_FILE.XXXXXX")" || return 1
@@ -122,9 +101,7 @@ preflight() {
   fi
 }
 
-# The backend image runs as an unprivileged user and compose mounts the settings file into it.
-# A file only root can read would stop the new backend from starting, so this is settled before
-# anything changes: the file is given to the group of that user (it stays unreadable for others).
+# The non-root backend user must read the mounted settings file; settle that before any change.
 settings_readable() {
   local backend user
   backend="$(image backend "$1")"
@@ -147,9 +124,7 @@ login() {
     die "login to ghcr.io failed with the token in $TOKEN_FILE; nothing was changed"
 }
 
-# Dumps the database next to the earlier dumps and keeps the newest ones. A dump that cannot be
-# taken or is not complete stops the deploy before anything was changed. Without a running
-# database container (a first install) there is nothing to dump.
+# A rollback does not undo migrations, so this dump is the way back; a bad dump aborts the deploy.
 backup_database() {
   local tag="$1" file old
   if [ -z "$(running_image db)" ]; then
@@ -167,7 +142,6 @@ backup_database() {
     rm -f "$file.partial"
     die "the database backup failed; nothing was changed"
   fi
-  # The names start with the time of the dump, so their order is the order in time
   ls -1 "$BACKUP_DIR"/pkgdiffdb-*.sql.gz 2>/dev/null | sort -r | tail -n "+$((BACKUP_KEEP + 1))" | while IFS= read -r old; do
     rm -f "$old"
   done
@@ -175,8 +149,7 @@ backup_database() {
 
 http_ok() { curl -fsS -o /dev/null --max-time 10 "$1" 2>/dev/null; }
 
-# Ready means the database and Redis answer too. An image from before /health/ready existed answers
-# 404 there and is asked through its old health endpoint, so rolling back to it still works.
+# Older images answer 404 on /health/ready; fall back to their old endpoint so rollback works.
 backend_ok() {
   local code
   code="$(curl -s -o /dev/null --max-time 10 -w '%{http_code}' "$BACKEND_URL" 2>/dev/null || true)"
@@ -187,14 +160,11 @@ backend_ok() {
   esac
 }
 
-# An image that renders its pages on the server says so in a label; an older one serves the
-# client-side application only.
 renders_on_server() {
   [ "$(docker image inspect "$1" --format '{{index .Config.Labels "dev.pkgdiff.rendering"}}' 2>/dev/null || true)" = 'server' ]
 }
 
-# nginx answers with the client-side page while the render server is down, so a 200 alone says
-# nothing about it: the page itself has to say that it was rendered.
+# nginx serves the client-side page while the render server is down, so a 200 proves nothing.
 page_is_rendered() { curl -fsS --max-time 20 "$FRONTEND_URL" 2>/dev/null | grep -q "$RENDERED_MARKER"; }
 
 # Both ports must stay on the loopback interface: the host nginx is the only public entry.
@@ -203,7 +173,6 @@ ports_ok() {
     [ "$(docker port pkgdiff-frontend 80/tcp 2>/dev/null)" = '127.0.0.1:8090' ]
 }
 
-# Waits until the containers run the images of this tag and answer; prints the reason when they do not.
 wait_healthy() {
   local tag="$1" deadline=$((SECONDS + HEALTH_TIMEOUT)) s wanted problem
   while :; do
@@ -240,8 +209,7 @@ have_rollback_point() {
   done
 }
 
-# The tag to write when going back: the earlier tag name while it still names the rollback
-# images, otherwise the local ":rollback" tag (a moving tag such as develop has moved on).
+# A moving tag may no longer name the rollback images; then the local ":rollback" tag is used.
 rollback_tag_name() {
   local previous="$1" s
   if [ -n "$previous" ] && [ "$previous" != "$ROLLBACK_TAG" ] && valid_tag "$previous"; then
@@ -257,7 +225,6 @@ rollback_tag_name() {
   printf '%s' "$ROLLBACK_TAG"
 }
 
-# Remembers what runs now, image and tag name, unless this deploy is a repeat of the last one.
 mark_rollback_point() {
   local tag="$1" previous="$2" s running changed=0
   for s in $SERVICES; do

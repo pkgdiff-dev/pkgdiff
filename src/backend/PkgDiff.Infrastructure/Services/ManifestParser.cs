@@ -11,9 +11,8 @@ using YamlDotNet.RepresentationModel;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Reads the packages out of a dependency file a visitor pasted. The type is recognised from the
-// content, so the file name is only a hint. Every requirement is reduced to one version to check:
-// the exact one when the file pins it, otherwise the lowest version the requirement allows.
+// Reads packages from a pasted dependency file; the type is detected from the content.
+// Each requirement becomes one version: the pinned one, else the lowest it allows.
 public partial class ManifestParser : IManifestParser
 {
     private const string Dev = "dev";
@@ -38,7 +37,7 @@ public partial class ManifestParser : IManifestParser
         return Finish(result);
     }
 
-    // One entry per package (the first one wins), at most the audit limit
+    // One entry per package (the first one wins), capped at the audit limit
     private static ManifestParseResult Finish(ManifestParseResult result)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -63,8 +62,6 @@ public partial class ManifestParser : IManifestParser
         result.Dependencies = unique;
         return result;
     }
-
-    // ---------------------------------------------------------------- npm
 
     private static ManifestParseResult ParseNpm(string content)
     {
@@ -165,8 +162,6 @@ public partial class ManifestParser : IManifestParser
         };
     }
 
-    // ---------------------------------------------------------------- NuGet
-
     private static ManifestParseResult ParseNuGet(string content)
     {
         if (content.StartsWith('{'))
@@ -175,7 +170,7 @@ public partial class ManifestParser : IManifestParser
         XDocument document;
         try
         {
-            // No DTD at all: a dependency file needs none, and one could expand entities ("billion laughs")
+            // No DTD: a dependency file needs none, and one could expand entities (billion laughs)
             using var reader = XmlReader.Create(new StringReader(content), new XmlReaderSettings
             {
                 DtdProcessing = DtdProcessing.Prohibit,
@@ -296,8 +291,6 @@ public partial class ManifestParser : IManifestParser
         };
     }
 
-    // ---------------------------------------------------------------- PyPI
-
     private static ManifestParseResult ParsePyPI(string content, string? fileName)
     {
         if (content.StartsWith('{'))
@@ -413,7 +406,6 @@ public partial class ManifestParser : IManifestParser
         }
     }
 
-    // Poetry and Pipfile tables: name = "^1.2" | "*" | { version = "..." , ... }
     private static void ReadPoetryStyle(TomlTable parent, string key, string? scope, ManifestParseResult result)
     {
         if (!parent.TryGetValue(key, out var value) || value is not TomlTable dependencies)
@@ -456,7 +448,6 @@ public partial class ManifestParser : IManifestParser
         return result;
     }
 
-    // "requests[socks]>=2.31,<3 ; python_version >= '3.8'"
     private static AuditDependency? FromPep508(string line, string? scope)
     {
         var withoutMarker = line.Split(';')[0].Trim();
@@ -493,8 +484,6 @@ public partial class ManifestParser : IManifestParser
             Version = lower?.Groups["version"].Value
         };
     }
-
-    // ---------------------------------------------------------------- pub.dev
 
     private static ManifestParseResult ParsePub(string content)
     {
@@ -560,9 +549,7 @@ public partial class ManifestParser : IManifestParser
         return pubspec;
     }
 
-    // YamlStream builds its nodes recursively: a document nested a few thousand levels deep ("a: [[[[...")
-    // overflows the stack, and a stack overflow ends the whole process, where no catch can stop it. The
-    // event parser is not recursive, so the depth is measured with it first.
+    // YamlStream recurses and a stack overflow kills the process, so depth is measured first
     private const int MaxYamlDepth = 64;
 
     private static void RejectDeepYaml(string content)
@@ -599,8 +586,6 @@ public partial class ManifestParser : IManifestParser
             Version = match.Success ? Complete(match.Value) : null
         };
     }
-
-    // ---------------------------------------------------------------- helpers
 
     private static JsonElement ParseJson(string content, string expected)
     {

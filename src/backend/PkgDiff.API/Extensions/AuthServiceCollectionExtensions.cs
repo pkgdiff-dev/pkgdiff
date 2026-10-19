@@ -51,8 +51,7 @@ public static class AuthServiceCollectionExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.SecretKey))
                 };
 
-                // A signed token is not enough: its user must still exist, not be locked out and have the
-                // security stamp the token was issued with. The answer is cached for a minute per token stamp.
+                // A signed token is not enough: the user must exist, be unlocked and match the security stamp
                 options.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = async context =>

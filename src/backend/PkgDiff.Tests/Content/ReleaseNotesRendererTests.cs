@@ -21,8 +21,6 @@ public class ReleaseNotesRendererTests
 
     private readonly ReleaseNotesRenderer _renderer = new();
 
-    // The reviewer's corpora (208 payloads): parser-divergence, link-obfuscation, backtick-pairing,
-    // fence, table, list and autolink attacks against the previous markdown sanitizer
     public static TheoryData<string> Payloads()
     {
         var data = new TheoryData<string>();

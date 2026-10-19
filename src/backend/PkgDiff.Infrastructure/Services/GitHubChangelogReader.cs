@@ -7,8 +7,7 @@ using PkgDiff.Shared.Validation;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Finds the notes of a version in the changelog file of a repository, for releases whose own notes
-// are empty or only point to the changelog
+// Reads a version's notes from the repo changelog when its release notes are empty or a link
 public partial class GitHubChangelogReader
 {
     private static readonly string[] CandidateFiles =
@@ -56,15 +55,12 @@ public partial class GitHubChangelogReader
     {
         if (string.IsNullOrWhiteSpace(notes)) return false;
         
-        // If notes are very long, they probably contain actual notes alongside a link
         if (notes.Length > 250) return false;
         
         var lower = notes.ToLowerInvariant();
         
-        // Check if it contains changelog/history/changes reference
         if (lower.Contains("changelog") || lower.Contains("history") || lower.Contains("changes"))
         {
-            // Check for redirection indicators
             if (lower.Contains("see") || 
                 lower.Contains("refer") || 
                 lower.Contains("view") || 
@@ -79,8 +75,7 @@ public partial class GitHubChangelogReader
         return false;
     }
 
-    // Where a changelog can be: the folder of the package in a monorepo (from the repository URL,
-    // e.g. .../tree/main/packages/core), the repository root, and the repository wiki
+    // Looks in the package's monorepo folder, then the repository root, then the wiki
     public async Task<string?> FetchAsync(string githubRepoUrl, string version, string? packageId = null)
     {
         var (owner, repo) = GitHubUrls.Parse(githubRepoUrl, _logger);
@@ -104,25 +99,21 @@ public partial class GitHubChangelogReader
         var knowledge = _cache.Changelog(repoKey);
         IReadOnlyList<string> changelogFiles = CandidateFiles;
 
-        // Try API first to get exact list of existing changelog files
         await ResolveExistingFilesViaApiAsync(owner, repo, folder, repoKey, knowledge);
 
         var existingFiles = knowledge.ExistingFiles();
         if (knowledge.IsFullyResolved && existingFiles != null)
         {
-            // If the cache says there are no changelog files, we can skip immediately!
             if (existingFiles.Count == 0)
             {
                 _logger.LogDebug("[GitHubScraper] Skipping changelog search for {RepoKey} because cache indicates no changelog files exist.", repoKey);
                 return null;
             }
 
-            // Otherwise, only try files that are known to exist
             changelogFiles = existingFiles;
         }
         else if (existingFiles is { Count: > 0 })
         {
-            // Prioritize already discovered existing files even if repository is not fully resolved
             var prioritizedList = new List<string>(existingFiles);
             foreach (var file in CandidateFiles)
             {
@@ -135,7 +126,7 @@ public partial class GitHubChangelogReader
         }
 
         var cleanVersion = version.TrimStart('v', 'V');
-        // The version tag, then the default branch: HEAD is whichever branch the repository uses (master, main, develop)
+        // HEAD resolves to the repository's default branch, whatever it is named
         var refNames = new[] { $"v{cleanVersion}", cleanVersion, "HEAD" };
 
         var attemptedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -143,7 +134,6 @@ public partial class GitHubChangelogReader
 
         foreach (var fileName in changelogFiles)
         {
-            // Skip if we already know this file does not exist in this repo
             if (knowledge.IsMissing(fileName))
             {
                 continue;
@@ -164,7 +154,6 @@ public partial class GitHubChangelogReader
                     {
                         succeededFiles.Add(fileName);
 
-                        // Since it succeeded, we know this file exists
                         knowledge.AddExisting(fileName);
 
                         var content = await response.Content.ReadAsStringAsync();
@@ -180,7 +169,7 @@ public partial class GitHubChangelogReader
                     }
                     else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
-                        // Missing on the default branch: the file is not in the repository
+                        // Only a miss on the default branch means the file is not in the repository
                         if (refName == "HEAD")
                         {
                             knowledge.MarkMissing(fileName);
@@ -191,7 +180,6 @@ public partial class GitHubChangelogReader
                 }
                 catch (OperationCanceledException) when (WorkCancellation.Token.IsCancellationRequested)
                 {
-                    // The work this lookup belongs to was cancelled: no point in trying the other files
                     throw;
                 }
                 catch (Exception ex)
@@ -205,7 +193,7 @@ public partial class GitHubChangelogReader
         return null;
     }
 
-    // GitHub wiki pages are plain Markdown files of a separate repository (lodash keeps its changelog there)
+    // Wiki pages are plain Markdown files served from a separate repository
     private static readonly string[] WikiPages = { "Changelog", "CHANGELOG", "Change-Log", "Release-Notes", "Release-notes", "Changes", "History" };
 
     private async Task<string?> FetchFromWikiAsync(string owner, string repo, string version, string? packageId)
@@ -304,7 +292,7 @@ public partial class GitHubChangelogReader
         }
         catch (GitHubRateLimitedException)
         {
-            // The candidate files are tried directly instead; raw file downloads do not count against the API limit
+            // Raw downloads do not count against the API limit, so candidates are tried directly
             _logger.LogDebug("[GitHubScraper] Rate limited, not listing repo contents of {RepoKey}", repoKey);
         }
         catch (Exception ex)
@@ -340,14 +328,10 @@ public partial class GitHubChangelogReader
         var lines = changelogText.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
         var cleanVer = version.TrimStart('v', 'V');
         
-        // A heading names the version, optionally after a word ("Version", "Release", the package name),
-        // and ends the version with a space, a bracket, a link or the end of the line:
-        //   ## v2.34.1      ## [2.34.1] - 2026-05-13      ## [10.0.0](https://...compare/v9.0.0...v10.0.0) (2024-06-07)
-        //   ## Version 1.1.4      ## socket.io@4.8.3      ## react-dom 18.3.1      1.1.4 (2021-05-13) + underline
+        // Version heading, optionally after a word or package name, ending at a space, bracket or EOL
         var title = $@"(?:(?:version|release|v)\s*|[\w@/.-]+(?:\s+v?|@v?))?\[?[vV]?{Regex.Escape(cleanVer)}\]?(?=$|[\s(\[\]:,;])(?:.*)$";
         var atxRegex = new Regex($@"^(?<hashes>#+)\s+{title}", RegexOptions.IgnoreCase);
 
-        // A line that could be a Setext heading, e.g. "2.34.1 (2026-05-13)" or "Version 1.1.4"
         var setextTitleRegex = new Regex("^" + title, RegexOptions.IgnoreCase);
         var setextUnderlineRegex = new Regex(@"^[-=]{3,}$");
 
@@ -359,7 +343,6 @@ public partial class GitHubChangelogReader
         {
             var line = HtmlTag().Replace(lines[i], string.Empty).Trim();
 
-            // Check ATX first
             var match = atxRegex.Match(line);
             if (match.Success)
             {
@@ -369,7 +352,6 @@ public partial class GitHubChangelogReader
                 break;
             }
             
-            // Check Setext
             if (setextTitleRegex.IsMatch(line) && i + 1 < lines.Length && setextUnderlineRegex.IsMatch(lines[i + 1].Trim()))
             {
                 startIndex = i;
@@ -382,8 +364,6 @@ public partial class GitHubChangelogReader
 
         var sectionLines = new List<string>();
         
-        // If ATX heading of level N: terminate on any heading of level <= N (e.g. # or ##)
-        // If Setext heading: terminate on any ATX heading of level 1 or 2, or another Setext heading
         Regex terminatorRegex;
         if (isAtx)
         {
@@ -391,18 +371,16 @@ public partial class GitHubChangelogReader
         }
         else
         {
-            // Setext heading is equivalent to h1 or h2. Terminate on any h1 or h2 (e.g. # or ##)
             terminatorRegex = new Regex(@"^#{1,2}\s+\S+");
         }
 
-        int startReadingFrom = isAtx ? startIndex + 1 : startIndex + 2; // Skip the underline for Setext
+        int startReadingFrom = isAtx ? startIndex + 1 : startIndex + 2;
 
         for (int i = startReadingFrom; i < lines.Length; i++)
         {
             var rawLine = lines[i];
             var trimmedLine = rawLine.Trim();
 
-            // Check if we hit another header
             if (isAtx)
             {
                 if (terminatorRegex.IsMatch(trimmedLine))
@@ -410,13 +388,11 @@ public partial class GitHubChangelogReader
             }
             else
             {
-                // For Setext, we also terminate if we find another Setext header
                 if (terminatorRegex.IsMatch(trimmedLine))
                     break;
                 
                 if (i + 1 < lines.Length && setextUnderlineRegex.IsMatch(lines[i + 1].Trim()))
                 {
-                    // This line and next line form a Setext header, which terminates our section
                     break;
                 }
             }

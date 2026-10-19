@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* The wordmark font. The files hold the letters of "pkgdiff" only: it is used for nothing else. */
+/* Subset font: holds only the letters of "pkgdiff". */
 @font-face {
   font-family: 'Thicker';
   src: url('/fonts/thicker/thicker-400.woff2') format('woff2');
@@ -41,7 +41,6 @@ body {
   font-family: "JetBrains Mono", monospace;
 }
 
-/* Sticky search backdrop */
 .sticky-search {
   position: sticky;
   top: 0;
@@ -54,12 +53,10 @@ body {
   background-color: rgba(10, 10, 10, 0.8);
 }
 
-/* Release item hover */
 .release-item:hover .release-version {
   color: #137fec;
 }
 
-/* Live updates ticker */
 @keyframes scroll {
   0% {
     transform: translateX(0);
@@ -80,7 +77,6 @@ body {
   animation-play-state: paused;
 }
 
-/* Pulse dot */
 @keyframes pulse-green {
 
   0%,
@@ -99,13 +95,11 @@ body {
   animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Fade edges mask */
 .mask-fade-edges {
   mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
 }
 
-/* Dot grid background */
 .dot-grid-bg {
   background: radial-gradient(#e5e7eb 1px, transparent 1px);
   background-size: 32px 32px;
@@ -116,7 +110,6 @@ body {
   background-size: 32px 32px;
 }
 
-/* Rendered release-note HTML (sanitized server-side) */
 .markdown-content h1, .markdown-content h2, .markdown-content h3,
 .markdown-content h4, .markdown-content h5, .markdown-content h6 {
   font-weight: 600;
@@ -178,7 +171,6 @@ body {
   border-color: rgba(99, 102, 241, 0.2);
 }
 
-/* Select arrow styling */
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -188,7 +180,6 @@ select {
   padding-right: 2.5rem;
 }
 
-/* Drag and Drop styles */
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 8px;
@@ -217,8 +208,6 @@ select {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* Custom Scrollbars */
-/* Webkit Browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -253,7 +242,6 @@ select {
   background-clip: padding-box;
 }
 
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.25) transparent;
