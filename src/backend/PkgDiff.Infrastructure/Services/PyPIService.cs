@@ -167,8 +167,6 @@ public class PyPIService : IPyPIService
             ?? RepositoryFromDescription(info);
     }
 
-    // Some packages link only their website (selenium: www.selenium.dev) and name the repository in the
-    // README alone. Only a repository named after the package counts there: READMEs link other projects too.
     private static string? RepositoryFromDescription(PyPIPackageInfo info)
     {
         if (string.IsNullOrEmpty(info.Description) || string.IsNullOrEmpty(info.Name))
@@ -182,7 +180,6 @@ public class PyPIService : IPyPIService
             .FirstOrDefault(url => url != null && NormalizeName(url[(url.LastIndexOf('/') + 1)..]) == name);
     }
 
-    // PEP 503: names compare case-insensitively with runs of "-", "_" and "." as one "-"
     private static string NormalizeName(string name) =>
         System.Text.RegularExpressions.Regex.Replace(name, @"[-_.]+", "-").ToLowerInvariant();
 
