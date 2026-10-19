@@ -64,8 +64,9 @@
           <thead>
             <tr class="border-b border-blue-50 dark:border-blue-900/20">
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Job ID</th>
-              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Package
-              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Type</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Target</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Triggered by</th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">State</th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Time</th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Server</th>
@@ -78,14 +79,13 @@
               <td class="px-5 py-3 text-sm font-mono font-medium text-[#111418] dark:text-gray-200">#{{ job.jobId }}
               </td>
               <td class="px-5 py-3">
-                @if (job.packageId) {
-                <div class="flex items-center gap-1.5">
-                  <lucide-icon [img]="PackageIcon" [size]="12" class="text-gray-400"></lucide-icon>
-                  <span class="text-xs font-medium text-[#111418] dark:text-gray-200">{{ job.packageId }}</span>
-                </div>
-                } @else {
-                <span class="text-xs font-mono text-gray-500">{{ job.jobName }}</span>
-                }
+                <ng-container *ngTemplateOutlet="typeCell; context: { $implicit: job }"></ng-container>
+              </td>
+              <td class="px-5 py-3">
+                <ng-container *ngTemplateOutlet="targetCell; context: { $implicit: job }"></ng-container>
+              </td>
+              <td class="px-5 py-3">
+                <ng-container *ngTemplateOutlet="triggerCell; context: { $implicit: job }"></ng-container>
               </td>
               <td class="px-5 py-3">
                 <span
@@ -98,7 +98,7 @@
               </td>
               <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.state === 'Processing' ? job.startedAt :
                 job.enqueuedAt) }}</td>
-              <td class="px-5 py-3 text-xs text-gray-500 font-mono">{{ job.serverId || '-' }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500 font-mono" [title]="job.serverId || ''">{{ shortServer(job.serverId) }}</td>
               <td class="px-5 py-3 text-right">
                 <button type="button" *appHasPermission="'Permissions.Jobs.Manage'" (click)="cancelJob(job.jobId)"
                   [disabled]="canceling() === job.jobId"
@@ -190,6 +190,9 @@
             <tr class="border-b border-gray-100 dark:border-gray-800">
               <th class="w-10"></th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Job</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Type</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Target</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Triggered by</th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">State</th>
               <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Created
               </th>
@@ -218,14 +221,20 @@
                   <lucide-icon [img]="XIcon" [size]="14" class="text-red-500"></lucide-icon>
                   }
                   <span class="text-sm font-mono font-medium text-[#111418] dark:text-gray-200">#{{ job.jobId }}</span>
-                  @if (job.childJobs.length) {
-                  <span class="text-xs text-gray-400 dark:text-gray-500">{{ childSummary(job) }}</span>
-                  } @else if (job.packageId) {
-                  <span class="text-xs font-medium text-[#111418] dark:text-gray-300">{{ job.packageId }}</span>
-                  } @else {
-                  <span class="text-xs font-mono text-gray-500">{{ job.jobName }}</span>
-                  }
                 </div>
+              </td>
+              <td class="px-5 py-3">
+                <ng-container *ngTemplateOutlet="typeCell; context: { $implicit: job }"></ng-container>
+              </td>
+              <td class="px-5 py-3">
+                @if (job.childJobs.length) {
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ childSummary(job) }}</span>
+                } @else {
+                <ng-container *ngTemplateOutlet="targetCell; context: { $implicit: job }"></ng-container>
+                }
+              </td>
+              <td class="px-5 py-3">
+                <ng-container *ngTemplateOutlet="triggerCell; context: { $implicit: job }"></ng-container>
               </td>
               <td class="px-5 py-3">
                 <span class="text-xs px-2 py-0.5 rounded-full {{ stateBg(job.state) }} {{ stateColor(job.state) }}">
@@ -248,11 +257,17 @@
                   } @else {
                   <lucide-icon [img]="XIcon" [size]="12" class="text-red-500"></lucide-icon>
                   }
-                  <lucide-icon [img]="PackageIcon" [size]="12" class="text-gray-400"></lucide-icon>
-                  <span class="text-xs font-medium text-[#111418] dark:text-gray-300">{{ child.packageId ||
-                    child.jobName }}</span>
-                  <span class="text-[10px] font-mono text-gray-400">#{{ child.jobId }}</span>
+                  <span class="text-xs font-mono text-gray-500">#{{ child.jobId }}</span>
                 </div>
+              </td>
+              <td class="px-5 py-2.5">
+                <ng-container *ngTemplateOutlet="typeCell; context: { $implicit: child }"></ng-container>
+              </td>
+              <td class="px-5 py-2.5">
+                <ng-container *ngTemplateOutlet="targetCell; context: { $implicit: child }"></ng-container>
+              </td>
+              <td class="px-5 py-2.5">
+                <ng-container *ngTemplateOutlet="triggerCell; context: { $implicit: child }"></ng-container>
               </td>
               <td class="px-5 py-2.5">
                 <span
@@ -268,7 +283,7 @@
             @if (child.state === 'Failed' && child.exceptionMessage) {
             <tr>
               <td></td>
-              <td colspan="5" class="px-5 py-1.5 bg-red-50/50 dark:bg-red-900/10">
+              <td colspan="8" class="px-5 py-1.5 bg-red-50/50 dark:bg-red-900/10">
                 <p class="text-[10px] text-red-600 dark:text-red-400 font-mono truncate pl-4">{{ child.exceptionMessage
                   }}</p>
               </td>
@@ -278,7 +293,7 @@
             }
             } @empty {
             <tr>
-              <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400">No job history yet</td>
+              <td colspan="9" class="px-5 py-12 text-center text-sm text-gray-400">No job history yet</td>
             </tr>
             }
           </tbody>
@@ -288,3 +303,31 @@
     }
   </div>
 </div>
+
+<ng-template #typeCell let-job>
+  <div class="text-xs font-medium text-[#111418] dark:text-gray-200 whitespace-nowrap">{{ job.jobType }}</div>
+  <div class="text-[10px] font-mono text-gray-400 whitespace-nowrap">{{ job.jobName }}</div>
+</ng-template>
+
+<ng-template #targetCell let-job>
+  @if (job.packageId) {
+  <div class="flex items-center gap-1.5">
+    <lucide-icon [img]="PackageIcon" [size]="12" class="text-gray-400"></lucide-icon>
+    <span class="text-xs font-medium text-[#111418] dark:text-gray-200">{{ job.packageId }}</span>
+    @if (job.registry) {
+    <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 uppercase">{{ job.registry }}</span>
+    }
+  </div>
+  }
+  @if (job.detail) {
+  <div class="text-[10px] font-mono text-gray-400">{{ job.detail }}</div>
+  }
+  @if (!job.packageId && !job.detail) {
+  <span class="text-xs text-gray-400">-</span>
+  }
+</ng-template>
+
+<ng-template #triggerCell let-job>
+  <span class="inline-block max-w-[18rem] truncate align-middle text-[10px] px-2 py-0.5 rounded-full {{ triggerClass(job.triggeredBy) }}"
+    [title]="job.triggeredBy || 'Not recorded'">{{ job.triggeredBy || 'Not recorded' }}</span>
+</ng-template>

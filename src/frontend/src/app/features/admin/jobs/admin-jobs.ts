@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { LucideAngularModule, Activity, Play, CheckCircle, XCircle, Clock, Loader2, RefreshCw, Zap, ChevronRight, Package, Trash2, ExternalLink } from 'lucide-angular';
 import { environment } from '../../../../environments/environment';
@@ -18,23 +19,31 @@ interface RecurringJobInfo {
 interface RecentJobInfo {
   jobId: string;
   jobName: string;
+  jobType: string;
   state: string;
   createdAt: string | null;
   completedAt: string | null;
   duration: number | null;
   exceptionMessage: string | null;
   packageId: string | null;
+  registry: string | null;
+  detail: string | null;
+  triggeredBy: string | null;
   childJobs: RecentJobInfo[];
 }
 
 interface QueuedJobInfo {
   jobId: string;
   jobName: string;
+  jobType: string;
   state: string;
   enqueuedAt: string | null;
   startedAt: string | null;
   serverId: string | null;
   packageId: string | null;
+  registry: string | null;
+  detail: string | null;
+  triggeredBy: string | null;
 }
 
 interface JobsOverview {
@@ -53,7 +62,7 @@ const REFRESH_INTERVAL_MS = 10000;
 @Component({
   selector: 'app-admin-jobs',
   standalone: true,
-  imports: [LucideAngularModule, GridPatternComponent, HasPermissionDirective],
+  imports: [NgTemplateOutlet, LucideAngularModule, GridPatternComponent, HasPermissionDirective],
   templateUrl: './admin-jobs.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -224,6 +233,19 @@ export class AdminJobsComponent {
     if (succeeded) parts.push(`${succeeded} succeeded`);
     if (failed) parts.push(`${failed} failed`);
     return `${job.childJobs.length} packages (${parts.join(', ')})`;
+  }
+
+  shortServer(serverId: string | null): string {
+    if (!serverId) return '-';
+    const parts = serverId.split(':');
+    return parts.length > 2 ? parts.slice(0, 2).join(':') : serverId;
+  }
+
+  triggerClass(trigger: string | null): string {
+    if (!trigger) return 'bg-gray-50 dark:bg-gray-800 text-gray-500';
+    if (trigger.startsWith('Schedule')) return 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400';
+    if (trigger.startsWith('Request')) return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400';
+    return 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400';
   }
 
   stateColor(state: string): string {
