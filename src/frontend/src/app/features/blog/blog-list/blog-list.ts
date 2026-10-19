@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, catchError, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
-import { LucideAngularModule, BookOpen, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, BookOpen, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { ApiService } from '../../../core/services/api';
 import { SeoService } from '../../../core/services/seo.service';
 import { BlogPostSnippet } from '../../../core/models/blog.models';
@@ -13,7 +13,24 @@ import { stripMarkdown } from '../../../core/utils/markdown.utils';
 type PageState = 'loading' | 'loaded' | 'error';
 type Loaded = { page: PaginatedResult<BlogPostSnippet> } | { failure: unknown };
 
+type PageLink = { kind: 'page'; page: number } | { kind: 'gap'; key: string };
+
 const PAGE_SIZE = 10;
+const SIBLINGS = 1;
+
+function pageWindow(current: number, total: number): PageLink[] {
+  let start = Math.max(2, current - SIBLINGS);
+  let end = Math.min(total - 1, current + SIBLINGS);
+  if (start === 3) start = 2;
+  if (end === total - 2) end = total - 1;
+
+  const links: PageLink[] = [{ kind: 'page', page: 1 }];
+  if (start > 2) links.push({ kind: 'gap', key: 'gap-start' });
+  for (let page = start; page <= end; page++) links.push({ kind: 'page', page });
+  if (end < total - 1) links.push({ kind: 'gap', key: 'gap-end' });
+  if (total > 1) links.push({ kind: 'page', page: total });
+  return links;
+}
 
 @Component({
   selector: 'app-blog-list',
@@ -29,6 +46,8 @@ export class BlogListComponent {
 
   readonly BookOpenIcon = BookOpen;
   readonly AlertIcon = AlertCircle;
+  readonly PrevIcon = ChevronLeft;
+  readonly NextIcon = ChevronRight;
   readonly skeletonRows = [1, 2, 3];
   readonly stripMarkdown = stripMarkdown;
 
@@ -36,7 +55,7 @@ export class BlogListComponent {
   state = signal<PageState>('loading');
   currentPage = signal(1);
   totalPages = signal(0);
-  pages = computed(() => Array.from({ length: this.totalPages() }, (_, index) => index + 1));
+  pages = computed(() => pageWindow(this.currentPage(), this.totalPages()));
 
   private reload$ = new Subject<void>();
 
