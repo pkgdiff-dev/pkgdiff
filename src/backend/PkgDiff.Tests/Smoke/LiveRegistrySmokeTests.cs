@@ -80,7 +80,8 @@ public class LiveRegistrySmokeTests
     {
         SkipUnlessOptedIn();
         var filter = await RegistrySmokeTests.CreateSeededVersionFilterAsync();
-        var service = new NugetService(filter, NullLogger<NugetService>.Instance);
+        await using var provider = CreateProvider();
+        var service = new NugetService(filter, provider.GetRequiredService<IHttpClientFactory>(), NullLogger<NugetService>.Instance);
 
         var versions = await service.GetVersionsInRangeAsync(
             "Newtonsoft.Json",

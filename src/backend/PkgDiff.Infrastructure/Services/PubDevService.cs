@@ -166,6 +166,8 @@ public class PubDevService : IPubDevService
                     }
                 }
             }
+
+            repositoryUrl ??= await GetPubspecGitHubUrlAsync(packageId);
         }
         catch (Exception ex)
         {
@@ -173,6 +175,31 @@ public class PubDevService : IPubDevService
         }
 
         return (publisher, description, repositoryUrl);
+    }
+
+    // The page links no repository when the pubspec names its GitHub repository only as the homepage
+    private async Task<string?> GetPubspecGitHubUrlAsync(string packageId)
+    {
+        try
+        {
+            var json = await _httpClient.GetStringAsync($"https://pub.dev/api/packages/{PackageUrlEncoder.EscapeSegment(packageId)}");
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("latest", out var latest) || !latest.TryGetProperty("pubspec", out var pubspec))
+                return null;
+
+            foreach (var field in new[] { "repository", "homepage" })
+            {
+                if (pubspec.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String
+                    && GitHubUrls.IsGitHub(value.GetString()))
+                    return value.GetString();
+            }
+            return null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException)
+        {
+            _logger.LogWarning(ex, "Could not read the pubspec of {PackageId} from the pub.dev API", packageId);
+            return null;
+        }
     }
 
     public async Task<List<(string Version, DateTime? PublishDate)>> GetAllVersionsAsync(string packageId)
