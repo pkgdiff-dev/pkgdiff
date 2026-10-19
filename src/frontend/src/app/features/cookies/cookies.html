@@ -14,9 +14,9 @@
       <section>
         <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">1. Overview</h2>
         <p>
-          {{ appName }} uses browser local storage to enhance your user experience. We do not use
-          third-party cookies or tracking technologies. This policy explains what we store locally
-          in your browser and why.
+          {{ appName }} sets no cookies and uses no tracking technologies. It keeps a few preferences in
+          your browser's local storage so the site remembers them. This policy lists exactly what is
+          stored and why.
         </p>
       </section>
 
@@ -24,8 +24,8 @@
       <section>
         <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">2. What We Store</h2>
         <p class="mb-4">
-          All data is stored locally in your browser using localStorage. Nothing is sent to
-          external servers except when explicitly requested by your actions (e.g., package searches).
+          These entries live only in your browser (localStorage, or sessionStorage where noted). They are
+          never sent to our servers or to anyone else.
         </p>
 
         <!-- Table -->
@@ -53,6 +53,12 @@
                 <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Token lifetime</td>
               </tr>
               <tr>
+                <td class="py-3 px-4 font-mono text-xs">lastSelectedRegistry</td>
+                <td class="py-3 px-4">The registry you last selected on the home page</td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Functional</td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Persistent</td>
+              </tr>
+              <tr>
                 <td class="py-3 px-4 font-mono text-xs">recentRegistries</td>
                 <td class="py-3 px-4">Recent registry selections for quick access</td>
                 <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Functional</td>
@@ -60,26 +66,38 @@
               </tr>
               <tr>
                 <td class="py-3 px-4 font-mono text-xs">pkgdiff-cookie-consent</td>
-                <td class="py-3 px-4">Your cookie consent choice</td>
+                <td class="py-3 px-4">Remembers that you dismissed the privacy notice</td>
                 <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Essential</td>
                 <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Persistent</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-mono text-xs">pkgdiff-linkedin-oauth-state</td>
+                <td class="py-3 px-4">Protects the LinkedIn sign-in flow (admin only, sessionStorage)</td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Essential</td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">Until the flow completes</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <p class="mt-4 text-xs text-gray-500 dark:text-gray-500">
-          All items marked as "Functional" or "Essential" are necessary for the Service to operate
-          correctly. We do not use analytics, advertising, or tracking cookies.
+          "Essential" entries are needed for the Service to work; "Functional" entries only remember your
+          choices. None of them identify or track you, so they need no consent.
         </p>
       </section>
 
       <!-- 3. Third-Party Cookies -->
       <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. Third-Party Cookies</h2>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. Analytics and Third Parties</h2>
+        <p class="mb-3">
+          We count visits with Cloudflare Web Analytics, which sets no cookies, stores nothing in your
+          browser and does not track you across sites or visits.
+        </p>
         <p>
-          {{ appName }} does not integrate with any third-party services that set cookies or track
-          users. All functionality is self-contained within our application.
+          No third-party service sets cookies on {{ appName }}. Your browser does contact Google Fonts and
+          GitHub to load fonts and images; see the
+          <a href="/privacy" title="Privacy Policy" class="text-primary hover:underline">Privacy Policy</a>
+          for what they receive.
         </p>
       </section>
 
@@ -95,8 +113,8 @@
           <li><strong>Safari:</strong> Preferences → Privacy → Manage Website Data → pkgdiff.dev → Remove</li>
         </ul>
         <p class="mt-3">
-          Clearing local storage will reset your theme preference and consent choice. Essential
-          functional data (like auth tokens) will also be removed, logging you out if applicable.
+          Clearing it resets your theme and registry choices and shows the privacy notice again.
+          Administrators are also signed out.
         </p>
       </section>
 
@@ -105,8 +123,7 @@
         <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">5. Changes to This Policy</h2>
         <p>
           We may update this Cookie Policy from time to time. Changes will be posted on this page
-          with an updated "Last updated" date. Continued use of {{ appName }} after changes
-          constitutes acceptance of the updated policy.
+          with an updated "Last updated" date.
         </p>
       </section>
 

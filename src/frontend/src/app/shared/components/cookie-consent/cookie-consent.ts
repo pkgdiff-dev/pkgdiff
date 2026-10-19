@@ -19,23 +19,17 @@ export class CookieConsentComponent {
   constructor() {
     const destroyRef = inject(DestroyRef);
 
-    // Only a browser knows whether the visitor has already chosen
+    // Only a browser knows whether the visitor has already dismissed the notice
     afterNextRender(() => {
       if (this.storage.get(CONSENT_KEY)) return;
 
-      // Show banner after a short delay for better UX
       const timer = setTimeout(() => this.visible.set(true), 1000);
       destroyRef.onDestroy(() => clearTimeout(timer));
     });
   }
 
-  accept() {
-    this.storage.set(CONSENT_KEY, 'accepted');
-    this.visible.set(false);
-  }
-
-  decline() {
-    this.storage.set(CONSENT_KEY, 'declined');
+  dismiss() {
+    this.storage.set(CONSENT_KEY, 'seen');
     this.visible.set(false);
   }
 }
