@@ -17,8 +17,8 @@ a PostgreSQL and Redis you can reach on `localhost`.
 ## Branches and pull requests
 
 - Branch from `develop` and open the pull request into `develop`. `master` only receives releases.
-- Keep a pull request about one thing. CI (backend tests, frontend build and tests, dependency gate)
-  must be green.
+- Keep a pull request about one thing and fill in the pull request template, in English. CI
+  (backend tests, frontend build and tests, dependency gate) must be green.
 - Commit messages follow Conventional Commits: `feat(scope): ...`, `fix(scope): ...`, `docs: ...`.
 
 ## Code conventions
@@ -36,8 +36,10 @@ with the tool, never edited by hand.
 flow (`@if`, `@for` with a stable `track`). All HTTP goes through `ApiService`; a component never
 injects `HttpClient`. No `any`. Every HTTP subscription handles its error and resets its loading flag.
 
-**Both:** comments in English, explaining why rather than what. When a backend DTO changes, its
-TypeScript twin in `src/frontend/src/app/core/models` changes in the same pull request.
+**Both:** few comments, in English. Name things so the code explains itself; comment only a *why* the
+code cannot show, never the task or the package that prompted the change (that belongs in the pull
+request description). When a backend DTO changes, its TypeScript twin in
+`src/frontend/src/app/core/models` changes in the same pull request.
 
 ## Dependencies
 
