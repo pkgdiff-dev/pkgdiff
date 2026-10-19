@@ -1,0 +1,107 @@
+# pkgdiff
+
+> Compare and analyze package versions across NuGet, npm, PyPI and Pub registries. Track breaking changes, view detailed release notes, and understand version differences with our free online diff tool.
+
+## Overview
+
+pkgdiff is a web-based tool that helps developers compare package versions across different registries (NuGet, npm, PyPI and Pub). It aggregates release notes from multiple sources including registry pages and GitHub Releases, providing a consolidated view of changes between any two versions. Perfect for developers upgrading dependencies and managing package updates.
+
+## Core Features
+
+- **Multi-Registry Support**: Search packages across NuGet, npm, and other registries
+- **Release Notes Aggregation**: Combines release notes from registry pages and GitHub Releases
+- **Version Diff**: Compare any two versions to see consolidated changelogs
+- **Real-Time Updates**: Background jobs continuously fetch and update package data
+- **Categorized Changes**: Release notes are automatically categorized by type (features, fixes, breaking changes, etc.)
+- **Export Functionality**: Export release notes in multiple formats (Markdown, JSON, Text)
+
+## Main Pages
+
+### Home (/)
+The landing page features a search interface where users can:
+- Select a package registry from the dropdown (NuGet, npm, etc.)
+- Search for any package by name
+- View live updates of recently analyzed packages
+- Access example searches with popular packages
+
+### Package Page (/package/:registry/:packageId)
+Displays detailed information about a specific package:
+- Package metadata (description, authors, license, repository)
+- Complete version history with release dates
+- Tabbed interface for viewing releases and comparing versions
+- Direct links to package registry and source repository
+- Categorized release notes for each version
+
+### Browse Packages (/packages)
+List view of all packages in the system with:
+- Filtering by registry
+- Search functionality
+- Sorting options
+- Pagination
+
+## API Endpoints
+
+The service exposes a REST API:
+
+- `GET /api/package/{registry}/{packageId}` - Get package metadata and versions
+- `POST /api/package/analyze` - Trigger package analysis
+- `GET /api/package/registries` - List supported registries
+- `GET /api/package/recent` - Get recent package searches
+- `GET /health` - Service health check
+
+## Data Sources
+
+pkgdiff retrieves data from:
+1. **NuGet.org**: For .NET packages
+2. **npmjs.com**: For Node.js packages  
+3. **GitHub Releases**: Fallback for release notes when registry data is incomplete
+4. **Package repositories**: Direct links to source code and issue trackers
+
+## Technical Stack
+
+- **Frontend**: Angular with TypeScript, Tailwind CSS
+- **Backend**: ASP.NET Core Web API
+- **Database**: PostgreSQL with Entity Framework Core
+- **Real-time Communication**: SignalR for live analysis updates
+- **Background Jobs**: Hangfire for scheduled scraping tasks
+- **Caching**: 30-day cache for package data
+
+## Search Capabilities
+
+Users can search for:
+- Package names (e.g., "Newtonsoft.Json", "react")
+- View all versions with release dates
+- Compare any two versions
+- Filter by registry type
+- Access recent and popular searches
+
+## Content Organization
+
+- Release notes are scraped from registry pages and GitHub
+- Changes are categorized automatically (New Features, Bug Fixes, Breaking Changes, etc.)
+- Version comparisons show consolidated changelogs
+- All changes are timestamped and linked to sources
+
+## Privacy & Terms
+
+- Minimal data collection (search history, IP for rate limiting)
+- No third-party tracking or advertising
+- Open-source project
+- Free to use
+- See /privacy and /terms for detailed policies
+
+## Use Cases
+
+pkgdiff is designed for developers who need to:
+- Understand what changed between package versions
+- Review breaking changes before upgrading dependencies
+- Analyze release notes from multiple sources in one place
+- Export changelogs for documentation
+- Track package evolution over time
+
+## Links
+
+- Home: https://pkgdiff.com
+- GitHub: https://github.com/pkgdiff-dev
+- Privacy Policy: https://pkgdiff.com/privacy
+- Terms of Service: https://pkgdiff.com/terms

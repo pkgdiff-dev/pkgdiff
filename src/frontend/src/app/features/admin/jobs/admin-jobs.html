@@ -1,0 +1,298 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-[#111418] dark:text-white">Jobs</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Monitor Hangfire background jobs and their status.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" *appHasPermission="'Permissions.Jobs.Manage'" (click)="openDashboard()" [disabled]="openingDashboard()"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <lucide-icon [img]="ExternalLinkIcon" [size]="14"></lucide-icon>
+          <span>Open Hangfire dashboard</span>
+        </button>
+        <button type="button" (click)="load()"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors">
+          <lucide-icon [img]="RefreshIcon" [size]="14"></lucide-icon>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+    <div class="flex items-center justify-center py-24">
+      <div class="text-sm text-gray-500 dark:text-gray-500">Loading jobs...</div>
+    </div>
+    } @else if (data(); as jobs) {
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Enqueued</div>
+        <div class="text-2xl font-bold text-yellow-500">{{ jobs.enqueued }}</div>
+      </div>
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Processing</div>
+        <div class="text-2xl font-bold text-blue-500">{{ jobs.processing }}</div>
+      </div>
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Scheduled</div>
+        <div class="text-2xl font-bold text-purple-500">{{ jobs.scheduled }}</div>
+      </div>
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Succeeded</div>
+        <div class="text-2xl font-bold text-green-500">{{ jobs.succeeded }}</div>
+      </div>
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Failed</div>
+        <div class="text-2xl font-bold text-red-500">{{ jobs.failed }}</div>
+      </div>
+    </div>
+
+    <!-- Active Queue -->
+    @if (jobs.queuedJobs.length > 0) {
+    <div class="bg-white dark:bg-[#1a1a1a] border border-blue-200 dark:border-blue-900/50 rounded-xl">
+      <div class="px-5 py-4 border-b border-blue-100 dark:border-blue-900/30 flex items-center gap-2">
+        <lucide-icon [img]="ZapIcon" [size]="16" class="text-blue-500"></lucide-icon>
+        <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Active Queue</h2>
+        <span
+          class="ml-auto text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium">
+          {{ jobs.queuedJobs.length }} active
+        </span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-blue-50 dark:border-blue-900/20">
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Job ID</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Package
+              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">State</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Time</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Server</th>
+              <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-blue-50 dark:divide-blue-900/20">
+            @for (job of jobs.queuedJobs; track job.jobId) {
+            <tr class="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+              <td class="px-5 py-3 text-sm font-mono font-medium text-[#111418] dark:text-gray-200">#{{ job.jobId }}
+              </td>
+              <td class="px-5 py-3">
+                @if (job.packageId) {
+                <div class="flex items-center gap-1.5">
+                  <lucide-icon [img]="PackageIcon" [size]="12" class="text-gray-400"></lucide-icon>
+                  <span class="text-xs font-medium text-[#111418] dark:text-gray-200">{{ job.packageId }}</span>
+                </div>
+                } @else {
+                <span class="text-xs font-mono text-gray-500">{{ job.jobName }}</span>
+                }
+              </td>
+              <td class="px-5 py-3">
+                <span
+                  class="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full {{ stateBg(job.state) }} {{ stateColor(job.state) }}">
+                  @if (job.state === 'Processing') {
+                  <lucide-icon [img]="LoaderIcon" [size]="10" class="animate-spin"></lucide-icon>
+                  }
+                  {{ job.state }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.state === 'Processing' ? job.startedAt :
+                job.enqueuedAt) }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500 font-mono">{{ job.serverId || '-' }}</td>
+              <td class="px-5 py-3 text-right">
+                <button type="button" *appHasPermission="'Permissions.Jobs.Manage'" (click)="cancelJob(job.jobId)"
+                  [disabled]="canceling() === job.jobId"
+                  title="Cancel Job"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 disabled:opacity-50 transition-colors">
+                  @if (canceling() === job.jobId) {
+                  <lucide-icon [img]="LoaderIcon" [size]="12" class="animate-spin"></lucide-icon>
+                  <span>Canceling...</span>
+                  } @else {
+                  <lucide-icon [img]="TrashIcon" [size]="12"></lucide-icon>
+                  <span>Cancel</span>
+                  }
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+
+    <!-- Recurring Jobs -->
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+        <lucide-icon [img]="ClockIcon" [size]="16" class="text-primary"></lucide-icon>
+        <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Recurring Jobs</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Job ID</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Cron</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Last Run
+              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Next Run
+              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">State</th>
+              <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            @for (job of jobs.recurringJobs; track job.id) {
+            <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+              <td class="px-5 py-3 text-sm font-mono font-medium text-[#111418] dark:text-gray-200">{{ job.id }}</td>
+              <td class="px-5 py-3 text-xs font-mono text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded">{{ job.cron
+                }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.lastExecution) }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.nextExecution) }}</td>
+              <td class="px-5 py-3">
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full {{ stateBg(job.lastJobState) }} {{ stateColor(job.lastJobState) }}">
+                  {{ job.lastJobState }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <button type="button" *appHasPermission="'Permissions.Jobs.Manage'" (click)="triggerJob(job.id)"
+                  [disabled]="triggering() === job.id"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50 transition-colors">
+                  @if (triggering() === job.id) {
+                  <lucide-icon [img]="LoaderIcon" [size]="12" class="animate-spin"></lucide-icon>
+                  <span>Triggering...</span>
+                  } @else {
+                  <lucide-icon [img]="PlayIcon" [size]="12"></lucide-icon>
+                  <span>Trigger</span>
+                  }
+                </button>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400">No recurring jobs configured</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Job History -->
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+        <lucide-icon [img]="ActivityIcon" [size]="16" class="text-primary"></lucide-icon>
+        <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Recent Job History</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="w-10"></th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Job</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">State</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Created
+              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Completed
+              </th>
+              <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Duration
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            @for (job of jobs.recentJobs; track job.jobId) {
+            <!-- Parent / Standalone Row -->
+            <tr class="transition-colors" [class.hover:bg-gray-50/50]="true" [class.dark:hover:bg-gray-800/30]="true"
+              [class.cursor-pointer]="job.childJobs.length"
+              (click)="job.childJobs.length ? toggleExpand(job.jobId) : null">
+              <!-- Expand Toggle -->
+              <td class="pl-4 pr-0 py-3 w-10">
+                @if (job.childJobs.length) {
+                <lucide-icon [img]="ChevronIcon" [size]="14" class="text-gray-400 transition-transform duration-200"
+                  [class.rotate-90]="isExpanded(job.jobId)"></lucide-icon>
+                }
+              </td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-2">
+                  @if (job.state === 'Succeeded') {
+                  <lucide-icon [img]="CheckIcon" [size]="14" class="text-green-500"></lucide-icon>
+                  } @else {
+                  <lucide-icon [img]="XIcon" [size]="14" class="text-red-500"></lucide-icon>
+                  }
+                  <span class="text-sm font-mono font-medium text-[#111418] dark:text-gray-200">#{{ job.jobId }}</span>
+                  @if (job.childJobs.length) {
+                  <span class="text-xs text-gray-400 dark:text-gray-500">{{ childSummary(job) }}</span>
+                  } @else if (job.packageId) {
+                  <span class="text-xs font-medium text-[#111418] dark:text-gray-300">{{ job.packageId }}</span>
+                  } @else {
+                  <span class="text-xs font-mono text-gray-500">{{ job.jobName }}</span>
+                  }
+                </div>
+              </td>
+              <td class="px-5 py-3">
+                <span class="text-xs px-2 py-0.5 rounded-full {{ stateBg(job.state) }} {{ stateColor(job.state) }}">
+                  {{ job.state }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.createdAt) }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(job.completedAt) }}</td>
+              <td class="px-5 py-3 text-xs text-gray-500 text-right font-mono">{{ formatDuration(job.duration) }}</td>
+            </tr>
+
+            <!-- Expanded Child Rows -->
+            @if (job.childJobs.length && isExpanded(job.jobId)) {
+            @for (child of job.childJobs; track child.jobId) {
+            <tr class="bg-gray-50/50 dark:bg-gray-800/20">
+              <td class="pl-4 pr-0 py-2.5 w-10"></td>
+              <td class="px-5 py-2.5">
+                <div class="flex items-center gap-2 pl-4">
+                  @if (child.state === 'Succeeded') {
+                  <lucide-icon [img]="CheckIcon" [size]="12" class="text-green-500"></lucide-icon>
+                  } @else {
+                  <lucide-icon [img]="XIcon" [size]="12" class="text-red-500"></lucide-icon>
+                  }
+                  <lucide-icon [img]="PackageIcon" [size]="12" class="text-gray-400"></lucide-icon>
+                  <span class="text-xs font-medium text-[#111418] dark:text-gray-300">{{ child.packageId ||
+                    child.jobName }}</span>
+                  <span class="text-[10px] font-mono text-gray-400">#{{ child.jobId }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-2.5">
+                <span
+                  class="text-[10px] px-1.5 py-0.5 rounded-full {{ stateBg(child.state) }} {{ stateColor(child.state) }}">
+                  {{ child.state }}
+                </span>
+              </td>
+              <td class="px-5 py-2.5 text-[10px] text-gray-500">{{ formatDate(child.createdAt) }}</td>
+              <td class="px-5 py-2.5 text-[10px] text-gray-500">{{ formatDate(child.completedAt) }}</td>
+              <td class="px-5 py-2.5 text-[10px] text-gray-500 text-right font-mono">{{ formatDuration(child.duration)
+                }}</td>
+            </tr>
+            @if (child.state === 'Failed' && child.exceptionMessage) {
+            <tr>
+              <td></td>
+              <td colspan="5" class="px-5 py-1.5 bg-red-50/50 dark:bg-red-900/10">
+                <p class="text-[10px] text-red-600 dark:text-red-400 font-mono truncate pl-4">{{ child.exceptionMessage
+                  }}</p>
+              </td>
+            </tr>
+            }
+            }
+            }
+            } @empty {
+            <tr>
+              <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-400">No job history yet</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+  </div>
+</div>

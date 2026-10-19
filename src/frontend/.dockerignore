@@ -1,0 +1,14 @@
+node_modules
+dist
+.angular
+coverage
+# Secrets, in any directory: the build reads none of them
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.pfx
+*.log
+.vscode
+.idea
+.git

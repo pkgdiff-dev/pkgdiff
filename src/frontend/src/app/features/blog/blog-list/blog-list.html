@@ -1,0 +1,101 @@
+<div class="flex-1 w-full max-w-5xl mx-auto px-6 py-12">
+  <header class="mb-12">
+    <h1 class="text-3xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">Engineering Blog</h1>
+    <p class="text-slate-500 dark:text-slate-400 text-sm">Deep dives into package analysis, security research, and
+      infrastructure.</p>
+  </header>
+
+  @switch (state()) {
+    @case ('loading') {
+    <div class="space-y-6" aria-busy="true" aria-label="Loading articles">
+      @for (row of skeletonRows; track row) {
+      <div class="py-8 border-b border-border-light dark:border-border-dark -mx-6 px-6 animate-pulse">
+        <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/4 mb-4"></div>
+        <div class="h-6 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-6"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full mb-2"></div>
+        <div class="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6 mb-6"></div>
+        <div class="h-8 bg-gray-200 dark:bg-gray-800 rounded w-32"></div>
+      </div>
+      }
+    </div>
+    }
+
+    @case ('error') {
+    <div class="py-24 text-center" role="alert">
+      <div
+        class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 mb-4">
+        <lucide-icon [img]="AlertIcon" class="w-8 h-8" aria-hidden="true"></lucide-icon>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">The articles could not be loaded</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto mb-6">
+        Something went wrong on our side. Please try again in a moment.
+      </p>
+      <button type="button" (click)="retry()"
+        class="font-mono text-xs font-bold border border-gray-200 dark:border-[#1f1f1f] px-4 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors uppercase tracking-widest text-slate-700 dark:text-slate-300">
+        Try Again
+      </button>
+    </div>
+    }
+
+    @case ('loaded') {
+    @if (posts().length > 0) {
+    <div class="flex flex-col">
+      @for (post of posts(); track post.id) {
+      <article
+        class="group relative py-8 border-b border-gray-200/50 dark:border-[#1f1f1f] hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors -mx-6 px-6">
+        <div class="flex flex-col md:flex-row md:items-baseline gap-4 md:gap-8">
+          <div class="w-32 flex-shrink-0 font-mono">
+            <time class="text-[11px] uppercase tracking-widest text-slate-400" [attr.datetime]="post.publishedAt">{{
+              post.publishedAt | date:'mediumDate' }}</time>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <span
+                class="font-mono text-[10px] font-bold px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 uppercase tracking-wider rounded">
+                {{ post.packageId }} v{{ post.version }}
+              </span>
+            </div>
+            <h2
+              class="text-xl font-semibold mb-2 group-hover:text-primary transition-colors text-slate-900 dark:text-white">
+              <!-- The link covers the whole card, so the card is one target for mouse, keyboard and crawler -->
+              <a [routerLink]="['/blog', post.slug]" class="after:absolute after:inset-0 focus:outline-none focus-visible:underline">{{
+                post.title }}</a>
+            </h2>
+            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-2xl">
+              {{ stripMarkdown(post.excerpt) }}
+            </p>
+          </div>
+        </div>
+      </article>
+      }
+    </div>
+    } @else {
+    <div class="py-24 text-center">
+      <div
+        class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-4">
+        <lucide-icon [img]="BookOpenIcon" class="w-8 h-8" aria-hidden="true"></lucide-icon>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No articles yet</h2>
+      <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
+        The AutoPilot hasn't generated any blog posts yet. Check back soon for AI-generated insights!
+      </p>
+    </div>
+    }
+
+    @if (totalPages() > 1) {
+    <nav class="mt-16 flex flex-wrap justify-center gap-2" aria-label="Blog pages">
+      @for (page of pages(); track page) {
+      <a [routerLink]="['/blog']" [queryParams]="page > 1 ? { page: page } : {}"
+        [attr.aria-current]="currentPage() === page ? 'page' : null"
+        [class]="currentPage() === page
+          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white'
+          : 'bg-white dark:bg-transparent text-slate-700 dark:text-slate-300 border-gray-200 dark:border-[#1f1f1f] hover:bg-slate-50 dark:hover:bg-slate-900'"
+        class="font-mono text-xs font-bold border px-3 md:px-4 py-2 rounded transition-colors uppercase tracking-widest">
+        {{ page }}
+      </a>
+      }
+    </nav>
+    }
+    }
+  }
+</div>

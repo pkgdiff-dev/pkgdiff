@@ -1,0 +1,101 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+  <div class="max-w-3xl mx-auto">
+
+    <!-- Terminal window -->
+    <div class="bg-[#0f1115] rounded-xl overflow-hidden border border-gray-800 mb-8 md:mb-12 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+      <div class="flex items-center gap-1.5 px-3 md:px-4 py-2.5 md:py-3 bg-[#1a1d23] border-b border-gray-800">
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff5f56]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ffbd2e]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#27c93f]"></div>
+        <div class="ml-3 md:ml-4 text-[10px] md:text-[11px] text-gray-500 mono-text tracking-wide">pkgdiff — find — 80x24</div>
+      </div>
+      <div class="p-4 md:p-6 mono-text text-xs md:text-sm leading-relaxed">
+        <div class="flex gap-2 mb-2">
+          <span class="text-emerald-500">$</span>
+          <span class="text-gray-300">pkgdiff find {{ packageName() }}</span>
+        </div>
+        <div class="text-[#ff6b6b] flex items-start gap-2">
+          <lucide-icon [img]="AlertIcon" [size]="14" class="mt-1 flex-shrink-0"></lucide-icon>
+          <div>
+            <p class="font-bold">Error: 404 - Package Not Found</p>
+            <p class="text-xs opacity-80 mt-1">The requested package does not exist on the {{ registry() }} registry.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions bar -->
+    <div class="flex items-center justify-between mb-6 md:mb-10 pb-4 md:pb-6 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-4">
+        <button (click)="goHome()"
+          class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <lucide-icon [img]="ArrowLeftIcon" [size]="14"></lucide-icon>
+          Search again
+        </button>
+      </div>
+      <div class="text-[10px] text-gray-400 mono-text uppercase tracking-widest">
+        Registry: {{ registry() }}
+      </div>
+    </div>
+
+    <!-- Suggested matches -->
+    @if (loadingSuggestions()) {
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Suggested matches</h2>
+      </div>
+      <div class="flex justify-center py-8">
+        <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    </div>
+    }
+
+    @if (!loadingSuggestions() && suggestions().length > 0) {
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Suggested matches</h2>
+        <span
+          class="text-[10px] text-gray-400 mono-text bg-gray-50 dark:bg-gray-900 px-2 py-0.5 border border-gray-100 dark:border-gray-800 rounded">
+          Fuzzy search active
+        </span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        @for (pkg of suggestions(); track pkg.packageId; let i = $index) {
+        <div (click)="goToPackage(pkg.packageId)"
+          class="p-3 md:p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm transition-all cursor-pointer bg-white dark:bg-[#0a0a0a] group">
+          <div class="flex items-center justify-between mb-3">
+            @if (i === 0) {
+            <div class="text-[10px] mono-text font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">
+              BEST MATCH
+            </div>
+            } @else {
+            <div class="text-[10px] mono-text font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">
+              MATCH
+            </div>
+            }
+            <lucide-icon [img]="ArrowRightIcon" [size]="14"
+              class="text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors">
+            </lucide-icon>
+          </div>
+          <p class="text-sm font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-primary transition-colors">
+            {{ pkg.packageId }}
+          </p>
+          @if (pkg.description) {
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2">{{ pkg.description }}</p>
+          }
+          @if (pkg.latestVersion) {
+          <p class="text-[10px] mono-text text-gray-400 mt-2">v{{ pkg.latestVersion }}</p>
+          }
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    @if (!loadingSuggestions() && suggestions().length === 0) {
+    <div class="text-center py-8">
+      <p class="text-sm text-gray-400 dark:text-gray-500">No similar packages found in cache. Try searching from the home page.</p>
+    </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="relative">
+    <app-grid-pattern />
+
+    <div class="relative z-10 space-y-6">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-[#111418] dark:text-white">Contributors</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                    GitHub @mentions from release notes. Use backfill to populate from existing data.
+                </p>
+            </div>
+
+            <!-- Backfill Button -->
+            <button type="button" (click)="triggerBackfill()" [disabled]="backfillStatus() === 'running'" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+               bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (backfillStatus() === 'running') {
+                <lucide-icon [img]="LoaderIcon" [size]="14" class="animate-spin"></lucide-icon>
+                Running...
+                } @else if (backfillStatus() === 'done') {
+                <lucide-icon [img]="CheckIcon" [size]="14"></lucide-icon>
+                Done — Reloading
+                } @else if (backfillStatus() === 'error') {
+                <lucide-icon [img]="AlertIcon" [size]="14"></lucide-icon>
+                Retry Backfill
+                } @else {
+                <lucide-icon [img]="RefreshIcon" [size]="14"></lucide-icon>
+                Run Backfill
+                }
+            </button>
+        </div>
+
+        <!-- Status Banner -->
+        @if (backfillStatus() === 'running') {
+        <div
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 text-sm">
+            <lucide-icon [img]="LoaderIcon" [size]="14" class="animate-spin shrink-0"></lucide-icon>
+            Scanning all GitHub release notes for @mentions. This may take a minute...
+        </div>
+        }
+
+        <!-- Leaderboard -->
+        <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <lucide-icon [img]="TrophyIcon" [size]="16" class="text-primary"></lucide-icon>
+                    <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Contributor Leaderboard</h2>
+                </div>
+                <span class="text-xs text-gray-400 font-mono">{{ result()?.total ?? 0 }} total</span>
+            </div>
+
+            <!-- Loading -->
+            @if (loadingLeaderboard()) {
+            <div class="p-6 space-y-3">
+                @for (i of skeletonRows; track i) {
+                <div class="flex items-center gap-4 animate-pulse">
+                    <div class="w-8 h-4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div class="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                    <div class="flex-1 h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+                    <div class="w-16 h-5 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                </div>
+                }
+            </div>
+            } @else {
+            @let data = result();
+            @if (!data || data.data.length === 0) {
+            <div class="py-16 text-center">
+                <div class="text-3xl mb-3">🏆</div>
+                <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">No contributors yet</p>
+                <p class="text-xs text-gray-400 max-w-xs mx-auto">
+                    Click <strong>Run Backfill</strong> to scan all existing GitHub release notes.
+                </p>
+            </div>
+            } @else {
+            <!-- Rows -->
+            <div class="divide-y divide-gray-50 dark:divide-gray-800">
+                @for (c of data.data; track c.gitHubUsername) {
+                <a [href]="c.gitHubUrl" target="_blank" rel="noopener noreferrer"
+                    class="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors group">
+
+                    <div class="w-8 text-center font-mono text-sm font-bold shrink-0"
+                        [class.text-yellow-400]="c.rank === 1" [class.text-slate-400]="c.rank === 2"
+                        [class.text-amber-600]="c.rank === 3" [class.text-gray-400]="c.rank > 3">
+                        {{ getRankEmoji(c.rank) }}
+                    </div>
+
+                    <img [src]="'https://avatars.githubusercontent.com/' + c.gitHubUsername + '?s=32'"
+                        [alt]="c.gitHubUsername"
+                        class="w-8 h-8 rounded-full ring-1 ring-gray-200 dark:ring-gray-700 object-cover shrink-0"
+                        loading="lazy" />
+
+                    <div class="flex-1 min-w-0">
+                        <span
+                            class="text-sm font-mono font-semibold text-[#111418] dark:text-gray-200 group-hover:text-primary transition-colors">
+                            @{{ c.gitHubUsername }}
+                        </span>
+                    </div>
+
+                    <div
+                        class="shrink-0 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 rounded-full">
+                        <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400">{{ c.mentionCount }}
+                            mentions</span>
+                    </div>
+                </a>
+                }
+            </div>
+
+            <app-pagination [page]="data.page" [totalPages]="data.totalPages" [total]="data.total"
+                (pageChange)="goToPage($event)" />
+            }
+            }
+        </div>
+
+    </div>
+</div>

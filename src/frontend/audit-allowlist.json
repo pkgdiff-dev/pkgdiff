@@ -1,0 +1,15 @@
+{
+  "reviewBy": "2026-11-03",
+  "exceptions": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "scope": "dev",
+      "via": "tailwindcss@3.4.19 > chokidar@3.6.0 > braces@3.0.3; tailwindcss@3.4.19 > micromatch@4.0.8 > braces@3.0.3 (fast-glob inherits it through micromatch)",
+      "reason": "No patched braces release exists (advisory range <=3.0.3, latest is 3.0.3). It is reachable only through the tailwindcss 3.4 devDependency, runs at build time on glob patterns from this repository, and is not part of the nginx runtime image. The only fix npm offers is tailwindcss 4, a held major.",
+      "exitCondition": "Remove when braces ships a patched release that tailwindcss 3.4 accepts, or when the Tailwind 4 migration is done.",
+      "added": "2026-10-03"
+    }
+  ]
+}

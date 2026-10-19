@@ -1,0 +1,119 @@
+<div class="flex flex-col items-center min-h-full min-h-[calc(100vh-64px)]">
+  <div class="w-full max-w-[720px] px-6 py-12">
+    <!-- Header -->
+    <div class="mb-10">
+      <a href="/" class="text-sm text-primary hover:underline mb-4 inline-block">&larr; Back to Home</a>
+      <h1 class="text-3xl font-bold tracking-tight text-[#111418] dark:text-white mb-2">Terms of Service</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-500">Last updated: {{ lastUpdated }}</p>
+    </div>
+
+    <!-- Content -->
+    <div class="space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+
+      <!-- 1. Acceptance -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">1. Acceptance of Terms</h2>
+        <p>
+          By accessing or using {{ appName }} ("the Service"), you agree to be bound by these Terms of Service.
+          If you do not agree to these terms, please do not use the Service. We reserve the right to update
+          these terms at any time, and continued use of the Service constitutes acceptance of any changes.
+        </p>
+      </section>
+
+      <!-- 2. Description -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">2. Description of Service</h2>
+        <p>
+          {{ appName }} is a free, open-source tool that allows users to compare package versions across
+          registries (such as NuGet and npm), view release notes, and analyze differences between versions.
+          The Service retrieves publicly available data from package registries and GitHub repositories.
+        </p>
+      </section>
+
+      <!-- 3. Use -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. Acceptable Use</h2>
+        <p class="mb-3">You agree to use the Service only for lawful purposes. You may not:</p>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>Attempt to overload, disrupt, or interfere with the Service's infrastructure</li>
+          <li>Use automated tools to scrape or harvest data from the Service at excessive rates</li>
+          <li>Circumvent any access controls, rate limits, or security measures</li>
+          <li>Use the Service to engage in any activity that violates applicable laws or regulations</li>
+          <li>Misrepresent your identity or affiliation when using the Service</li>
+        </ul>
+      </section>
+
+      <!-- 4. Data & Content -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">4. Data &amp; Content</h2>
+        <p>
+          The release notes, version information, and package metadata displayed on {{ appName }} are sourced
+          from third-party registries (NuGet.org, npmjs.com) and GitHub. We do not claim ownership of this
+          content. The accuracy, completeness, and timeliness of this data depend on the upstream sources.
+          {{ appName }} is not responsible for errors or omissions in third-party data.
+        </p>
+      </section>
+
+      <!-- 5. Intellectual Property -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">5. Intellectual Property</h2>
+        <p>
+          The {{ appName }} source code is available under its respective open-source license. The Service's
+          branding, design, and original content are the property of the {{ appName }} project. Third-party
+          package names, logos, and trademarks belong to their respective owners.
+        </p>
+      </section>
+
+      <!-- 6. Disclaimers -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">6. Disclaimer of Warranties</h2>
+        <p>
+          The Service is provided "as is" and "as available" without warranties of any kind, either express
+          or implied. We do not guarantee that the Service will be uninterrupted, error-free, or free of
+          harmful components. Use of the Service is at your own risk.
+        </p>
+      </section>
+
+      <!-- 7. Limitation of Liability -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">7. Limitation of Liability</h2>
+        <p>
+          To the fullest extent permitted by law, {{ appName }} and its contributors shall not be liable for
+          any indirect, incidental, special, consequential, or punitive damages arising from your use of
+          the Service, including but not limited to loss of data, revenue, or profits.
+        </p>
+      </section>
+
+      <!-- 8. Termination -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">8. Termination</h2>
+        <p>
+          We reserve the right to suspend or terminate access to the Service at any time, with or without
+          cause and without prior notice. Upon termination, your right to use the Service ceases immediately.
+        </p>
+      </section>
+
+      <!-- 9. Related Policies -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">9. Related Policies</h2>
+        <p class="mb-3">
+          For more information about how we handle your data and privacy, please review:
+        </p>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li><a href="/privacy" title="Privacy Policy" class="text-primary hover:underline">Privacy Policy</a> — How we collect and use your data</li>
+          <li><a href="/cookies" title="Cookie Policy" class="text-primary hover:underline">Cookie Policy</a> — What we store in your browser</li>
+        </ul>
+      </section>
+
+      <!-- 10. Contact -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">10. Contact</h2>
+        <p>
+          If you have questions about these Terms, please contact us at
+          <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

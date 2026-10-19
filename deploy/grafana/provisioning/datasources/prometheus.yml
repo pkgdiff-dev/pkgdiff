@@ -1,0 +1,14 @@
+# The Prometheus of this compose stack. Its own name and uid, so it never collides with a data
+# source that was created by hand before.
+apiVersion: 1
+
+datasources:
+  - name: pkgdiff Prometheus
+    uid: pkgdiff-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
+    editable: false
+    jsonData:
+      timeInterval: 15s

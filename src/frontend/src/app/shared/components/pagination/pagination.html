@@ -1,0 +1,19 @@
+@if (totalPages() > 1) {
+<nav aria-label="Pagination"
+  class="flex items-center justify-between gap-4 px-5 py-3 border-t border-gray-200 dark:border-gray-800">
+  <p class="text-xs text-gray-500 dark:text-gray-400">
+    Page {{ page() }} of {{ totalPages() }}@if (total() !== null) { ({{ total() }} total) }
+  </p>
+  <div class="flex items-center gap-2">
+    <button type="button" (click)="go(page() - 1)" [disabled]="disabled() || page() <= 1" aria-label="Previous page"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+      <lucide-icon [img]="ChevronLeftIcon" [size]="16" aria-hidden="true"></lucide-icon>
+    </button>
+    <button type="button" (click)="go(page() + 1)" [disabled]="disabled() || page() >= totalPages()"
+      aria-label="Next page"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+      <lucide-icon [img]="ChevronRightIcon" [size]="16" aria-hidden="true"></lucide-icon>
+    </button>
+  </div>
+</nav>
+}

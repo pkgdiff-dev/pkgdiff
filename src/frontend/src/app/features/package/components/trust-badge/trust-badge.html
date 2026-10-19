@@ -1,0 +1,23 @@
+@switch (state()) {
+@case ('clean') {
+<span class="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-xs font-medium mb-1.5 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
+  title="OSV.dev knows no vulnerability in this version">
+  <lucide-icon [img]="ShieldCheckIcon" [size]="13" aria-hidden="true"></lucide-icon>
+  No known vulnerabilities
+</span>
+}
+@case ('vulnerable') {
+<span class="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-xs font-medium mb-1.5" [class]="badgeClass()"
+  title="Known vulnerabilities in this version, from OSV.dev">
+  <lucide-icon [img]="ShieldAlertIcon" [size]="13" aria-hidden="true"></lucide-icon>
+  {{ advisories().length }} known {{ advisories().length === 1 ? 'vulnerability' : 'vulnerabilities' }}
+</span>
+}
+@case ('pending') {
+<span class="inline-flex items-center gap-1 px-2 py-0.5 border rounded text-xs font-medium mb-1.5 text-gray-500 border-gray-200 dark:border-gray-700"
+  title="Security data is being collected">
+  <lucide-icon [img]="LoaderIcon" [size]="13" class="animate-spin" aria-hidden="true"></lucide-icon>
+  Checking security
+</span>
+}
+}

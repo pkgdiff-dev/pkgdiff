@@ -1,0 +1,82 @@
+<div class="flex-1 w-full max-w-[900px] mx-auto px-6 py-12 relative">
+
+  <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs font-medium text-slate-400 mb-8">
+    <a routerLink="/blog" class="hover:text-primary transition-colors">Blog</a>
+    <lucide-icon [img]="ChevronRightIcon" [size]="14" aria-hidden="true"></lucide-icon>
+    <span class="text-slate-600 dark:text-slate-300" aria-current="page">Article</span>
+  </nav>
+
+  @switch (state()) {
+    @case ('loading') {
+    <div class="animate-pulse space-y-8" aria-busy="true" aria-label="Loading article">
+      <div class="h-6 w-32 bg-gray-200 dark:bg-gray-800 rounded"></div>
+      <div class="h-12 w-3/4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+      <div class="flex gap-4">
+        <div class="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
+        <div class="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
+      </div>
+      <div class="space-y-4 pt-8">
+        <div class="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded"></div>
+        <div class="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded"></div>
+        <div class="h-4 w-5/6 bg-gray-200 dark:bg-gray-800 rounded"></div>
+        <div class="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded"></div>
+        <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+      </div>
+    </div>
+    }
+
+    @case ('loaded') {
+    @let article = post()!;
+    <article class="flex flex-col">
+      <header class="mb-12">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 leading-[1.1]">
+          {{ article.title }}
+        </h1>
+        <div class="flex items-center gap-4 py-6 border-y border-slate-100 dark:border-slate-800">
+          <div
+            class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+            <lucide-icon [img]="BotIcon" [size]="20" aria-hidden="true"></lucide-icon>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-semibold text-slate-900 dark:text-white">AI-Generated</span>
+            <span class="text-xs text-slate-500">
+              {{ article.packageId }} v{{ article.version }} • <time [attr.datetime]="article.publishedAt">{{
+                article.publishedAt | date:'mediumDate' }}</time>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div
+        class="prose max-w-none w-full overflow-hidden prose-slate dark:prose-invert prose-headings:font-bold prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl"
+        [innerHTML]="article.contentHtml">
+      </div>
+    </article>
+    }
+
+    @case ('not-found') {
+    <div class="text-center py-20">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Article Not Found</h1>
+      <p class="text-slate-500 dark:text-slate-400 mb-6">The blog post you're looking for doesn't exist or hasn't been
+        published yet.</p>
+      <a routerLink="/blog"
+        class="inline-flex items-center justify-center px-6 py-3 border border-slate-200 dark:border-slate-800 text-sm font-bold rounded text-slate-700 dark:text-slate-300 bg-white dark:bg-background-dark hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors uppercase tracking-widest font-mono">
+        Return to Blog List
+      </a>
+    </div>
+    }
+
+    @case ('error') {
+    <div class="text-center py-20" role="alert">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">This article could not be loaded</h1>
+      <p class="text-slate-500 dark:text-slate-400 mb-6">Something went wrong on our side. The article is still there;
+        please try again in a moment.</p>
+      <button type="button" (click)="retry()"
+        class="inline-flex items-center justify-center px-6 py-3 border border-slate-200 dark:border-slate-800 text-sm font-bold rounded text-slate-700 dark:text-slate-300 bg-white dark:bg-background-dark hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors uppercase tracking-widest font-mono">
+        Try Again
+      </button>
+    </div>
+    }
+  }
+
+</div>

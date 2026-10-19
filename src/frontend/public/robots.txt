@@ -1,0 +1,10 @@
+User-agent: Twitterbot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+Disallow: /api/
+
+Sitemap: https://pkgdiff.dev/sitemap.xml

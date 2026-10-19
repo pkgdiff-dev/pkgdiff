@@ -1,0 +1,60 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!-- Direct references -->
+  <ItemGroup>
+    <!-- The production CPU has no AVX2: a new version must pass .github/scripts/questpdf-cpu-check.sh (emulate mode) before it is taken -->
+    <PackageVersion Include="AngleSharp" Version="1.8.5" />
+    <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageVersion Include="Hangfire.Core" Version="1.8.25" />
+    <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
+    <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
+    <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />
+    <PackageVersion Include="Markdig" Version="1.4.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
+    <PackageVersion Include="Polly" Version="8.8.0" />
+    <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <PackageVersion Include="QuestPDF" Version="2026.9.1" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+    <PackageVersion Include="Tomlyn" Version="2.10.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <!-- Transitive pins: no project references these directly; CentralPackageTransitivePinningEnabled lifts them -->
+  <ItemGroup>
+    <!-- EntityFrameworkCore.Tools lifts the API to this Relational; Npgsql alone brings an older one to
+         Infrastructure and Tests, and the API then fails to load it at runtime. Keep it on the Tools version -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
+    <!-- JwtBearer brings 8.19.x; every Microsoft.IdentityModel.* package must match System.IdentityModel.Tokens.Jwt -->
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+    <!-- Hangfire.Core and NuGet.Packaging depend on it -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <!-- Infrastructure: DataProtection.EntityFrameworkCore -> DataProtection -> System.Security.Cryptography.Xml -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <!-- NuGet.Packaging brings 8.0.1, which carries GHSA-2fmv-rv2c-59x7 and GHSA-846f-f764-76mx -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>

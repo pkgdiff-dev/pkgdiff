@@ -1,0 +1,183 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-[#111418] dark:text-white">Version Filters</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Manage patterns to exclude development, CI, and test
+          versions from package analysis.</p>
+      </div>
+      <button type="button" *appHasPermission="'Permissions.VersionExcludePatterns.Create'" (click)="openAddForm()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-colors">
+        <lucide-icon [img]="PlusIcon" [size]="16"></lucide-icon>
+        <span>Add Pattern</span>
+      </button>
+    </div>
+
+    <!-- Form Modal -->
+    @if (showForm()) {
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-[#111418] dark:text-white">
+          {{ editingId() !== null ? 'Edit Pattern' : 'New Pattern' }}
+        </h2>
+        <button type="button" (click)="closeForm()" aria-label="Close form"
+          class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <lucide-icon [img]="XIcon" [size]="16"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="pattern-text" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Pattern *</label>
+          <input id="pattern-text" type="text" [ngModel]="formPattern()" (ngModelChange)="onPatternChange($event)"
+            placeholder="e.g., -dev-, -ci-, -nightly-"
+            class="w-full h-10 px-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all" />
+          <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">Text pattern to match in version strings
+            (case-insensitive)</p>
+        </div>
+        <div>
+          <label for="pattern-description" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Description</label>
+          <input id="pattern-description" type="text" [(ngModel)]="formDescription" placeholder="e.g., Development builds"
+            class="w-full h-10 px-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 mt-4">
+        <input type="checkbox" [(ngModel)]="formIsActive" id="active-checkbox"
+          class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/40" />
+        <label for="active-checkbox" class="text-sm text-gray-600 dark:text-gray-400">Active (filter versions
+          immediately)</label>
+      </div>
+
+      <!-- Live Preview -->
+      @if (formPattern()) {
+      <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div class="flex items-center gap-2 mb-2">
+          <lucide-icon [img]="EyeIcon" [size]="14" class="text-gray-400"></lucide-icon>
+          <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Live Preview</span>
+        </div>
+
+        @if (previewLoading()) {
+        <div class="text-xs text-gray-500 italic">Checking pattern...</div>
+        } @else if (previewResults().length > 0) {
+        <div class="space-y-1.5">
+          @for (version of previewResults(); track version) {
+          <div
+            class="flex items-center justify-between px-2 py-1.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded text-xs">
+            <span class="font-mono text-gray-700 dark:text-gray-300">{{ version }}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-900/20 text-red-500">Excluded</span>
+          </div>
+          }
+        </div>
+        <p class="text-xs text-gray-500 mt-2">{{ previewMessage() }}</p>
+        } @else {
+        <div
+          class="flex items-center gap-2 px-2 py-1.5 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-700 dark:text-yellow-500">
+          <lucide-icon [img]="AlertCircleIcon" [size]="12"></lucide-icon>
+          <span>No sample versions match this pattern</span>
+        </div>
+        }
+      </div>
+      }
+
+      <div class="flex items-center gap-2 mt-5">
+        <button type="button" (click)="savePattern()" [disabled]="saving()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-50 transition-colors">
+          @if (saving()) {
+          <lucide-icon [img]="LoaderIcon" [size]="14" class="animate-spin"></lucide-icon>
+          } @else {
+          <lucide-icon [img]="CheckIcon" [size]="14"></lucide-icon>
+          }
+          <span>{{ editingId() !== null ? 'Update' : 'Create' }}</span>
+        </button>
+        <button type="button" (click)="closeForm()"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Table -->
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+      @if (loading() && !showForm()) {
+      <div class="flex items-center justify-center py-16">
+        <div class="text-sm text-gray-500">Loading patterns...</div>
+      </div>
+      } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Pattern
+              </th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Description
+              </th>
+              <th class="text-center px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Status
+              </th>
+              <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            @for (pattern of patterns(); track pattern.id) {
+            <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-2">
+                  <lucide-icon [img]="FilterXIcon" [size]="14" class="text-gray-400"></lucide-icon>
+                  <span class="text-sm font-mono font-medium text-[#111418] dark:text-gray-200">{{ pattern.pattern
+                    }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-3 text-xs text-gray-500">{{ pattern.description || '-' }}</td>
+              <td class="px-5 py-3 text-center">
+                @if (pattern.isActive) {
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500">Active</span>
+                } @else {
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">Inactive</span>
+                }
+              </td>
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <button type="button" *appHasPermission="'Permissions.VersionExcludePatterns.Edit'" (click)="toggleActive(pattern)"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                    [title]="pattern.isActive ? 'Disable' : 'Enable'"
+                    [attr.aria-label]="pattern.isActive ? 'Disable' : 'Enable'">
+                    <lucide-icon [img]="pattern.isActive ? PauseIcon : PlayIcon" [size]="14"></lucide-icon>
+                  </button>
+                  <button type="button" *appHasPermission="'Permissions.VersionExcludePatterns.Edit'" (click)="openEditForm(pattern)"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Edit" aria-label="Edit">
+                    <lucide-icon [img]="PencilIcon" [size]="14"></lucide-icon>
+                  </button>
+                  <button type="button" *appHasPermission="'Permissions.VersionExcludePatterns.Delete'"
+                    (click)="confirmDelete(pattern.id)"
+                    class="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                    title="Delete" aria-label="Delete">
+                    <lucide-icon [img]="TrashIcon" [size]="14"></lucide-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="4" class="px-5 py-16 text-center">
+                <lucide-icon [img]="FilterXIcon" [size]="32"
+                  class="text-gray-300 dark:text-gray-600 mx-auto mb-3"></lucide-icon>
+                <p class="text-sm text-gray-400">No exclude patterns configured yet.</p>
+                <p class="text-xs text-gray-400 mt-1">Add patterns to filter out development, CI, and test versions.</p>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+  </div>
+</div>

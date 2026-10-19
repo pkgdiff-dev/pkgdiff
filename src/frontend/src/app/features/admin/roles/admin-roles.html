@@ -1,0 +1,155 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-[#111418] dark:text-white">Roles</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Manage user roles and permissions.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="load()" aria-label="Refresh"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors">
+          <lucide-icon [img]="RefreshIcon" [size]="16"></lucide-icon>
+        </button>
+        <button type="button" *appHasPermission="'Permissions.Roles.Create'" (click)="openCreate()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-colors">
+          <lucide-icon [img]="PlusIcon" [size]="16"></lucide-icon>
+          <span>Add Role</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Roles List -->
+    @if (loading()) {
+    <div class="flex items-center justify-center py-24">
+      <div class="text-sm text-gray-500">Loading roles...</div>
+    </div>
+    } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (role of roles(); track role.id) {
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <lucide-icon [img]="ShieldIcon" [size]="20" class="text-primary"></lucide-icon>
+          </div>
+          @if (role.name === 'Admin') {
+          <div
+            class="flex items-center gap-1 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 cursor-help"
+            title="System Role (Locked)">
+            <lucide-icon [img]="LockIcon" [size]="14"></lucide-icon>
+            <span>System</span>
+          </div>
+          } @else {
+          <div class="flex items-center gap-1">
+            <button type="button" *appHasPermission="'Permissions.Roles.Edit'" (click)="openPermissions(role)"
+              class="p-1.5 rounded hover:bg-primary/10 text-primary transition-colors" title="Permissions" aria-label="Permissions">
+              <lucide-icon [img]="KeyIcon" [size]="16"></lucide-icon>
+            </button>
+            <button type="button" *appHasPermission="'Permissions.Roles.Delete'" (click)="deleteRole(role)"
+              class="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+              title="Delete" aria-label="Delete">
+              <lucide-icon [img]="TrashIcon" [size]="16"></lucide-icon>
+            </button>
+          </div>
+          }
+        </div>
+        <h3 class="text-base font-semibold text-[#111418] dark:text-white mb-1">{{ role.name }}</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-500">
+          {{ role.userCount }} {{ role.userCount === 1 ? 'user' : 'users' }}
+        </p>
+      </div>
+      } @empty {
+      <div
+        class="col-span-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+          <lucide-icon [img]="ShieldIcon" [size]="24" class="text-gray-400"></lucide-icon>
+        </div>
+        <p class="text-sm text-gray-400">No roles configured yet.</p>
+        <p class="text-xs text-gray-400 mt-1">Create your first role to get started.</p>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>
+
+@if (showModal()) {
+<app-modal title="Add Role" size="sm" [closable]="!saving()" (closed)="closeModal()">
+  <div>
+    <label for="role-name" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Role Name</label>
+    <input id="role-name" type="text" [(ngModel)]="roleName"
+      placeholder="e.g., Admin, Editor, Viewer"
+      class="w-full h-10 px-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40" />
+  </div>
+
+  <div modalFooter class="flex gap-3">
+    <button type="button" (click)="closeModal()" [disabled]="saving()"
+      class="flex-1 h-10 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50">
+      Cancel
+    </button>
+    <button type="button" (click)="createRole()" [disabled]="saving()"
+      class="flex-1 h-10 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+      Create
+    </button>
+  </div>
+</app-modal>
+}
+
+@if (selectedRole(); as role) {
+<app-modal title="Manage Permissions" size="lg" [closable]="!saving()" (closed)="closePermissionModal()">
+  <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+    Role: <span class="font-medium text-primary">{{ role.name }}</span>
+  </p>
+
+  @if (permissionLoading()) {
+  <div class="flex items-center justify-center py-12">
+    <div class="text-sm text-gray-500">Loading permissions...</div>
+  </div>
+  } @else {
+  <div class="space-y-6">
+    @for (group of permissionGroups(); track group.name) {
+    <div>
+      <h3 class="text-sm font-semibold text-[#111418] dark:text-white mb-3 uppercase tracking-wider">{{ group.name }}
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        @for (perm of group.permissions; track perm.name) {
+        <button type="button" role="checkbox" [attr.aria-checked]="perm.isSelected" (click)="togglePermission(perm)"
+          class="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 cursor-pointer text-left w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          [class.border-primary]="perm.isSelected" [class.bg-primary-50]="perm.isSelected"
+          [class.dark:bg-primary-900/10]="perm.isSelected">
+          <span class="mt-0.5 relative flex items-center justify-center w-5 h-5 rounded border transition-colors"
+            [class.bg-primary]="perm.isSelected" [class.border-primary]="perm.isSelected"
+            [class.border-gray-300]="!perm.isSelected" [class.dark:border-gray-600]="!perm.isSelected">
+            @if (perm.isSelected) {
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            }
+          </span>
+          <span>
+            <span class="block text-sm font-medium text-[#111418] dark:text-white">{{ perm.description }}</span>
+            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ perm.name }}</span>
+          </span>
+        </button>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <div modalFooter class="flex justify-end gap-3">
+    <button type="button" (click)="closePermissionModal()" [disabled]="saving()"
+      class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50">
+      Cancel
+    </button>
+    <button type="button" (click)="savePermissions()" [disabled]="saving() || permissionLoading()"
+      class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50">
+      Save Changes
+    </button>
+  </div>
+</app-modal>
+}

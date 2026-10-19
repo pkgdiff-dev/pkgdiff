@@ -1,0 +1,109 @@
+@if (malicious().length) {
+<div role="alert"
+  class="mb-4 flex items-start gap-3 p-4 rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200">
+  <lucide-icon [img]="ShieldXIcon" [size]="22" class="shrink-0 mt-0.5" aria-hidden="true"></lucide-icon>
+  <div>
+    <p class="font-bold">Malicious package warning</p>
+    <p class="text-sm">Version{{ malicious().length === 1 ? '' : 's' }} {{ malicious().join(', ') }} of this range
+      {{ malicious().length === 1 ? 'is' : 'are' }} listed as malware in the OpenSSF malicious-packages database. Do not
+      install {{ malicious().length === 1 ? 'it' : 'them' }}.</p>
+  </div>
+</div>
+}
+
+<section class="mb-6 border border-gray-200 dark:border-gray-800 rounded-xl p-4 md:p-5" aria-labelledby="upgrade-security-title">
+  <h3 id="upgrade-security-title" class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-3">
+    Security of this upgrade
+  </h3>
+
+  @if (status() === 'pending') {
+  <p class="text-sm text-gray-500">Security data is being collected. This section updates by itself when it arrives.</p>
+  } @else if (status() === 'unavailable') {
+  <p class="text-sm text-gray-500">Security data is not available for this package right now.</p>
+  } @else if (!checked()) {
+  <p class="text-sm text-gray-500">These versions were not checked for vulnerabilities.</p>
+  } @else {
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <p class="flex items-center gap-1.5 text-sm font-semibold text-green-700 dark:text-green-400 mb-2">
+        <lucide-icon [img]="ShieldCheckIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        {{ fixed().length }} {{ fixed().length === 1 ? 'vulnerability' : 'vulnerabilities' }} fixed by this upgrade
+      </p>
+      <ul class="space-y-1.5">
+        @for (advisory of fixed(); track advisory.id) {
+        <li class="text-xs">
+          <span class="inline-block px-1 border rounded text-[10px] font-bold uppercase mr-1" [class]="severityClass(advisory.severity)">{{ advisory.severity }}</span>
+          <a [href]="advisory.url" target="_blank" rel="noopener noreferrer" class="font-mono text-primary hover:underline">{{ advisory.id }}</a>
+          <span class="text-gray-600 dark:text-gray-400"> {{ advisory.summary }}</span>
+        </li>
+        }
+      </ul>
+    </div>
+    <div>
+      <p class="flex items-center gap-1.5 text-sm font-semibold mb-2"
+        [class]="introduced().length ? 'text-red-700 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
+        <lucide-icon [img]="ShieldAlertIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        {{ introduced().length }} {{ introduced().length === 1 ? 'vulnerability' : 'vulnerabilities' }} introduced
+      </p>
+      <ul class="space-y-1.5">
+        @for (advisory of introduced(); track advisory.id) {
+        <li class="text-xs">
+          <span class="inline-block px-1 border rounded text-[10px] font-bold uppercase mr-1" [class]="severityClass(advisory.severity)">{{ advisory.severity }}</span>
+          <a [href]="advisory.url" target="_blank" rel="noopener noreferrer" class="font-mono text-primary hover:underline">{{ advisory.id }}</a>
+          <span class="text-gray-600 dark:text-gray-400"> {{ advisory.summary }}</span>
+          @if (advisory.fixedIn.length) {
+          <span class="text-gray-500"> Fixed in {{ advisory.fixedIn.join(', ') }}.</span>
+          }
+        </li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  @if (perVersion().length > 2) {
+  <details class="mt-4">
+    <summary class="text-xs text-gray-500 cursor-pointer">Known vulnerabilities per version</summary>
+    <ul class="mt-2 flex flex-wrap gap-1.5">
+      @for (item of perVersion(); track item.version) {
+      <li class="text-[11px] font-mono px-1.5 py-0.5 border rounded"
+        [class]="item.count ? severityClass(item.worst) : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+        v{{ item.version }}: {{ item.count }}
+      </li>
+      }
+    </ul>
+  </details>
+  }
+
+  <p class="text-[11px] text-gray-400 mt-3">Vulnerability data from
+    <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" class="underline">OSV.dev</a>.</p>
+  }
+
+  @if (behavior() !== null) {
+  <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+    <h4 class="text-xs font-semibold text-gray-500 mb-2">Behaviour</h4>
+    @if (isPub()) {
+    <p class="text-sm text-gray-500">Behaviour analysis is not available for pub.dev packages.</p>
+    } @else if (!behaviorTo()) {
+    <p class="text-sm text-gray-500">No behaviour analysis for v{{ to() }} yet.</p>
+    } @else {
+    @if (behaviorTo()!.overallScore !== null) {
+    <p class="text-sm mb-2">Socket score: {{ behaviorFrom()?.overallScore ?? '–' }} → <strong>{{ behaviorTo()!.overallScore }}</strong></p>
+    }
+    @if (newAlerts().length) {
+    <p class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">New in v{{ to() }}:</p>
+    <ul class="flex flex-wrap gap-1.5">
+      @for (alert of newAlerts(); track alert.type) {
+      <li class="text-[11px] font-mono px-1.5 py-0.5 border rounded" [class]="severityClass(alert.severity)">{{ alert.type }}</li>
+      }
+    </ul>
+    } @else {
+    <p class="text-sm text-gray-600 dark:text-gray-400">No new behaviour alerts compared with v{{ from() }}.</p>
+    }
+    @if (behaviorTo()!.url) {
+    <p class="text-[11px] text-gray-400 mt-2">Behaviour data from
+      <a [href]="behaviorTo()!.url" target="_blank" rel="noopener noreferrer" class="underline">Socket.dev</a>.</p>
+    }
+    }
+  </div>
+  }
+</section>

@@ -1,0 +1,161 @@
+# Builds the backend and frontend images once and pushes them to GHCR, but only after the CI gate
+# and the image scan pass. The server never builds: it pulls a tag with deploy/deploy.sh.
+#
+# A push to develop is also deployed, by deploy.yml, while the repository variable
+# PKGDIFF_AUTO_DEPLOY is "true" (Settings > Secrets and variables > Actions > Variables).
+#
+# Tags: sha-<7 hex> on every run (never moves), the branch name (develop, master) on a branch push,
+# and <major>.<minor>.<patch> plus <major>.<minor> on a v* tag. ":buildcache" holds build layers
+# only; it is not a runnable image.
+name: Publish images
+
+on:
+  push:
+    branches: [develop, master]
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: ghcr.io/pkgdiff-dev/pkgdiff
+
+jobs:
+  gate:
+    name: Gate
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Build, scan and push
+    needs: gate
+    # A manual run from another branch would push a tag named after it and write the shared build cache
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.tags.outputs.primary }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Work out the tags
+        id: tags
+        run: |
+          primary="sha-${GITHUB_SHA::7}"
+          tags="$primary"
+          case "$GITHUB_REF" in
+            refs/heads/*)
+              tags="$tags $(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9_.-' '-')"
+              ;;
+            refs/tags/v*)
+              version="${GITHUB_REF_NAME#v}"
+              tags="$tags $version ${version%.*}"
+              ;;
+          esac
+          echo "PRIMARY=$primary" >> "$GITHUB_ENV"
+          echo "primary=$primary" >> "$GITHUB_OUTPUT"
+          echo "TAGS=$tags" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build
+        run: |
+          docker buildx create --name pkgdiff --driver docker-container --use
+          created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          # Every build reruns the OS upgrade layer: a fix published during the day (libx11 on 2026-10-18)
+          # is in the next image, not only in tomorrow's. The layers after it are small.
+          upgrade_key="$GITHUB_RUN_ID.$GITHUB_RUN_ATTEMPT"
+
+          # $1 image name, $2 build context, $3 build argument that reruns the OS upgrade layer
+          build() {
+            docker buildx build "$2" \
+              --tag "$IMAGE_PREFIX-$1:$PRIMARY" \
+              --build-arg "$3=$upgrade_key" \
+              --label "org.opencontainers.image.title=pkgdiff-$1" \
+              --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+              --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+              --label "org.opencontainers.image.created=$created" \
+              --cache-from "type=registry,ref=$IMAGE_PREFIX-$1:buildcache" \
+              --cache-to "type=registry,ref=$IMAGE_PREFIX-$1:buildcache,mode=max" \
+              --provenance=false --sbom=false \
+              --load
+          }
+
+          build backend src/backend APT_UPGRADE_DATE
+          build frontend src/frontend APK_UPGRADE_DATE
+
+      # The frontend image has two roles, nginx and the render server; both have to start. The
+      # render server runs as it does in compose: unprivileged, on a read-only file system.
+      - name: Start the frontend image in both roles
+        run: |
+          image="$IMAGE_PREFIX-frontend:$PRIMARY"
+          docker run --rm --add-host backend:127.0.0.1 --entrypoint nginx "$image" -t
+          docker run -d --name pkgdiff-ssr-check --user 65534:65534 --read-only --tmpfs /tmp \
+            --cap-drop ALL -e PORT=4000 -e SSR_INTERNAL_ORIGIN=http://127.0.0.1:9 \
+            --entrypoint node "$image" /app/server/server.mjs
+          ready=""
+          for attempt in $(seq 1 30); do
+            if docker exec pkgdiff-ssr-check wget -q -O /dev/null http://127.0.0.1:4000/healthz; then ready=1; break; fi
+            sleep 1
+          done
+          docker logs pkgdiff-ssr-check
+          test -n "$ready"
+          docker exec pkgdiff-ssr-check wget -q -O - http://127.0.0.1:4000/terms | grep -q 'ng-server-context="ssr"'
+          docker rm -f pkgdiff-ssr-check
+
+      # The package checks ran in the gate; this run adds the scan of the two images just built
+      - name: Scan the images
+        run: |
+          CHECK_DEPS_DOCKER=1 TRIVY=1 \
+            BACKEND_IMAGE="$IMAGE_PREFIX-backend:$PRIMARY" \
+            FRONTEND_IMAGE="$IMAGE_PREFIX-frontend:$PRIMARY" \
+            bash .github/scripts/check-deps.sh
+
+      - name: Push
+        run: |
+          for name in backend frontend; do
+            for tag in $TAGS; do
+              docker tag "$IMAGE_PREFIX-$name:$PRIMARY" "$IMAGE_PREFIX-$name:$tag"
+              docker push "$IMAGE_PREFIX-$name:$tag"
+            done
+          done
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published images"
+            echo
+            for name in backend frontend; do
+              for tag in $TAGS; do
+                echo "- \`$IMAGE_PREFIX-$name:$tag\`"
+              done
+            done
+            echo
+            echo "Deploy on the server: \`bash deploy/deploy.sh $PRIMARY\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # develop is the branch the server runs. The switch is a repository variable, so a release that
+  # needs a manual step on the server first can be held back without touching this file.
+  deploy:
+    name: Deploy
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.PKGDIFF_AUTO_DEPLOY == 'true'
+    permissions: {}
+    uses: ./.github/workflows/deploy.yml
+    with:
+      action: deploy
+      tag: ${{ needs.publish.outputs.tag }}
+      revision: ${{ github.sha }}
+    secrets: inherit

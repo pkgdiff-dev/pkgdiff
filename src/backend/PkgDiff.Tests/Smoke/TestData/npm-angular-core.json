@@ -1,0 +1,153 @@
+{
+  "name": "@angular/core",
+  "description": "Angular - the core framework",
+  "dist-tags": {
+    "latest": "22.2.1",
+    "next": "22.3.0-next.0",
+    "v21-lts": "21.2.25"
+  },
+  "versions": {
+    "21.0.0": {
+      "name": "@angular/core",
+      "version": "21.0.0",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.0.1": {
+      "name": "@angular/core",
+      "version": "21.0.1",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "20.3.14": {
+      "name": "@angular/core",
+      "version": "20.3.14",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.1.0-next.0": {
+      "name": "@angular/core",
+      "version": "21.1.0-next.0",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.1.0": {
+      "name": "@angular/core",
+      "version": "21.1.0",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.2.0-rc.0": {
+      "name": "@angular/core",
+      "version": "21.2.0-rc.0",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.2.0": {
+      "name": "@angular/core",
+      "version": "21.2.0",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "21.2.1": {
+      "name": "@angular/core",
+      "version": "21.2.1",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    },
+    "22.2.1": {
+      "name": "@angular/core",
+      "version": "22.2.1",
+      "description": "Angular - the core framework",
+      "author": {
+        "name": "angular"
+      },
+      "repository": {
+        "url": "git+https://github.com/angular/angular.git",
+        "type": "git",
+        "directory": "packages/core"
+      },
+      "homepage": "https://github.com/angular/angular#readme"
+    }
+  },
+  "time": {
+    "created": "2016-04-28T04:23:30.108Z",
+    "modified": "2026-09-30T18:59:21.757Z",
+    "21.0.0": "2025-11-19T18:07:38.390Z",
+    "21.0.1": "2025-11-25T20:05:24.154Z",
+    "20.3.14": "2025-11-25T20:14:54.577Z",
+    "21.1.0-next.0": "2025-11-25T20:26:03.040Z",
+    "21.1.0": "2026-01-14T19:45:01.175Z",
+    "21.2.0-rc.0": "2026-02-18T22:38:54.266Z",
+    "21.2.0": "2026-02-25T19:29:37.765Z",
+    "21.2.1": "2026-03-04T19:34:35.176Z",
+    "22.2.1": "2026-09-30T18:37:32.189Z"
+  },
+  "author": {
+    "name": "angular"
+  }
+}

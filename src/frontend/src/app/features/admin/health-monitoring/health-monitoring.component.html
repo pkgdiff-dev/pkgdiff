@@ -1,0 +1,244 @@
+<div class="relative">
+    <app-grid-pattern />
+
+    <div class="relative z-10 space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-[#111418] dark:text-white">Health Monitoring</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                    Real-time system health and service availability
+                    @if (lastChecked(); as checked) {
+                    <span class="ml-2">• Last checked: {{ checked.toLocaleTimeString() }}</span>
+                    }
+                </p>
+            </div>
+            <button type="button" (click)="loadHealth()" [disabled]="loading()"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                <lucide-icon [img]="RefreshIcon" [size]="16" [class.animate-spin]="loading()"></lucide-icon>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        @if (error()) {
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+            <div class="flex items-center gap-2 text-red-600 dark:text-red-400">
+                <lucide-icon [img]="XCircleIcon" [size]="16"></lucide-icon>
+                <span class="text-sm font-medium">{{ error() }}</span>
+            </div>
+        </div>
+        }
+
+        @if (loading() && !healthDetails()) {
+        <div class="flex items-center justify-center py-24">
+            <div class="text-sm text-gray-500">Loading health status...</div>
+        </div>
+        } @else if (healthDetails(); as health) {
+        <!-- Overall Status Card -->
+        <div [class]="getStatusBg(health.overallStatus)"
+            class="border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <lucide-icon [img]="ActivityIcon" [size]="24"
+                        [class]="getStatusColor(health.overallStatus)"></lucide-icon>
+                    <div>
+                        <h2 class="text-lg font-semibold text-[#111418] dark:text-white">Overall System Status</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                            Checked at {{ formatTime(health.checkedAt) }}
+                        </p>
+                    </div>
+                </div>
+                <div [class]="getStatusColor(health.overallStatus)" class="text-2xl font-bold uppercase">
+                    {{ health.overallStatus }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Database -->
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon [img]="DatabaseIcon" [size]="18" class="text-gray-400"></lucide-icon>
+                        <h3 class="text-sm font-semibold text-[#111418] dark:text-white">Database</h3>
+                    </div>
+                    <lucide-icon [img]="getStatusIcon(health.database.isHealthy)" [size]="20"
+                        [class]="health.database.isHealthy ? 'text-green-500' : 'text-red-500'"></lucide-icon>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Status</span>
+                        <span [class]="health.database.isHealthy ? 'text-green-500' : 'text-red-500'"
+                            class="font-medium">
+                            {{ health.database.isHealthy ? 'Connected' : 'Disconnected' }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Response Time</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{
+                            health.database.responseTimeMs }}ms</span>
+                    </div>
+                    @if (health.database.errorMessage) {
+                    <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/10 rounded text-xs text-red-600 dark:text-red-400">
+                        {{ health.database.errorMessage }}
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- NuGet API -->
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon [img]="GlobeIcon" [size]="18" class="text-gray-400"></lucide-icon>
+                        <h3 class="text-sm font-semibold text-[#111418] dark:text-white">NuGet API</h3>
+                    </div>
+                    <lucide-icon [img]="getStatusIcon(health.nuGet.isAvailable)" [size]="20"
+                        [class]="health.nuGet.isAvailable ? 'text-green-500' : 'text-red-500'"></lucide-icon>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Status</span>
+                        <span [class]="health.nuGet.isAvailable ? 'text-green-500' : 'text-red-500'"
+                            class="font-medium">
+                            {{ health.nuGet.isAvailable ? 'Available' : 'Unavailable' }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Response Time</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{ health.nuGet.responseTimeMs
+                            }}ms</span>
+                    </div>
+                    @if (health.nuGet.errorMessage) {
+                    <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/10 rounded text-xs text-red-600 dark:text-red-400">
+                        {{ health.nuGet.errorMessage }}
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- GitHub API -->
+            @let gitHubLimited = health.gitHub.isAvailable && isRateLimited(health.gitHub);
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon [img]="GlobeIcon" [size]="18" class="text-gray-400"></lucide-icon>
+                        <h3 class="text-sm font-semibold text-[#111418] dark:text-white">GitHub API</h3>
+                    </div>
+                    <lucide-icon [img]="getStatusIcon(health.gitHub.isAvailable && !gitHubLimited)" [size]="20"
+                        [class]="!health.gitHub.isAvailable ? 'text-red-500' : gitHubLimited ? 'text-yellow-500' : 'text-green-500'"></lucide-icon>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Status</span>
+                        <span [class]="!health.gitHub.isAvailable ? 'text-red-500' : gitHubLimited ? 'text-yellow-500' : 'text-green-500'"
+                            class="font-medium">
+                            {{ !health.gitHub.isAvailable ? 'Unavailable' : gitHubLimited ? 'Rate limited' : 'Available' }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Response Time</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{ health.gitHub.responseTimeMs
+                            }}ms</span>
+                    </div>
+                    @if (health.gitHub.rateLimitRemaining !== null &&
+                    health.gitHub.rateLimitRemaining !== undefined) {
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Rate Limit</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{
+                            health.gitHub.rateLimitRemaining }} remaining</span>
+                    </div>
+                    }
+                    @if (health.gitHub.rateLimitResetAt) {
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Resets At</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{
+                            formatTime(health.gitHub.rateLimitResetAt) }}</span>
+                    </div>
+                    }
+                    @if (health.gitHub.errorMessage) {
+                    <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/10 rounded text-xs text-red-600 dark:text-red-400">
+                        {{ health.gitHub.errorMessage }}
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Hangfire Status -->
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <lucide-icon [img]="ServerIcon" [size]="18" class="text-gray-400"></lucide-icon>
+                        <h3 class="text-sm font-semibold text-[#111418] dark:text-white">Background Jobs</h3>
+                    </div>
+                    <lucide-icon [img]="getStatusIcon(health.hangfire.isHealthy)" [size]="20"
+                        [class]="health.hangfire.isHealthy ? 'text-green-500' : 'text-red-500'"></lucide-icon>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Active Servers</span>
+                        <span class="text-[#111418] dark:text-white font-mono">{{
+                            health.hangfire.activeServers }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Processing</span>
+                        <span class="text-blue-500 font-mono">{{ health.hangfire.processingJobs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Enqueued</span>
+                        <span class="text-yellow-500 font-mono">{{ health.hangfire.enqueuedJobs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-500">Failed</span>
+                        <span [class]="health.hangfire.failedJobs > 0 ? 'text-red-500' : 'text-green-500'"
+                            class="font-mono">{{ health.hangfire.failedJobs }}</span>
+                    </div>
+                    @if (health.hangfire.errorMessage) {
+                    <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/10 rounded text-xs text-red-600 dark:text-red-400">
+                        {{ health.hangfire.errorMessage }}
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Package security data providers -->
+        <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-8">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Package security providers</h2>
+            <p class="text-xs text-gray-500 mb-4">Switched on and off in Settings, category Security. They do not count towards the overall status.</p>
+            <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+                @for (provider of health.securityProviders ?? []; track provider.name) {
+                <li class="py-3 flex flex-wrap items-center gap-3 text-sm">
+                    <span class="font-medium w-28">{{ provider.name }}</span>
+                    @if (!provider.enabled) {
+                    <span class="px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 text-gray-500">Off</span>
+                    } @else if (provider.isAvailable) {
+                    <span class="px-2 py-0.5 rounded text-xs bg-green-50 dark:bg-green-900/20 text-green-600">Available</span>
+                    <span class="text-xs text-gray-500 font-mono">{{ provider.responseTimeMs }} ms</span>
+                    } @else {
+                    <span class="px-2 py-0.5 rounded text-xs bg-red-50 dark:bg-red-900/20 text-red-600">Unavailable</span>
+                    }
+                    <span class="text-xs text-gray-400 font-mono">{{ provider.settingKey }}</span>
+                    @if (provider.errorMessage) {
+                    <span class="text-xs text-red-500 basis-full">{{ provider.errorMessage }}</span>
+                    }
+                </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Auto-refresh notice -->
+        <div class="text-center">
+            <p class="text-xs text-gray-400">
+                <lucide-icon [img]="RefreshIcon" [size]="12" class="inline"></lucide-icon>
+                Auto-refreshing every 30 seconds
+            </p>
+        </div>
+        }
+    </div>
+</div>

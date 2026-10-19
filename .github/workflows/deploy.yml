@@ -1,0 +1,115 @@
+# Runs deploy/remote.sh on the server over SSH.
+#   - Automatically: publish.yml calls it after the images of a push to develop are published,
+#     while the repository variable PKGDIFF_AUTO_DEPLOY is "true".
+#   - By hand: Actions > Deploy > Run workflow (deploy a tag, roll back, or show the status).
+# It does nothing until these repository secrets exist (docs/ops/deploy-ghcr.md):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS; optional DEPLOY_PORT, DEPLOY_PATH
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        type: string
+        default: deploy
+      tag:
+        type: string
+        required: true
+      revision:
+        description: commit the images were built from; the server checkout is brought to it first
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      action:
+        description: deploy a tag, roll back to the images that ran before the last deploy, or show what runs
+        type: choice
+        options: [deploy, rollback, status]
+        default: deploy
+      tag:
+        description: image tag to deploy (sha-<7 hex>, develop, master or a version)
+        default: develop
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Deploy over SSH
+    # The DEPLOY_* secrets live in this environment, which only develop and master may use
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # One deploy at a time, in the order they were started; a running one is never cancelled
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      ACTION: ${{ inputs.action }}
+      TAG: ${{ inputs.tag }}
+      REVISION: ${{ inputs.revision }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - name: Check the configuration and the request
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_USER" ] || [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_KNOWN_HOSTS" ]; then
+            echo "::error::The deploy secrets are not configured in the production environment. Nothing was done."
+            exit 1
+          fi
+          case "$ACTION" in
+            deploy | rollback | status) ;;
+            *) echo "::error::'$ACTION' is not an action."; exit 1 ;;
+          esac
+          if [ "$ACTION" = deploy ] && ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'; then
+            echo "::error::'$TAG' is not a valid image tag."
+            exit 1
+          fi
+          if [ -n "$REVISION" ] && ! printf '%s' "$REVISION" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::'$REVISION' is not a commit id."
+            exit 1
+          fi
+
+      - name: Run deploy/remote.sh on the server
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          (umask 077 && printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key)
+
+          path="${DEPLOY_PATH:-/opt/pkgdiff/src}"
+          request="$ACTION"
+          if [ "$ACTION" = deploy ]; then request="deploy $TAG $REVISION"; fi
+
+          # Every word of the request was checked above. A key installed with remote.sh as its forced
+          # command ignores the script path given here and reads only the request.
+          # The log of this job may be public: it shows the "deploy:" lines of the server only, the full
+          # output (paths, container state) stays in deploy.log on the runner and on the server
+          status=0
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$path/deploy/remote.sh' $request" > deploy.log 2>&1 || status=$?
+          grep -E '^deploy: ' deploy.log || true
+          exit "$status"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### ${ACTION} ${TAG}"
+            echo
+            echo '```text'
+            if [ -s deploy.log ]; then grep -E '^deploy: ' deploy.log | tail -n 20; else echo 'no output from the server'; fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

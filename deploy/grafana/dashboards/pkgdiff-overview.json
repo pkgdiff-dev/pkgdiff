@@ -1,0 +1,481 @@
+{
+  "uid": "pkgdiff-overview",
+  "title": "pkgdiff overview",
+  "tags": [
+    "pkgdiff"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Backend up",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"pkgdiff-backend\"}",
+          "legendFormat": "up",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Requests per second",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_requests_received_total[5m]))",
+          "legendFormat": "req/s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Server errors (5xx) per minute",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_requests_received_total{code=~\"5..\"}[5m])) * 60",
+          "legendFormat": "5xx/min",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Analyses in the last hour",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(pkgdiff_analyses[1h]))",
+          "legendFormat": "analyses",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Requests in progress",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 19,
+        "y": 0,
+        "w": 5,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(http_requests_in_progress)",
+          "legendFormat": "in progress",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Requests by status code",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (code) (rate(http_requests_received_total[5m]))",
+          "legendFormat": "{{code}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Request duration (p50 / p95)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p50",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Analyses by registry and outcome",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (registry, outcome) (increase(pkgdiff_analyses[15m]))",
+          "legendFormat": "{{registry}} {{outcome}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Analysis duration (p95)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, registry) (rate(pkgdiff_analysis_duration_bucket[15m])))",
+          "legendFormat": "{{registry}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Release-note lookups by source and outcome",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (source, outcome) (increase(pkgdiff_release_notes_scrapes[15m]))",
+          "legendFormat": "{{source}} {{outcome}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Backend memory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "pkgdiff-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "process_working_set_bytes{job=\"pkgdiff-backend\"}",
+          "legendFormat": "working set",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "dotnet_total_memory_bytes{job=\"pkgdiff-backend\"}",
+          "legendFormat": "managed heap",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "pkgdiff-prometheus"
+          }
+        }
+      ]
+    }
+  ]
+}

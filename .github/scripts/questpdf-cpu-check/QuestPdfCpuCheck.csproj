@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- The version under test always comes from the caller (.github/scripts/questpdf-cpu-check.sh); the brackets make it exact -->
+  <ItemGroup>
+    <PackageReference Include="QuestPDF" Version="[$(QuestPdfVersion)]" />
+  </ItemGroup>
+
+  <Target Name="RequireQuestPdfVersion" BeforeTargets="CollectPackageReferences;Build" Condition="'$(QuestPdfVersion)' == ''">
+    <Error Text="Pass the QuestPDF version to test: -p:QuestPdfVersion=x.y.z" />
+  </Target>
+
+</Project>

@@ -1,0 +1,147 @@
+<div class="flex flex-col min-h-screen w-full font-display min-h-[calc(100vh-64px)]">
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-10 pb-20">
+        <!-- Sticky Search Header -->
+        <div
+            class="sticky top-0 z-40 bg-white/80 dark:bg-black/0 backdrop-blur-md pb-4 pt-2 -mt-2 mb-6 transition-colors duration-300">
+            <div class="flex items-center gap-4">
+                <div class="relative flex-1 group">
+                    <div
+                        class="flex items-center bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                        <lucide-icon [img]="SearchIcon" [size]="20"
+                            class="text-gray-400 dark:text-gray-500 mr-3"></lucide-icon>
+                        <input
+                            class="w-full bg-transparent border-none focus:outline-none text-sm font-medium p-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
+                            placeholder="Search packages..." type="text" (input)="onSearch($event)" />
+                        <kbd
+                            class="hidden md:inline-block px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-[10px] font-mono text-gray-400 dark:text-gray-500 ml-2">/</kbd>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters & Sort Bar -->
+        <div
+            class="flex flex-wrap items-center gap-3 mb-6 pb-5 border-b border-gray-100 dark:border-gray-800/60">
+            <!-- Ecosystem Filters -->
+            <div class="flex flex-wrap items-center gap-2">
+                @for (reg of registries(); track reg.value) {
+                <button type="button" (click)="!reg.disabled && toggleRegistry(reg.value)" [class.opacity-40]="reg.disabled"
+                    [attr.aria-pressed]="isRegistrySelected(reg.value)" [attr.aria-disabled]="reg.disabled ? 'true' : null"
+                    [class.cursor-not-allowed]="reg.disabled"
+                    class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200"
+                    [ngClass]="{
+                        'bg-primary/10 text-primary border-primary/30 shadow-sm shadow-primary/5': isRegistrySelected(reg.value),
+                        'bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-300': !isRegistrySelected(reg.value) && !reg.disabled
+                    }">
+                    <img [src]="reg.icon" alt="" width="14" height="14" loading="lazy" class="w-3.5 h-3.5 object-contain"
+                        (error)="hideBrokenIcon($event)" />
+                    <span>{{ reg.label }}</span>
+                </button>
+                }
+            </div>
+
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+
+            <!-- Results Count & Sort -->
+            <div class="flex items-center gap-4">
+                <span class="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                    {{ filteredPackages().length }} of {{ packages().length }}
+                </span>
+                <div class="relative">
+                    <button type="button" (click)="toggleSortDropdown($event)" aria-haspopup="true"
+                        [attr.aria-expanded]="sortOpen()" aria-label="Sort packages"
+                        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer">
+                        <span>{{ currentSortLabel() }}</span>
+                        <lucide-icon [img]="ChevronDownIcon" [size]="14"
+                            class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
+                            [class.rotate-180]="sortOpen()">
+                        </lucide-icon>
+                    </button>
+                    @if (sortOpen()) {
+                    <div
+                        class="absolute right-0 top-full mt-2 w-40 md:w-44 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700/60 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50">
+                        @for (opt of sortOptions; track opt.value) {
+                        <button type="button" (click)="onSortChange(opt.value)" [attr.aria-current]="sortBy() === opt.value ? 'true' : null"
+                            class="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors"
+                            [ngClass]="{
+                                'text-primary bg-primary/5': sortBy() === opt.value,
+                                'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50': sortBy() !== opt.value
+                            }">
+                            {{ opt.label }}
+                        </button>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Package List -->
+        @if (isLoading()) {
+        <div class="space-y-4 animate-pulse">
+            @for (i of [1,2,3,4,5]; track i) {
+            <div class="h-24 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
+            </div>
+            }
+        </div>
+        } @else if (loadFailed()) {
+        <div role="alert"
+            class="py-24 text-center border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/20">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">The package list could not be loaded</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Please try again in a moment.</p>
+            <button type="button" (click)="loadPackages()"
+                class="mt-6 px-6 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                Try again
+            </button>
+        </div>
+        } @else if (filteredPackages().length > 0) {
+        <div
+            class="bg-white/50 dark:bg-black/20 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+            @for (pkg of visiblePackages(); track pkg.packageId) {
+            <a href="/package/{{ pkg.registry }}/{{ pkg.packageId }}"
+                class="group block p-4 md:p-5 transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+                        <span class="font-bold text-gray-900 dark:text-gray-100 text-base md:text-lg">{{
+                            pkg.packageId }}</span>
+                        <span
+                            class="font-mono text-[11px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-md">v{{
+                            pkg.latestVersion }}</span>
+                        <span
+                            [class]="'text-[10px] font-bold border px-1.5 py-0.5 rounded uppercase tracking-tight ' + registryBadgeClass(pkg.registry)">{{
+                            pkg.registry }}</span>
+                    </div>
+                </div>
+                <p
+                    class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
+                    {{ pkg.description || 'No description provided.' }}
+                </p>
+            </a>
+            }
+        </div>
+
+        <!-- Load More -->
+        @if (hasMore()) {
+        <div class="mt-8 flex justify-center">
+            <button type="button" (click)="loadMore()"
+                class="w-full md:w-auto px-8 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                Load more packages
+            </button>
+        </div>
+        }
+        } @else {
+        <!-- Empty State -->
+        <div
+            class="py-24 text-center border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/20">
+            <div
+                class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 mb-4 shadow-sm border border-gray-100 dark:border-gray-800">
+                <lucide-icon [img]="SearchIcon" [size]="32"></lucide-icon>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">No packages found</h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Try adjusting your search or filters.</p>
+        </div>
+        }
+    </main>
+</div>

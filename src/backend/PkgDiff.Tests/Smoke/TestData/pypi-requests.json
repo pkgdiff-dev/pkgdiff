@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "requests",
+    "version": "2.34.2",
+    "summary": "Python HTTP for Humans.",
+    "author": null,
+    "home_page": null,
+    "project_urls": {
+      "Documentation": "https://requests.readthedocs.io",
+      "Source": "https://github.com/psf/requests"
+    }
+  },
+  "releases": {
+    "2.31.0": [
+      {
+        "filename": "requests-2.31.0-py3-none-any.whl",
+        "upload_time": "2023-05-22T15:12:42",
+        "upload_time_iso_8601": "2023-05-22T15:12:42.313790Z",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "filename": "requests-2.31.0.tar.gz",
+        "upload_time": "2023-05-22T15:12:44",
+        "upload_time_iso_8601": "2023-05-22T15:12:44.175995Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.32.0": [
+      {
+        "filename": "requests-2.32.0-py3-none-any.whl",
+        "upload_time": "2024-05-20T16:08:19",
+        "upload_time_iso_8601": "2024-05-20T16:08:19.530618Z",
+        "yanked": true,
+        "yanked_reason": "Yanked due to conflicts with CVE-2024-35195 mitigation"
+      },
+      {
+        "filename": "requests-2.32.0.tar.gz",
+        "upload_time": "2024-05-20T16:11:48",
+        "upload_time_iso_8601": "2024-05-20T16:11:48.306524Z",
+        "yanked": true,
+        "yanked_reason": "Yanked due to conflicts with CVE-2024-35195 mitigation"
+      }
+    ],
+    "2.32.3": [
+      {
+        "filename": "requests-2.32.3-py3-none-any.whl",
+        "upload_time": "2024-05-29T15:37:47",
+        "upload_time_iso_8601": "2024-05-29T15:37:47.027275Z",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "filename": "requests-2.32.3.tar.gz",
+        "upload_time": "2024-05-29T15:37:49",
+        "upload_time_iso_8601": "2024-05-29T15:37:49.536140Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.34.0.dev1": [
+      {
+        "filename": "requests-2.34.0.dev1-py3-none-any.whl",
+        "upload_time": "2026-05-03T20:21:40",
+        "upload_time_iso_8601": "2026-05-03T20:21:40.509155Z",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "filename": "requests-2.34.0.dev1.tar.gz",
+        "upload_time": "2026-05-03T20:21:41",
+        "upload_time_iso_8601": "2026-05-03T20:21:41.747826Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.34.2": [
+      {
+        "filename": "requests-2.34.2-py3-none-any.whl",
+        "upload_time": "2026-05-14T19:25:26",
+        "upload_time_iso_8601": "2026-05-14T19:25:26.443000Z",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "filename": "requests-2.34.2.tar.gz",
+        "upload_time": "2026-05-14T19:25:27",
+        "upload_time_iso_8601": "2026-05-14T19:25:27.735762Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ],
+    "2.4.0": [
+      {
+        "filename": "requests-2.4.0-py2.py3-none-any.whl",
+        "upload_time": "2014-08-29T14:32:48",
+        "upload_time_iso_8601": "2014-08-29T14:32:48.896671Z",
+        "yanked": false,
+        "yanked_reason": null
+      },
+      {
+        "filename": "requests-2.4.0.tar.gz",
+        "upload_time": "2014-08-29T14:32:45",
+        "upload_time_iso_8601": "2014-08-29T14:32:45.073609Z",
+        "yanked": false,
+        "yanked_reason": null
+      }
+    ]
+  }
+}

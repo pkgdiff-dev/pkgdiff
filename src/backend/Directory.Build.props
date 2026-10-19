@@ -1,0 +1,16 @@
+<Project>
+
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+    <!-- lock files are generated and verified inside mcr.microsoft.com/dotnet/sdk:10.0.402-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa; regenerate them with that image after any package change -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <!-- A known-vulnerable package fails Release/CI restores. PkgDiffAuditAsErrors=false is the emergency-only escape hatch. -->
+  <PropertyGroup Condition="('$(Configuration)' == 'Release' Or '$(ContinuousIntegrationBuild)' == 'true') And '$(PkgDiffAuditAsErrors)' != 'false'">
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

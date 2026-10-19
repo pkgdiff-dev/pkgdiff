@@ -1,0 +1,139 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10">
+    <!-- Loading State -->
+    @if (loading()) {
+  <div class="flex items-center justify-center py-24">
+    <div class="text-sm text-gray-500 dark:text-gray-500">Loading dashboard...</div>
+  </div>
+} @else if (stats(); as data) {
+  <div class="space-y-6">
+    <!-- Page Title -->
+    <div>
+      <h1 class="text-xl font-bold text-[#111418] dark:text-white">Dashboard</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Overview of pkgdiff usage and analytics.</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Total Searches -->
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Total Searches</span>
+          <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+            <lucide-icon [img]="SearchIcon" [size]="16" class="text-blue-500"></lucide-icon>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.totalSearches.toLocaleString() }}</div>
+      </div>
+
+      <!-- Cached Packages -->
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Cached Packages</span>
+          <div class="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+            <lucide-icon [img]="DatabaseIcon" [size]="16" class="text-green-500"></lucide-icon>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.cachedPackages.toLocaleString() }}</div>
+      </div>
+
+      <!-- Unique Packages -->
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Unique Packages</span>
+          <div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
+            <lucide-icon [img]="PackageIcon" [size]="16" class="text-purple-500"></lucide-icon>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.totalPackagesAnalyzed }}</div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Top Packages -->
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+          <lucide-icon [img]="TrendingIcon" [size]="16" class="text-primary"></lucide-icon>
+          <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Top Packages</h2>
+        </div>
+        <div class="divide-y divide-gray-50 dark:divide-gray-800">
+          @for (pkg of data.topPackages; track pkg.packageId; let i = $index) {
+            <div class="px-5 py-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-mono text-gray-400 w-5">{{ i + 1 }}</span>
+                <span class="text-sm font-medium text-[#111418] dark:text-gray-200">{{ pkg.packageId }}</span>
+              </div>
+              <span class="text-xs font-mono text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded">{{ pkg.searchCount }}</span>
+            </div>
+          } @empty {
+            <div class="px-5 py-8 text-center text-sm text-gray-400">No data yet</div>
+          }
+        </div>
+      </div>
+
+      <!-- Searches by Day -->
+      <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+          <lucide-icon [img]="ClockIcon" [size]="16" class="text-primary"></lucide-icon>
+          <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Searches (Last 7 Days)</h2>
+        </div>
+        <div class="p-5 space-y-3">
+          @for (day of sortedDays(); track day.day) {
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono text-gray-500 dark:text-gray-500 w-20 flex-shrink-0">{{ day.day.slice(5) }}</span>
+              <div class="flex-1 h-6 bg-gray-50 dark:bg-gray-800 rounded overflow-hidden">
+                <div
+                  class="h-full bg-primary/20 rounded flex items-center pl-2"
+                  [style.width.%]="(day.count / maxDayCount()) * 100"
+                >
+                  <span class="text-[10px] font-mono text-primary font-medium">{{ day.count }}</span>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="py-8 text-center text-sm text-gray-400">No data for the last 7 days</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Searches -->
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+        <lucide-icon [img]="SearchIcon" [size]="16" class="text-primary"></lucide-icon>
+        <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Recent Searches</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500 dark:text-gray-500">Package</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500 dark:text-gray-500">Versions</th>
+              <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500 dark:text-gray-500">Time</th>
+              <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500 dark:text-gray-500">Duration</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+            @for (search of data.recentSearches; track search.searchedAt) {
+              <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                <td class="px-5 py-3 text-sm font-medium text-[#111418] dark:text-gray-200">{{ search.packageId }}</td>
+                <td class="px-5 py-3 text-xs font-mono text-gray-500 dark:text-gray-400">{{ search.versionRange }}</td>
+                <td class="px-5 py-3 text-xs text-gray-500 dark:text-gray-500">{{ formatDate(search.searchedAt) }}</td>
+                <td class="px-5 py-3 text-xs font-mono text-gray-500 dark:text-gray-500 text-right">{{ formatTime(search.processingTime) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="px-5 py-8 text-center text-sm text-gray-400">No searches yet</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}
+  </div>
+</div>

@@ -1,0 +1,14 @@
+namespace PkgDiff.Application.Versioning;
+
+// The rules a registry's versions are parsed and ordered by
+public enum VersionScheme
+{
+    // NuGet's own rules; a version is spelled the way NuGet normalizes it
+    NuGet,
+
+    // SemVer in the registry's own spelling: npm and pub.dev
+    SemVer,
+
+    // PEP 440: PyPI
+    Pep440
+}

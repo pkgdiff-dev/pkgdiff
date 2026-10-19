@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="PkgDiff.API/PkgDiff.csproj" />
+  <Project Path="PkgDiff.Application/PkgDiff.Application.csproj" />
+  <Project Path="PkgDiff.Domain/PkgDiff.Domain.csproj" />
+  <Project Path="PkgDiff.Infrastructure/PkgDiff.Infrastructure.csproj" />
+  <Project Path="PkgDiff.Shared/PkgDiff.Shared.csproj" />
+  <Project Path="PkgDiff.Tests/PkgDiff.Tests.csproj" />
+</Solution>

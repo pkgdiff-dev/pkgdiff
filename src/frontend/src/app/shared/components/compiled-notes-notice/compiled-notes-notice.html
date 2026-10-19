@@ -1,0 +1,18 @@
+<div role="note"
+  class="flex items-start gap-3 mb-3 p-3 rounded-lg border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200">
+  <lucide-icon [img]="AlertTriangleIcon" [size]="18" class="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true"></lucide-icon>
+  <div class="text-xs leading-relaxed">
+    <p class="font-semibold text-sm">Not official release notes</p>
+    <p class="mt-1">
+      The maintainers publish no changelog for this version. pkgdiff compiled this list from the closed issues and
+      pull requests of the
+      @if (source().url) {
+      <a [href]="source().url" target="_blank" rel="noopener noreferrer"
+        class="inline-flex items-center gap-0.5 font-medium underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-100">{{ source().label }}<lucide-icon [img]="ExternalLinkIcon" [size]="11" aria-hidden="true"></lucide-icon></a>
+      } @else {
+      {{ source().label }}
+      }
+      on GitHub. It may be incomplete; check the milestone before relying on it.
+    </p>
+  </div>
+</div>

@@ -1,0 +1,249 @@
+<div class="flex min-h-screen relative">
+  <!-- Mobile Sidebar Backdrop -->
+  @if (sidebarOpen()) {
+  <div class="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm" (click)="toggleSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside
+    class="w-60 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] flex flex-col fixed md:relative h-full z-50 transition-transform duration-300 md:translate-x-0"
+    [class.-translate-x-full]="!sidebarOpen()" [class.translate-x-0]="sidebarOpen()">
+    <!-- Logo -->
+    <div class="p-5 border-b border-gray-100 dark:border-gray-800">
+      <a href="/admin/dashboard">
+        <app-logo size="sm" />
+      </a>
+      <span class="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600 font-medium mt-1 block">Admin
+        Panel</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+      <!-- Main -->
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-2 pb-1">Main</span>
+
+      <a [routerLink]="['/admin/dashboard']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="DashboardIcon" [size]="18"></lucide-icon>
+        <span>Dashboard</span>
+      </a>
+
+      <a [routerLink]="['/admin/health-monitoring']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Health.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="ActivityIcon" [size]="18"></lucide-icon>
+        <span>Health Monitoring</span>
+      </a>
+
+      <!-- Management -->
+      @if (hasAnyPermission(['Permissions.Packages.View', 'Permissions.Registries.View'])) {
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Management</span>
+      }
+
+      <a [routerLink]="['/admin/packages']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Packages.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="PackageIcon" [size]="18"></lucide-icon>
+        <span>Packages</span>
+      </a>
+
+      <a [routerLink]="['/admin/registries']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Registries.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="GlobeIcon" [size]="18"></lucide-icon>
+        <span>Registries</span>
+      </a>
+
+      <a [routerLink]="['/admin/blogs']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Blog.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="FileTextIcon" [size]="18"></lucide-icon>
+        <span>AutoPilot Blogs</span>
+      </a>
+
+      <a [routerLink]="['/admin/social-media']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.SocialMedia.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="Share2Icon" [size]="18"></lucide-icon>
+        <span>Social Media</span>
+      </a>
+
+      <a [routerLink]="['/admin/contributors']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Contributors.Manage'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="TrophyIcon" [size]="18"></lucide-icon>
+        <span>Contributors</span>
+      </a>
+
+      <!-- Monitoring -->
+      @if (hasAnyPermission(['Permissions.Jobs.View', 'Permissions.Security.ViewLogs', 'Permissions.ScrapeLogs.View']))
+      {
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Monitoring</span>
+      }
+
+      <a [routerLink]="['/admin/jobs']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Jobs.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="ActivityIcon" [size]="18"></lucide-icon>
+        <span>Jobs</span>
+      </a>
+
+      <a [routerLink]="['/admin/search-history']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Security.ViewLogs'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="HistoryIcon" [size]="18"></lucide-icon>
+        <span>Search History</span>
+      </a>
+
+      <a [routerLink]="['/admin/scrape-logs']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.ScrapeLogs.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="BugIcon" [size]="18"></lucide-icon>
+        <span>Scrape Logs</span>
+      </a>
+
+      <!-- Configuration -->
+      @if (hasAnyPermission(['Permissions.Settings.View', 'Permissions.VersionExcludePatterns.View'])) {
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Configuration</span>
+      }
+
+      <a [routerLink]="['/admin/settings']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Settings.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="SettingsIcon" [size]="18"></lucide-icon>
+        <span>Settings</span>
+      </a>
+
+      <a [routerLink]="['/admin/version-exclude-patterns']"
+        routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.VersionExcludePatterns.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="FilterXIcon" [size]="18"></lucide-icon>
+        <span>Version Filters</span>
+      </a>
+
+      <!-- Security -->
+      @if (hasAnyPermission(['Permissions.Security.ManageIps'])) {
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Security</span>
+      }
+
+      <a [routerLink]="['/admin/security']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Security.ManageIps'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="ShieldAlertIcon" [size]="18"></lucide-icon>
+        <span>IP Blocking</span>
+      </a>
+
+      <!-- Access Control -->
+      @if (hasAnyPermission(['Permissions.Users.View', 'Permissions.Roles.View'])) {
+      <span
+        class="block text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-medium px-3 pt-4 pb-1">Access
+        Control</span>
+      }
+
+      <a [routerLink]="['/admin/users']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Users.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="UsersIcon" [size]="18"></lucide-icon>
+        <span>Users</span>
+      </a>
+
+      <a [routerLink]="['/admin/roles']" routerLinkActive="bg-primary/10 text-primary hover:bg-primary/15"
+        *appHasPermission="'Permissions.Roles.View'"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="ShieldIcon" [size]="18"></lucide-icon>
+        <span>Roles</span>
+      </a>
+    </nav>
+
+    <!-- Go to Site -->
+    <div class="p-3 border-t border-gray-100 dark:border-gray-800">
+      <a href="/"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="ExternalLinkIcon" [size]="18"></lucide-icon>
+        <span>Go to Site</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col min-h-screen">
+    <!-- Top Bar -->
+    <header
+      class="h-14 flex items-center justify-between px-4 md:px-6 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#111]/80 backdrop-blur-sm sticky top-0 z-40">
+
+      <!-- Mobile Sidebar Toggle -->
+      <div class="flex items-center">
+        <button (click)="toggleSidebar()"
+          class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          title="Toggle menu">
+          <lucide-icon [img]="MenuIcon" [size]="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle -->
+        <button (click)="toggleTheme()"
+          class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          type="button" aria-label="Switch between light and dark mode" title="Switch between light and dark mode">
+          <lucide-icon [img]="MoonIcon" [size]="18" class="block dark:hidden" aria-hidden="true"></lucide-icon>
+          <lucide-icon [img]="SunIcon" [size]="18" class="hidden dark:block" aria-hidden="true"></lucide-icon>
+        </button>
+
+        <!-- Divider -->
+        <div class="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative profile-dropdown">
+          <button (click)="toggleProfile()"
+            class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <div
+              class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+              {{ auth.currentUser()?.username?.charAt(0)?.toUpperCase() }}
+            </div>
+            <div class="text-left hidden sm:block">
+              <div class="text-sm font-medium text-[#111418] dark:text-white leading-tight">{{
+                auth.currentUser()?.username }}</div>
+              <div class="text-[10px] text-gray-500 dark:text-gray-500 leading-tight">{{ auth.currentUser()?.role }}
+              </div>
+            </div>
+            <lucide-icon [img]="ChevronDownIcon" [size]="14" class="text-gray-400 transition-transform duration-200"
+              [class.rotate-180]="profileOpen()"></lucide-icon>
+          </button>
+
+          <!-- Dropdown Menu -->
+          @if (profileOpen()) {
+          <div
+            class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 z-50">
+            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800">
+              <div class="text-sm font-medium text-[#111418] dark:text-white">{{ auth.currentUser()?.username }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-500">{{ auth.currentUser()?.email }}</div>
+            </div>
+            <a href="/admin/profile"
+              class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <lucide-icon [img]="SettingsIcon" [size]="16"></lucide-icon>
+              <span>Profile Settings</span>
+            </a>
+
+            <button (click)="logout()"
+              class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+              <lucide-icon [img]="LogOutIcon" [size]="16"></lucide-icon>
+              <span>Sign Out</span>
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 p-6 bg-gray-50/50 dark:bg-[#0a0a0a]">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

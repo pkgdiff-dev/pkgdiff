@@ -1,0 +1,77 @@
+<header
+  class="relative z-50 w-full border-b border-gray-200/60 dark:border-gray-800/60">
+  <div class="px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+    <a routerLink="/" title="pkgdiff - Compare Package Versions" class="shrink-0" (click)="closeMenu()">
+      <app-logo size="md" />
+    </a>
+
+    <!-- Wide screens: the links, the audit as the call to action, the theme -->
+    <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+      @for (link of links; track link.path) {
+      @if (link.primary) {
+      <a [routerLink]="link.path" [title]="link.title" routerLinkActive="ring-2 ring-primary/30"
+        class="ml-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm">
+        <lucide-icon [img]="link.icon" [size]="15" aria-hidden="true"></lucide-icon>
+        {{ link.label }}
+      </a>
+      } @else {
+      <a [routerLink]="link.path" [title]="link.title"
+        routerLinkActive="!text-[#111418] dark:!text-white bg-gray-100 dark:bg-gray-800/80"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-[#617589] hover:text-[#111418] hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/80 transition-colors">
+        <lucide-icon [img]="link.icon" [size]="15" aria-hidden="true"></lucide-icon>
+        {{ link.label }}
+      </a>
+      }
+      }
+      <span class="mx-2 h-5 w-px bg-gray-200 dark:bg-gray-800" aria-hidden="true"></span>
+      <ng-container [ngTemplateOutlet]="themeButton" />
+    </nav>
+
+    <!-- Phones: theme and a menu button; the links open below the bar -->
+    <div class="flex md:hidden items-center gap-1">
+      <ng-container [ngTemplateOutlet]="themeButton" />
+      <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-controls="mobile-menu"
+        [attr.aria-label]="menuOpen() ? 'Close menu' : 'Open menu'"
+        class="p-2 rounded-lg text-[#617589] hover:text-[#111418] dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <lucide-icon [img]="menuOpen() ? CloseIcon : MenuIcon" [size]="20" aria-hidden="true"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (menuOpen()) {
+  <nav id="mobile-menu" aria-label="Main navigation"
+    class="md:hidden absolute left-0 right-0 top-full z-40 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] shadow-lg">
+    <ul class="px-4 py-2">
+      @for (link of links; track link.path) {
+      <li>
+        <a [routerLink]="link.path" (click)="closeMenu()" routerLinkActive="text-primary"
+          class="flex items-start gap-3 py-3 text-base font-medium text-[#111418] dark:text-gray-200 border-b border-gray-100 dark:border-gray-800/60">
+          <lucide-icon [img]="link.icon" [size]="18" class="mt-0.5 shrink-0" [class.text-primary]="link.primary"
+            aria-hidden="true"></lucide-icon>
+          <span>
+            {{ link.label }}
+            <span class="block text-xs font-normal text-gray-500 dark:text-gray-400">{{ link.title }}</span>
+          </span>
+        </a>
+      </li>
+      }
+      <!-- The rest of the site is in the footer on wide screens; on a phone it is one tap away here -->
+      <li class="flex gap-4 pt-3 pb-1 text-sm">
+        @for (link of moreLinks; track link.path) {
+        <a [routerLink]="link.path" (click)="closeMenu()" routerLinkActive="text-primary"
+          class="text-gray-500 dark:text-gray-400 hover:text-[#111418] dark:hover:text-white">{{ link.label }}</a>
+        }
+      </li>
+    </ul>
+  </nav>
+  }
+</header>
+
+<ng-template #themeButton>
+  <button (click)="toggleTheme()"
+    class="p-2 rounded-lg text-[#617589] hover:text-[#111418] dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+    type="button" aria-label="Switch between light and dark mode" title="Switch between light and dark mode">
+    <lucide-icon [img]="MoonIcon" [size]="16" class="block dark:hidden" aria-hidden="true"></lucide-icon>
+    <lucide-icon [img]="SunIcon" [size]="16" class="hidden dark:block" aria-hidden="true"></lucide-icon>
+  </button>
+</ng-template>

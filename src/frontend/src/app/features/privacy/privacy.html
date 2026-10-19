@@ -1,0 +1,137 @@
+<div class="flex flex-col items-center min-h-full min-h-[calc(100vh-64px)]">
+  <div class="w-full max-w-[720px] px-6 py-12">
+    <!-- Header -->
+    <div class="mb-10">
+      <a href="/" class="text-sm text-primary hover:underline mb-4 inline-block">&larr; Back to Home</a>
+      <h1 class="text-3xl font-bold tracking-tight text-[#111418] dark:text-white mb-2">Privacy Policy</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-500">Last updated: {{ lastUpdated }}</p>
+    </div>
+
+    <!-- Content -->
+    <div class="space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+
+      <!-- 1. Overview -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">1. Overview</h2>
+        <p>
+          {{ appName }} is committed to protecting your privacy. This policy explains what information we
+          collect, how we use it, and your rights regarding that information. We designed the Service to
+          minimize data collection — we only collect what is necessary to operate and improve {{ appName }}.
+        </p>
+      </section>
+
+      <!-- 2. Information We Collect -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">2. Information We Collect</h2>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.1 Search Data</h3>
+        <p class="mb-3">
+          When you search for a package, we store the package name, selected versions, and a timestamp
+          of the search. This data is used to display recent searches and improve the Service.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.2 Technical Data</h3>
+        <p class="mb-3">
+          We may collect your IP address, browser type, and general usage patterns through server logs.
+          This information is used for security monitoring, rate limiting, and diagnosing technical issues.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.3 Account Data</h3>
+        <p>
+          If you create an account, we store your email address and an encrypted password. We never store
+          passwords in plain text.
+        </p>
+      </section>
+
+      <!-- 3. What We Don't Collect -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. What We Don't Collect</h2>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>We do not use third-party tracking or advertising cookies</li>
+          <li>We do not sell, rent, or share your personal data with third parties</li>
+          <li>We do not collect financial or payment information</li>
+          <li>We do not track your browsing activity outside of {{ appName }}</li>
+        </ul>
+      </section>
+
+      <!-- 4. How We Use Data -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">4. How We Use Your Data</h2>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>To provide and maintain the Service</li>
+          <li>To display recent and popular package searches</li>
+          <li>To protect against abuse and enforce rate limits</li>
+          <li>To diagnose and fix technical issues</li>
+          <li>To improve the Service based on usage patterns</li>
+        </ul>
+      </section>
+
+      <!-- 5. Data Storage -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">5. Data Storage &amp; Retention</h2>
+        <p>
+          Data is stored on secured servers. Cached package data is automatically purged after 30 days
+          and refreshed from upstream sources. Search history is retained for operational purposes and may
+          be periodically cleaned. You can request deletion of your data by contacting us.
+        </p>
+      </section>
+
+      <!-- 6. Third-Party Services -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">6. Third-Party Services</h2>
+        <p>
+          {{ appName }} retrieves data from NuGet.org, npmjs.com, and GitHub to display package information.
+          When you search for a package, we make requests to these services on your behalf. These services
+          have their own privacy policies that govern how they handle data.
+        </p>
+      </section>
+
+      <!-- 7. Your Rights -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">7. Your Rights</h2>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>Request access to the personal data we hold about you</li>
+          <li>Request correction or deletion of your data</li>
+          <li>Object to processing of your data</li>
+          <li>Request a copy of your data in a portable format</li>
+        </ul>
+        <p class="mt-3">
+          To exercise any of these rights, contact us at
+          <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
+        </p>
+      </section>
+
+      <!-- 8. Changes -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">8. Changes to This Policy</h2>
+        <p>
+          We may update this Privacy Policy from time to time. Changes will be posted on this page with
+          an updated revision date. Continued use of the Service after changes constitutes acceptance
+          of the revised policy.
+        </p>
+      </section>
+
+      <!-- 9. Related Policies -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">9. Related Policies</h2>
+        <p class="mb-3">
+          For complete transparency, please also review:
+        </p>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li><a href="/terms" title="Terms of Service" class="text-primary hover:underline">Terms of Service</a> — Terms governing your use of {{ appName }}</li>
+          <li><a href="/cookies" title="Cookie Policy" class="text-primary hover:underline">Cookie Policy</a> — Details on browser storage</li>
+        </ul>
+      </section>
+
+      <!-- 10. Contact -->
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">10. Contact</h2>
+        <p>
+          If you have questions about this Privacy Policy, please contact us at
+          <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

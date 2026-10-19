@@ -1,0 +1,75 @@
+# Runs on every pull request into develop or master, and as the gate of the publish workflow.
+# No toolchain is installed on the runner: the tests run inside the SDK and Node images pinned in
+# src/backend/Dockerfile and src/frontend/Dockerfile, so CI uses exactly what the published images use.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The database tests run against the PostgreSQL image docker-compose.yml pins; without a server
+      # they would be skipped. The password belongs to this throwaway container only.
+      - name: Run the tests in the pinned SDK image, against the pinned PostgreSQL
+        run: |
+          sdk="$(sed -n 's/^FROM \(mcr\.microsoft\.com\/dotnet\/sdk:[^ ]*\) AS build.*/\1/p' src/backend/Dockerfile)"
+          postgres="$(sed -n 's/^ *image: \(postgres:[^ ]*\)$/\1/p' docker-compose.yml)"
+          test -n "$sdk"
+          test -n "$postgres"
+          docker network create pkgdiff-ci
+          docker run -d --name pkgdiff-ci-db --network pkgdiff-ci -e POSTGRES_PASSWORD=ci "$postgres"
+          docker run --rm --network pkgdiff-ci -v "$PWD:/src" -w /src \
+            -e DOTNET_NOLOGO=1 -e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+            -e "PKGDIFF_TEST_POSTGRES=Host=pkgdiff-ci-db;Username=postgres;Password=ci" \
+            "$sdk" sh -c '
+            dotnet restore src/backend/PkgDiff.slnx --locked-mode -p:ContinuousIntegrationBuild=true &&
+            dotnet test --project src/backend/PkgDiff.Tests/PkgDiff.Tests.csproj -c Release --no-restore -p:ContinuousIntegrationBuild=true'
+
+  frontend:
+    name: Frontend build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and test in the pinned Node image
+        run: |
+          node_image="$(sed -n 's/^FROM \(node:[^ ]*\) AS build.*/\1/p' src/frontend/Dockerfile)"
+          test -n "$node_image"
+          docker run --rm -v "$PWD/src/frontend:/app" -w /app -e CI=true "$node_image" sh -c '
+            npm ci && npm run build && npm test -- --watch=false && npm run test:ssr'
+
+  supply-chain:
+    name: Dependency gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Script tests
+        run: node --test .github/scripts/tests/*.test.mjs
+
+      # Fails closed: a check that could not be carried out (advisory data unreachable) is a failure
+      - name: Lock files and known vulnerabilities
+        run: CHECK_DEPS_DOCKER=1 bash .github/scripts/check-deps.sh

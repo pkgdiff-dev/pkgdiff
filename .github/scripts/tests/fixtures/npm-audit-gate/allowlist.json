@@ -1,0 +1,25 @@
+{
+  "reviewBy": "2026-11-03",
+  "exceptions": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "scope": "dev",
+      "via": "tailwindcss > micromatch > braces",
+      "reason": "Fixture reason for braces.",
+      "exitCondition": "Fixture exit condition for braces.",
+      "added": "2026-10-03"
+    },
+    {
+      "id": "GHSA-ch52-4w7c-c8xp",
+      "package": "http-cache-semantics",
+      "severity": "high",
+      "scope": "dev",
+      "via": "@angular/cli > make-fetch-happen > http-cache-semantics",
+      "reason": "Fixture reason for http-cache-semantics.",
+      "exitCondition": "Fixture exit condition for http-cache-semantics.",
+      "added": "2026-10-03"
+    }
+  ]
+}

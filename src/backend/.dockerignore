@@ -1,0 +1,22 @@
+# Host build output: a copied obj folder carries Windows package paths and breaks the publish step
+**/bin
+**/obj
+**/TestResults
+
+# Editor and user files
+.vs
+.vscode
+.idea
+**/*.user
+**/*.suo
+
+# Secrets and local settings: they must not reach the build context, where COPY . . would put
+# them into a cached build layer.
+# appsettings.json stays in the context on purpose: it is the tracked base configuration
+# (defaults only, no secrets). A server puts its own settings on top through a mounted file.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.pfx
+**/appsettings.*.json

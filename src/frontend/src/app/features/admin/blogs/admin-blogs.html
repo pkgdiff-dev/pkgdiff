@@ -1,0 +1,151 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-[#111418] dark:text-white">AutoPilot Blogs</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Manage LLM-generated blog posts.</p>
+      </div>
+      <button type="button"
+        *appHasPermission="'Permissions.Blog.Manage'"
+        (click)="triggerAutoPilot()"
+        [disabled]="triggering()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <lucide-icon [img]="RocketIcon" [size]="16" [class.animate-pulse]="triggering()"></lucide-icon>
+        {{ triggering() ? 'Queuing...' : 'Trigger AutoPilot' }}
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+      @if (loading()) {
+        <div class="flex items-center justify-center py-16">
+          <div class="text-sm text-gray-500 dark:text-gray-500">Loading blog posts...</div>
+        </div>
+      } @else if (result(); as data) {
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-100 dark:border-gray-800">
+                <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Post</th>
+                <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Package</th>
+                <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Model</th>
+                <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Status</th>
+                <th class="text-left px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Created</th>
+                <th class="text-right px-5 py-3 text-[10px] uppercase tracking-wider font-medium text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+              @for (blog of data.data; track blog.id) {
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <td class="px-5 py-3 max-w-xs">
+                    <a [routerLink]="['/blog', blog.slug]" target="_blank"
+                       class="text-sm font-medium text-[#111418] dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors line-clamp-1">
+                      {{ blog.title }}
+                    </a>
+                    <div class="text-xs font-mono text-gray-400 mt-0.5 truncate">{{ blog.slug }}</div>
+                  </td>
+                  <td class="px-5 py-3">
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium">
+                      {{ blog.packageId }} v{{ blog.version }}
+                    </span>
+                    <div class="text-xs text-gray-400 mt-1">{{ blog.registry }}</div>
+                  </td>
+                  <td class="px-5 py-3 text-xs font-mono text-gray-500 dark:text-gray-400">
+                    🤖 {{ blog.llmModelUsed }}
+                  </td>
+                  <td class="px-5 py-3">
+                    @if (blog.isPublished) {
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-medium">Published</span>
+                    } @else {
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 font-medium">Draft</span>
+                    }
+                  </td>
+                  <td class="px-5 py-3 text-xs text-gray-500">{{ formatDate(blog.createdAt) }}</td>
+                  <td class="px-5 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button type="button" *appHasPermission="'Permissions.Blog.Manage'" (click)="openEdit(blog)"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors" title="Edit" aria-label="Edit">
+                        <lucide-icon [img]="PencilIcon" [size]="14"></lucide-icon>
+                      </button>
+                      <button type="button" *appHasPermission="'Permissions.Blog.Manage'" (click)="togglePublish(blog)"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
+                        [title]="blog.isPublished ? 'Unpublish' : 'Publish'"
+                        [attr.aria-label]="blog.isPublished ? 'Unpublish' : 'Publish'">
+                        <lucide-icon [img]="blog.isPublished ? EyeOffIcon : EyeIcon" [size]="14"></lucide-icon>
+                      </button>
+                      <button type="button" *appHasPermission="'Permissions.Blog.Manage'" (click)="deleteBlog(blog)"
+                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors" title="Delete" aria-label="Delete">
+                        <lucide-icon [img]="Trash2Icon" [size]="14"></lucide-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="px-5 py-16 text-center text-sm text-gray-400">
+                    No blog posts yet. Trigger AutoPilot to generate one.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <app-pagination [page]="data.page" [totalPages]="data.totalPages" [total]="data.total" (pageChange)="goToPage($event)" />
+      }
+    </div>
+  </div>
+</div>
+
+@if (editingBlog(); as blog) {
+  <app-modal title="Edit Blog Post" size="2xl" [closable]="!saving() && !editDirty()" (closed)="closeEdit()">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+        {{ blog.packageId }} v{{ blog.version }}
+      </span>
+      <button type="button" (click)="togglePreview()" [disabled]="previewLoading()"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <lucide-icon [img]="previewMode() ? EyeOffIcon : EyeIcon" [size]="14" aria-hidden="true"></lucide-icon>
+        {{ previewMode() ? 'Editor' : 'Preview' }}
+      </button>
+    </div>
+
+    <div>
+      <label for="blog-edit-title" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Title</label>
+      <input id="blog-edit-title" type="text" [(ngModel)]="editTitle"
+        class="w-full h-10 px-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" />
+    </div>
+
+    <div class="pt-4">
+      @if (!previewMode()) {
+        <label for="blog-edit-content" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Content (Markdown)</label>
+        <textarea id="blog-edit-content" [(ngModel)]="editContent" rows="24" spellcheck="false"
+          class="w-full px-3 py-2.5 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-mono text-[#111418] dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y leading-relaxed">
+        </textarea>
+      } @else {
+        <p class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Content (Markdown)</p>
+        <div class="min-h-[480px] px-4 py-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-lg overflow-auto">
+          <div class="prose max-w-none dark:prose-invert prose-sm prose-headings:font-bold prose-a:text-primary"
+            [innerHTML]="previewHtml()">
+          </div>
+        </div>
+      }
+    </div>
+
+    <div modalFooter class="flex items-center justify-end gap-3">
+      <button type="button" (click)="closeEdit()" [disabled]="saving()"
+        class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        Cancel
+      </button>
+      <button type="button" (click)="saveEdit()" [disabled]="saving()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <lucide-icon [img]="SaveIcon" [size]="14" aria-hidden="true"></lucide-icon>
+        {{ saving() ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </app-modal>
+}

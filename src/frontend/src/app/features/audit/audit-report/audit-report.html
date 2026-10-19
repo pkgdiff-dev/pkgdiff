@@ -1,0 +1,187 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+  @if (failure() === 'not-found') {
+  <div class="py-20 text-center">
+    <h1 class="text-xl font-bold mb-2">This report does not exist or has expired</h1>
+    <p class="text-sm text-gray-500 mb-6">Reports are kept for 30 days.</p>
+    <a routerLink="/audit" class="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold">Start a new audit</a>
+  </div>
+  } @else if (!report() && failure() === 'error') {
+  <p role="alert" class="py-20 text-center text-sm text-red-600 dark:text-red-400">The report could not be loaded. Please refresh the page.</p>
+  } @else if (report(); as r) {
+  <header class="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Dependency audit</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        <span class="uppercase font-mono">{{ r.registry }}</span>
+        @if (r.format) { · <span class="font-mono">{{ r.format }}</span> }
+        · {{ r.total }} packages · {{ r.createdAt | date: 'yyyy-MM-dd HH:mm' }}
+      </p>
+    </div>
+    @if (done()) {
+    <div class="flex flex-wrap gap-2">
+      <button type="button" (click)="copyLink()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+        <lucide-icon [img]="LinkIcon" [size]="15" aria-hidden="true"></lucide-icon> Copy link
+      </button>
+      <button type="button" (click)="exportMarkdown()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm">
+        <lucide-icon [img]="DownloadIcon" [size]="15" aria-hidden="true"></lucide-icon> Markdown
+      </button>
+      <a routerLink="/audit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold">
+        <lucide-icon [img]="AgainIcon" [size]="15" aria-hidden="true"></lucide-icon> New audit
+      </a>
+    </div>
+    }
+  </header>
+
+  <!-- Running -->
+  @if (!done()) {
+  <section class="py-12" aria-live="polite">
+    <p class="text-sm font-medium mb-3">
+      @if (r.status === 'queued') { Waiting for a free worker… } @else { Checking packages: {{ r.progress }} of {{ r.total }} }
+    </p>
+    <div class="w-full h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden" role="progressbar"
+      [attr.aria-valuenow]="percent()" aria-valuemin="0" aria-valuemax="100">
+      <div class="h-full bg-primary transition-all duration-500" [style.width.%]="r.status === 'queued' ? 3 : percent()"></div>
+    </div>
+    <p class="text-xs text-gray-500 mt-3">This takes a few seconds for a small file and up to a minute or two for 200 packages.
+      You can keep this page open or come back to its link later.</p>
+  </section>
+  } @else if (r.status === 'failed') {
+  <p role="alert" class="py-12 text-sm text-red-600 dark:text-red-400">{{ r.error || 'The audit could not be completed.' }}</p>
+  } @else {
+
+  <!-- Summary -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" aria-label="Summary">
+    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div class="text-2xl font-bold">{{ r.summary.packages }}</div>
+      <div class="text-xs text-gray-500">packages checked</div>
+    </div>
+    <div class="p-4 rounded-xl border" [class]="r.summary.vulnerable ? 'border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20' : 'border-green-200 dark:border-green-900/60 bg-green-50/50 dark:bg-green-950/20'">
+      <div class="text-2xl font-bold" [class]="r.summary.vulnerable ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'">{{ r.summary.vulnerable }}</div>
+      <div class="text-xs text-gray-500">with known vulnerabilities</div>
+    </div>
+    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div class="flex flex-wrap gap-1 text-[11px] font-bold">
+        <span class="px-1.5 py-0.5 border rounded" [class]="severityClass('critical')">{{ r.summary.critical }} critical</span>
+        <span class="px-1.5 py-0.5 border rounded" [class]="severityClass('high')">{{ r.summary.high }} high</span>
+        <span class="px-1.5 py-0.5 border rounded" [class]="severityClass('medium')">{{ r.summary.medium }} medium</span>
+        <span class="px-1.5 py-0.5 border rounded" [class]="severityClass('low')">{{ r.summary.low }} low</span>
+      </div>
+      <div class="text-xs text-gray-500 mt-1.5">advisories by severity</div>
+    </div>
+    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+      <div class="text-2xl font-bold">{{ r.summary.notFound }}</div>
+      <div class="text-xs text-gray-500">not found in {{ r.registry }}</div>
+    </div>
+  </section>
+
+  @if (r.summary.malicious) {
+  <div role="alert" class="mb-6 flex items-start gap-3 p-4 rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200">
+    <lucide-icon [img]="MalwareIcon" [size]="22" class="shrink-0" aria-hidden="true"></lucide-icon>
+    <p class="text-sm"><strong>{{ r.summary.malicious }} {{ r.summary.malicious === 1 ? 'package is' : 'packages are' }} listed as
+      malware</strong> in the OpenSSF malicious-packages database. Remove {{ r.summary.malicious === 1 ? 'it' : 'them' }} and
+      check the machines that installed {{ r.summary.malicious === 1 ? 'it' : 'them' }}.</p>
+  </div>
+  }
+
+  <!-- Filter -->
+  <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Show">
+    @for (option of [['all', 'All'], ['vulnerable', 'Vulnerable'], ['clean', 'No known issues'], ['not-found', 'Not checked']]; track option[0]) {
+    <button type="button" (click)="filter.set($any(option[0]))" [attr.aria-pressed]="filter() === option[0]"
+      class="px-3 py-1.5 rounded-full text-xs font-semibold border"
+      [class]="filter() === option[0] ? 'bg-primary/10 text-primary border-primary/40' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+      {{ option[1] }}
+    </button>
+    }
+  </div>
+
+  <!-- Packages -->
+  <ul class="space-y-3">
+    @for (item of visibleItems(); track item.name) {
+    <li class="p-4 rounded-xl border"
+      [class]="item.isMalicious ? 'border-red-500' : item.status === 'vulnerable' ? 'border-red-200 dark:border-red-900/50' : 'border-gray-200 dark:border-gray-800'">
+      <div class="flex flex-wrap items-center gap-2">
+        <a [routerLink]="['/package', r.registry, item.name]" class="font-mono font-semibold hover:text-primary">{{ item.name }}</a>
+        @if (item.version) {
+        <span class="font-mono text-sm text-gray-500">{{ item.version }}</span>
+        }
+        @if (item.versionAssumed) {
+        <span class="text-[10px] uppercase text-gray-400" title="The file named no version, so the latest one was checked">latest</span>
+        }
+        @if (item.scope) {
+        <span class="text-[10px] uppercase text-gray-400">{{ item.scope }}</span>
+        }
+        <span class="ml-auto"></span>
+        @switch (item.status) {
+        @case ('vulnerable') {
+        <span class="px-2 py-0.5 border rounded text-[11px] font-bold uppercase"
+          [class]="item.isMalicious ? 'bg-red-600 text-white border-red-700' : severityClass(worstSeverity(item.advisories))">
+          {{ item.isMalicious ? 'malware' : item.advisories.length + (item.advisories.length === 1 ? ' vulnerability' : ' vulnerabilities') }}
+        </span>
+        }
+        @case ('clean') {
+        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-green-700 dark:text-green-400">
+          <lucide-icon [img]="CheckIcon" [size]="13" aria-hidden="true"></lucide-icon> No known vulnerabilities
+        </span>
+        }
+        @case ('not-found') {
+        <span class="text-[11px] font-semibold text-gray-500">Not found in {{ r.registry }}</span>
+        }
+        @default {
+        <span class="text-[11px] font-semibold text-amber-600">Could not be checked</span>
+        }
+        }
+      </div>
+
+      @if (item.requirement && item.requirement !== item.version) {
+      <p class="text-xs text-gray-500 mt-1">In the file: <span class="font-mono">{{ item.requirement }}</span>
+        @if (!item.isExact && !item.versionAssumed) { · the lowest version it allows was checked }</p>
+      }
+
+      @if (item.status === 'vulnerable') {
+      <p class="text-sm mt-2">
+        @if (item.safeVersion) {
+        Upgrade to <strong class="font-mono">{{ item.safeVersion }}</strong> or later to fix {{ item.hasUnfixedAdvisory ? 'the fixable ones' : 'all of them' }}.
+        }
+        @if (item.hasUnfixedAdvisory) {
+        <span class="text-amber-700 dark:text-amber-400">At least one has no fixed version yet.</span>
+        }
+        @if (item.latestVersion && item.latestVersion !== item.version) {
+        <span class="text-gray-500"> Latest: <span class="font-mono">{{ item.latestVersion }}</span>.</span>
+        }
+      </p>
+      <ul class="mt-3 space-y-2">
+        @for (advisory of sortedAdvisories(item); track advisory.id) {
+        <li class="text-sm">
+          <span class="inline-block px-1.5 py-0.5 border rounded text-[10px] font-bold uppercase mr-1.5"
+            [class]="severityClass(advisory.severity)">{{ advisory.isMalicious ? 'malware' : advisory.severity }}</span>
+          <a [href]="advisory.url" target="_blank" rel="noopener noreferrer" class="font-mono text-primary hover:underline">{{ advisory.id }}</a>
+          @if (advisory.aliases.length) {
+          <span class="text-xs text-gray-500"> ({{ advisory.aliases.join(', ') }})</span>
+          }
+          @if (advisory.summary) {
+          <span class="text-gray-700 dark:text-gray-300"> {{ advisory.summary }}</span>
+          }
+          <span class="text-xs" [class]="advisory.fixedIn.length ? 'text-green-700 dark:text-green-400' : 'text-gray-500'">
+            · {{ advisory.fixedIn.length ? 'fixed in ' + advisory.fixedIn.join(', ') : 'no fix yet' }}
+          </span>
+        </li>
+        }
+      </ul>
+      } @else if (item.status === 'clean' && item.latestVersion && item.latestVersion !== item.version) {
+      <p class="text-xs text-gray-500 mt-1">Latest: <span class="font-mono">{{ item.latestVersion }}</span></p>
+      }
+    </li>
+    } @empty {
+    <li class="py-10 text-center text-sm text-gray-500">No package in this group.</li>
+    }
+  </ul>
+
+  <p class="text-[11px] text-gray-400 mt-8">
+    Vulnerability data from <a href="https://osv.dev" target="_blank" rel="noopener noreferrer" class="underline">OSV.dev</a>.
+    A package without known vulnerabilities is not proven safe. This report is kept until {{ r.expiresAt | date: 'yyyy-MM-dd' }}.
+  </p>
+  }
+  } @else {
+  <p class="py-20 text-center text-sm text-gray-500">Loading the report…</p>
+  }
+</div>

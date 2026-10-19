@@ -1,0 +1,166 @@
+# =====================
+# .NET / Backend
+# =====================
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+src/backend/**/[Pp]ackages/*
+!src/backend/**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
+.vs/
+*.suo
+*.cache
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+launchSettings.json
+
+## Secrets & environment config
+appsettings.*.json
+appsettings.Local.json
+appsettings.Production.json
+
+## Server-only files of the pull-based deploy: the mounted server settings and the deploy state
+/config/
+/.deploy/
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## dotnet tools
+.dotnet/
+
+# =====================
+# Angular / Frontend
+# =====================
+## Compiled output
+src/frontend/dist/
+src/frontend/tmp/
+src/frontend/out-tsc/
+src/frontend/bazel-out/
+src/frontend/.env
+
+## Node
+src/frontend/node_modules/
+npm-debug.log
+yarn-error.log
+
+## Angular CLI cache
+src/frontend/.angular/
+
+## Test & coverage
+src/frontend/coverage/
+src/frontend/testem.log
+
+## Misc
+src/frontend/.sass-cache/
+src/frontend/connect.lock
+src/frontend/libpeerconnection.log
+src/frontend/typings/
+src/frontend/__screenshots__/
+
+# =====================
+# IDEs & Editors
+# =====================
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+## VS Code (keep shared settings)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# =====================
+# OS Files
+# =====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# =====================
+# Project specific
+# =====================
+CLAUDE/
+.claude/
+.vscode/
+
+# =====================
+# Environment & Secrets
+# =====================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH Keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+github_deploy_key
+github_deploy_key.pub
+
+# =====================
+# Deployment & CI/CD
+# =====================
+backups/
+*.bak
+*.log
+deployment-logs/
+
+# Docker volumes (local development)
+docker-compose.override.yml
+.agents
+.claude
+
+# GSD runtime artifacts (session-scoped)
+.gsd/
+# Local planning notes of the maintainer, never published
+.planning/

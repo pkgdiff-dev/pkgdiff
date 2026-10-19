@@ -1,0 +1,102 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+  <div class="max-w-3xl mx-auto">
+
+    <!-- Terminal window -->
+    <div
+      class="bg-[#0f1115] rounded-xl overflow-hidden border border-gray-800 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+      <div class="flex items-center gap-1.5 px-3 md:px-4 py-2.5 md:py-3 bg-[#1a1d23] border-b border-gray-800">
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff5f56]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ffbd2e]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#27c93f]"></div>
+        <div class="ml-3 md:ml-4 text-[10px] md:text-[11px] text-gray-500 mono-text tracking-wide">pkgdiff — find — 80x24</div>
+      </div>
+      <div class="p-4 md:p-6 mono-text text-xs md:text-sm leading-relaxed">
+        <div class="flex gap-2 mb-2">
+          <span class="text-emerald-500">$</span>
+          <span class="text-gray-300 break-all">pkgdiff find {{ packageName() }}</span>
+        </div>
+        @if (removedForSecurity()) {
+        <div class="text-[#ff6b6b] flex items-start gap-2">
+          <lucide-icon [img]="ShieldAlertIcon" [size]="14" class="mt-1 flex-shrink-0" aria-hidden="true"></lucide-icon>
+          <div>
+            <p class="font-bold">Warning: package removed for security reasons</p>
+            <p class="text-xs opacity-80 mt-1">{{ registry() }} replaced it with a security placeholder
+              @if (latestVersion()) {({{ latestVersion() }})}.</p>
+          </div>
+        </div>
+        } @else {
+        <div class="text-[#ffbd2e] flex items-start gap-2">
+          <lucide-icon [img]="AlertIcon" [size]="14" class="mt-1 flex-shrink-0" aria-hidden="true"></lucide-icon>
+          <div>
+            <p class="font-bold">No stable versions</p>
+            <p class="text-xs opacity-80 mt-1">Only prerelease versions are published
+              @if (latestVersion()) {(latest: {{ latestVersion() }})}.</p>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    @if (removedForSecurity()) {
+    <div role="alert"
+      class="mb-8 rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 p-4 md:p-5 text-red-900 dark:text-red-200">
+      <div class="flex items-start gap-3">
+        <lucide-icon [img]="ShieldAlertIcon" [size]="20" class="shrink-0 mt-0.5 text-red-600 dark:text-red-400" aria-hidden="true"></lucide-icon>
+        <div class="text-sm leading-relaxed">
+          <p class="font-semibold">Do not install {{ packageName() }}.</p>
+          <p class="mt-1">
+            This package was published with malicious code, so {{ registry() }} took it down and left only a placeholder
+            in its place. If it is in one of your projects, remove it and check the machines that installed it.
+          </p>
+        </div>
+      </div>
+
+      @if (sortedAdvisories().length > 0) {
+      <ul class="mt-4 space-y-2">
+        @for (advisory of sortedAdvisories(); track advisory.id) {
+        <li class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="px-1.5 py-0.5 rounded border font-semibold uppercase" [class]="severityClass(advisory.severity)">
+            {{ advisory.severity }}
+          </span>
+          <a [href]="advisory.url" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 font-medium underline underline-offset-2 hover:text-red-700 dark:hover:text-red-100">
+            {{ advisory.id }}
+            <lucide-icon [img]="ExternalLinkIcon" [size]="11" aria-hidden="true"></lucide-icon>
+          </a>
+          <span class="text-red-800/80 dark:text-red-200/80">{{ advisory.summary }}</span>
+        </li>
+        }
+      </ul>
+      }
+    </div>
+    } @else {
+    <p class="mb-8 text-sm text-gray-600 dark:text-gray-400">
+      pkgdiff compares the stable releases of a package. {{ packageName() }} has none on {{ registry() }} yet; once one is
+      published, its release notes show here.
+    </p>
+    }
+
+    @if (suggestions().length > 0) {
+    <div>
+      <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        {{ removedForSecurity() ? 'Were you looking for one of these?' : 'Similar packages' }}
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        @for (pkg of suggestions(); track pkg.packageId) {
+        <a [routerLink]="['/package', registry(), pkg.packageId]"
+          class="p-3 md:p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm transition-all bg-white dark:bg-[#0a0a0a] group">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors truncate">
+              {{ pkg.packageId }}
+            </p>
+            <lucide-icon [img]="ArrowRightIcon" [size]="14"
+              class="shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" aria-hidden="true">
+            </lucide-icon>
+          </div>
+        </a>
+        }
+      </div>
+    </div>
+    }
+  </div>
+</div>

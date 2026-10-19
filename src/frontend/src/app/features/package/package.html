@@ -1,0 +1,259 @@
+@if (state() === 'loading') {
+<div class="flex items-center justify-center min-h-[calc(100vh-64px)]">
+  <div class="flex flex-col items-center gap-6 max-w-sm text-center">
+    <div class="relative">
+      <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <lucide-icon [img]="InfoIcon" [size]="16" class="text-primary"></lucide-icon>
+      </div>
+    </div>
+    <div class="space-y-2">
+      <p class="text-lg font-medium text-gray-900 dark:text-white">Analyzing Package</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 min-h-[1.25rem]">
+        {{ progressMessage() || 'Fetching latest data from ' + registry() + '...' }}
+      </p>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Not Found -->
+@if (state() === 'not-found') {
+<app-package-not-found [packageName]="packageId()" [registry]="registry()" />
+}
+
+<!-- Known to the registry, but nothing stable to compare -->
+@if (state() === 'no-versions' && metadata(); as meta) {
+<app-no-stable-versions [packageName]="meta.packageId" [registry]="registry()" [latestVersion]="meta.latestVersion"
+  [advisories]="meta.trust?.advisories ?? []" />
+}
+
+<!-- Service Error -->
+@if (state() === 'error') {
+<app-service-unavailable (onRetry)="retry()" />
+}
+
+<!-- No Releases -->
+@if (state() === 'no-releases') {
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-8">
+  <!-- Package info -->
+  <div class="mb-6 md:mb-8 relative z-10">
+    <div class="flex flex-wrap items-end gap-2 md:gap-3 mb-2">
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight">{{ packageId() }}</h1>
+      <span class="px-2 py-0.5 border text-xs font-mono rounded mb-1.5 uppercase" [class]="registryBadgeClass()">{{
+        registry() }}</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="flex border-b border-gray-200 dark:border-gray-700 mb-6 md:mb-8 overflow-x-auto relative z-10">
+    <button (click)="setTab('releases')"
+      class="px-4 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+      [class]="activeTab() === 'releases' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+      Releases
+    </button>
+    <button (click)="setTab('diff')"
+      class="px-4 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+      [class]="activeTab() === 'diff' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+      Diff
+    </button>
+    <button (click)="setTab('metadata')"
+      class="px-4 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+      [class]="activeTab() === 'metadata' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+      Metadata
+    </button>
+  </nav>
+
+  <app-no-releases />
+</div>
+}
+
+<!-- Loaded -->
+@if (state() === 'loaded' && metadata()) {
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-8">
+  <!-- Package info -->
+  <div class="mb-6 md:mb-8 relative z-10">
+    <div class="flex items-start gap-3 mb-2">
+      <div class="flex flex-wrap items-end gap-2 md:gap-3 flex-1 min-w-0">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight break-words min-w-0">{{ metadata()!.packageId }}</h1>
+        <span class="px-2 py-0.5 border text-xs font-mono rounded mb-1.5 uppercase" [class]="registryBadgeClass()">{{
+          registry() }}</span>
+        @if (metadata()!.latestVersion) {
+        <span class="text-lg md:text-xl text-gray-500 dark:text-gray-400 mb-1">v{{ metadata()!.latestVersion }}</span>
+        <app-trust-badge [trust]="trust()" [version]="metadata()!.latestVersion" />
+        }
+      </div>
+
+      <!-- Phones: share and export sit in the top right corner and open a sheet from the bottom -->
+      <div class="flex sm:hidden items-center gap-2 flex-shrink-0">
+        <button type="button" (click)="shareOpen.set(true)" aria-haspopup="dialog" [attr.aria-label]="'Share ' + metadata()!.packageId"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800">
+          <lucide-icon [img]="ShareIcon" [size]="18" aria-hidden="true"></lucide-icon>
+        </button>
+        @if (canExport()) {
+        <button type="button" (click)="exportOpen.set(true)" aria-haspopup="dialog" aria-label="Export"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800">
+          <lucide-icon [img]="DownloadIcon" [size]="18" aria-hidden="true"></lucide-icon>
+        </button>
+        }
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 md:gap-4 text-sm text-gray-500 dark:text-gray-400">
+      <p class="max-w-2xl">{{ metadata()!.description }}</p>
+    </div>
+    @if (maliciousVersions().length) {
+    <div role="alert"
+      class="mt-4 p-4 rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200">
+      <p class="font-bold">Malicious package warning</p>
+      <p class="text-sm">{{ maliciousVersions().length === 1 ? 'Version' : 'Versions' }} {{ maliciousVersions().join(', ') }}
+        {{ maliciousVersions().length === 1 ? 'is' : 'are' }} listed as malware in the OpenSSF malicious-packages
+        database (via OSV.dev). Do not install {{ maliciousVersions().length === 1 ? 'it' : 'them' }}.</p>
+    </div>
+    }
+    <div class="flex flex-wrap items-center gap-3 md:gap-4 text-sm text-gray-500 dark:text-gray-400">
+      @if (metadata()!.gitHubRepositoryUrl) {
+      <a [href]="metadata()!.gitHubRepositoryUrl" target="_blank"
+        class="text-primary hover:underline flex items-center gap-1.5">
+        View on GitHub
+        <lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon>
+      </a>
+      }
+    </div>
+    @if (metadata()!.authors) {
+    <div class="mt-4 text-xs text-gray-500 font-medium">
+      Authors: {{ metadata()!.authors }}
+    </div>
+    }
+  </div>
+
+  <!-- Updating Banner with Progress Bar -->
+  @if (isUpdating()) {
+  <div
+    class="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-sm">
+    <div class="flex items-start gap-4">
+      <div class="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0 mt-0.5">
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm font-bold text-blue-900 dark:text-blue-100">Updating Release Notes</p>
+          @if (progressInfo()) {
+          <span
+            class="text-xs font-mono font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">
+            {{ progressInfo()!.current }}/{{ progressInfo()!.total }}
+          </span>
+          }
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="relative w-full h-2 bg-blue-100 dark:bg-blue-900/40 rounded-full overflow-hidden mb-2">
+          <div
+            class="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-lg"
+            [style.width.%]="progressInfo()?.percentage || 0">
+            <!-- Shimmer effect -->
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer">
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-blue-700 dark:text-blue-300 truncate" [title]="progressMessage() || ''">
+          {{ progressMessage() || 'Fetching latest release information. This page will update automatically when
+          complete.' }}
+        </p>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Tabs & Export -->
+  <div
+    class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 mb-6 md:mb-8 relative z-10">
+    <nav class="flex overflow-x-auto flex-1 min-w-0">
+      <button (click)="setTab('releases')"
+        class="px-3 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+        [class]="activeTab() === 'releases' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+        Releases
+      </button>
+      <button (click)="setTab('diff')"
+        class="px-3 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+        [class]="activeTab() === 'diff' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+        Diff
+      </button>
+      <button (click)="setTab('versions')"
+        class="px-3 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+        [class]="activeTab() === 'versions' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+        Versions
+      </button>
+      <button (click)="setTab('metadata')"
+        class="px-3 md:px-6 py-2.5 md:py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-all"
+        [class]="activeTab() === 'metadata' ? 'border-primary font-semibold text-[#111418] dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300'">
+        Metadata
+      </button>
+    </nav>
+
+    <div class="hidden sm:flex items-center gap-2 mb-[-1.5px] flex-shrink-0">
+      <button type="button" (click)="shareOpen.set(true)" aria-haspopup="dialog" [title]="'Share ' + metadata()!.packageId"
+        class="inline-flex items-center gap-2 px-6 py-2.5 md:py-3 border-b-2 border-transparent text-sm font-medium whitespace-nowrap text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300 transition-all">
+        <lucide-icon [img]="ShareIcon" [size]="18" aria-hidden="true"></lucide-icon>
+        Share
+      </button>
+      @if (canExport()) {
+      <button type="button" (click)="exportOpen.set(true)" aria-haspopup="dialog"
+        class="inline-flex items-center gap-2 px-6 py-2.5 md:py-3 border-b-2 border-transparent text-sm font-medium whitespace-nowrap text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-300 transition-all">
+        <lucide-icon [img]="DownloadIcon" [size]="18" aria-hidden="true"></lucide-icon>
+        Export
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- Tab content -->
+  @if (activeTab() === 'releases') {
+  <app-releases-tab [versions]="mappedVersions()" [packageId]="metadata()!.packageId" [registry]="registry()"
+    [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [selectedVersion]="version()" />
+  }
+  @if (activeTab() === 'diff') {
+  <app-diff-tab [versions]="mappedVersions()" [packageId]="metadata()!.packageId" [registry]="registry()" [trust]="trust()"
+    [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [analysisData]="analysisData()" [loading]="analysisLoading()"
+    [error]="analysisError()" [initialFrom]="compareRange()?.from" [initialTo]="compareRange()?.to"
+    (onAnalyze)="onStartAnalysis($event)" />
+  }
+  @if (activeTab() === 'versions') {
+  <app-versions-tab [versions]="allVersions()" [packageId]="metadata()!.packageId" [registry]="registry()"
+    [latestVersion]="metadata()!.latestVersion" [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [trust]="trust()"
+    [selectedVersion]="version()" (compare)="compareWithLatest($event)" />
+  }
+  @if (activeTab() === 'metadata') {
+  <div class="bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 md:p-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+      <div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Package Details</h3>
+        <dl class="space-y-4">
+          <div>
+            <dt class="text-xs text-gray-500">Project URL</dt>
+            <dd class="text-sm font-medium">
+              <a [href]="metadata()!.projectUrl" target="_blank"
+                class="text-primary hover:underline flex items-center gap-1.5">
+                {{ metadata()!.projectUrl || 'N/A' }}
+                <lucide-icon [img]="LinkIcon" [size]="14"></lucide-icon>
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <app-trust-panel [trust]="trust()" [version]="metadata()!.latestVersion" [registry]="registry()" />
+  }
+
+  <!-- Outside the layered header and tab bar, so the dialogs cover everything on the page -->
+  @if (shareOpen()) {
+  <app-share-modal [packageId]="metadata()!.packageId" [registry]="registry()" [version]="version()"
+    (closed)="shareOpen.set(false)" />
+  }
+  @if (exportOpen() && canExport()) {
+  <app-export-modal [exportType]="activeTab() === 'diff' ? 'diff' : 'releases'" [packageMetadata]="metadata()"
+    [versions]="mappedVersions()" [diffResult]="activeTab() === 'diff' ? analysisData() : null" [registry]="registry()"
+    (closed)="exportOpen.set(false)" />
+  }
+</div>
+}

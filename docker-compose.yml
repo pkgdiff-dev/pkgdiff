@@ -1,0 +1,300 @@
+# Production stack. Backend and frontend run prebuilt images from GHCR; nothing is built here.
+# Deploy with deploy/deploy.sh (docs/ops/deploy-ghcr.md). To build from source instead, add
+# docker-compose.build.yml: docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Every service has a memory and a process limit, so one of them running away cannot take the
+# host (which also runs other projects) down with it; the two that depend on load can be changed
+# in .env. Nothing but the two ports the host nginx proxies to and the two monitoring ports is
+# published, and all four on the loopback interface only.
+services:
+  backend:
+    image: ghcr.io/pkgdiff-dev/pkgdiff-backend:${PKGDIFF_IMAGE_TAG:?PKGDIFF_IMAGE_TAG is not set; deploy/deploy.sh writes it to .env}
+    container_name: pkgdiff-backend
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Database=pkgdiffdb;Username=postgres;Password=${POSTGRES_PASSWORD}
+      - JwtSettings__SecretKey=${JWT_SECRET}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Ollama__BaseUrl=http://host.docker.internal:11434
+      - AutoPilot__LlmModel=qwen2:0.5b
+      - Redis__ConnectionString=redis:6379
+      - CacheSettings__Backend=Redis
+      - Security__SettingsEncryptionKey=${SETTINGS_ENCRYPTION_KEY}
+      - AdminSettings__AdminPassword=${ADMIN_PASSWORD:-}
+      - AdminSettings__ViewerPassword=${VIEWER_PASSWORD:-}
+      - ForwardedHeaders__TrustedNetworks=${FORWARDED_TRUSTED_NETWORKS:-172.28.0.0/16}
+      - GitHubSettings__PersonalAccessToken=${GITHUB_PAT:-}
+    # The image runs as an unprivileged user (uid 1654) and needs no capability
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # No CPU limit: the work of the backend is bounded in the application (10 analyses at a time,
+    # 10 job workers), and a limit above the number of cores of the host would stop the container
+    # from being created at all
+    mem_limit: ${PKGDIFF_BACKEND_MEMORY:-2g}
+    pids_limit: 1024
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # The settings of this server, on top of the defaults in the image (appsettings.json, no secrets)
+      - ./config/appsettings.json:/app/appsettings.Production.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Ready means the database and Redis answer. An image from before /health/ready existed answers 404 there
+      # and is asked through its old health endpoint, so a rollback to it still shows as healthy.
+      test: ["CMD-SHELL", "code=$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health/ready); [ \"$$code\" = 200 ] || { [ \"$$code\" = 404 ] && curl -fsS -o /dev/null http://localhost:8080/api/package/health; }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  # The render server: the frontend image run with Node instead of nginx. It renders the public
+  # pages and asks the API through the frontend container, the way a browser does.
+  ssr:
+    image: ghcr.io/pkgdiff-dev/pkgdiff-frontend:${PKGDIFF_IMAGE_TAG:?PKGDIFF_IMAGE_TAG is not set; deploy/deploy.sh writes it to .env}
+    container_name: pkgdiff-ssr
+    restart: always
+    # An image from before server rendering has no render server. The service then idles, so a
+    # rollback to such an image still brings the stack up; its nginx never asks this service.
+    entrypoint: ["/bin/sh", "-c", "if [ -f /app/server/server.mjs ]; then exec node /app/server/server.mjs; else echo 'this image has no render server; idling'; exec sleep infinity; fi"]
+    user: "65534:65534"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      # Where a render finds the API: nginx of the frontend service, inside the compose network
+      - SSR_INTERNAL_ORIGIN=http://frontend
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD-SHELL", "[ ! -f /app/server/server.mjs ] || wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  frontend:
+    image: ghcr.io/pkgdiff-dev/pkgdiff-frontend:${PKGDIFF_IMAGE_TAG:?PKGDIFF_IMAGE_TAG is not set; deploy/deploy.sh writes it to .env}
+    container_name: pkgdiff-frontend
+    restart: always
+    # The image runs nginx as the unprivileged "nginx" user. Capabilities and the file system
+    # are left as they are on purpose: an image from before that change (a rollback) starts
+    # nginx as root, which still needs both.
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    ports:
+      - "127.0.0.1:8090:80"
+    healthcheck:
+      # A file nginx serves itself: its health says nothing about the render server or the backend.
+      # 127.0.0.1, not localhost: localhost resolves to ::1 first and nginx listens on IPv4 only.
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/robots.txt || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    # nginx looks the backend up once, when it starts; the render server is looked up per request
+    depends_on:
+      backend:
+        condition: service_healthy
+      ssr:
+        condition: service_started
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  db:
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    container_name: pkgdiff-db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=pkgdiffdb
+    # The entrypoint starts as root to fix the ownership of the data directory and then runs the
+    # server as the "postgres" user
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${PKGDIFF_DB_MEMORY:-1024m}
+    pids_limit: 512
+    # No port on the host: backups and maintenance use docker exec
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  redis:
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    container_name: pkgdiff-redis
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 320m
+    cpus: 1.0
+    pids_limit: 128
+    # No port on the host: only the backend reaches it, over the compose network
+    volumes:
+      - redis-data:/data
+    # Redis holds the cache and the rate-limit counters, nothing that cannot be rebuilt: at its
+    # own limit, below the limit of the container, it drops the entries used least recently
+    command: redis-server --stop-writes-on-bgsave-error no --maxmemory 192mb --maxmemory-policy allkeys-lru
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    container_name: pkgdiff-prometheus
+    restart: always
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 256
+    # Loopback only: reached from outside through an SSH tunnel (docs/ops/operations.md)
+    ports:
+      - "127.0.0.1:${PKGDIFF_PROMETHEUS_PORT:-9390}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=2GB'
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  grafana:
+    image: grafana/grafana:13.2.4@sha256:dbbc38ea21103cefb50396340cd88afec779c7e070b0a7bf5a75b4ce46651d3f
+    container_name: pkgdiff-grafana
+    restart: always
+    environment:
+      # Required: with an empty value Grafana would start with its default admin password
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set in .env}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 256
+    # Loopback only: reached from outside through an SSH tunnel (docs/ops/operations.md)
+    ports:
+      - "127.0.0.1:${PKGDIFF_GRAFANA_PORT:-3300}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      # The Prometheus data source and the pkgdiff dashboard, from this repository
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    # No health condition on Prometheus: monitoring must never be the reason an application
+    # deploy fails
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - pkgdiff-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  pkgdiff-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1

@@ -1,0 +1,243 @@
+<!-- Version selector panel -->
+<div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 md:p-5 mb-6 md:mb-8">
+  <div class="flex flex-col md:flex-row items-center gap-3 md:gap-8">
+    <!-- From -->
+    <div class="flex-1 w-full md:w-auto">
+      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">From</label>
+      <div class="relative w-full">
+        <button (click)="toggleFromDropdown($event)"
+          class="w-full inline-flex items-center justify-between gap-2 py-2 px-3 rounded-lg border bg-white dark:bg-gray-800 text-sm font-mono text-[#111418] dark:text-white border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer">
+          <span>{{ fromVersion() }}</span>
+          <lucide-icon [img]="ChevronDownIcon" [size]="14"
+            class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
+            [class.rotate-180]="fromOpen()">
+          </lucide-icon>
+        </button>
+        @if (fromOpen()) {
+        <div
+          class="absolute left-0 top-full mt-1.5 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700/60 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50 max-h-60 overflow-y-auto">
+          @for (v of versionList(); track v) {
+          <button (click)="selectFromVersion(v)"
+            class="w-full text-left px-4 py-2.5 text-xs font-mono transition-colors"
+            [ngClass]="{
+              'text-primary bg-primary/5': fromVersion() === v,
+              'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50': fromVersion() !== v
+            }">
+            {{ v }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Swap icon -->
+    <div class="flex items-center justify-center md:pt-5">
+      <lucide-icon [img]="ArrowIcon" [size]="20" class="text-gray-400"></lucide-icon>
+    </div>
+
+    <!-- To -->
+    <div class="flex-1 w-full md:w-auto">
+      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">To</label>
+      <div class="relative w-full">
+        <button (click)="toggleToDropdown($event)"
+          class="w-full inline-flex items-center justify-between gap-2 py-2 px-3 rounded-lg border bg-white dark:bg-gray-800 text-sm font-mono text-[#111418] dark:text-white border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer">
+          <span>{{ toVersion() }}</span>
+          <lucide-icon [img]="ChevronDownIcon" [size]="14"
+            class="text-gray-400 dark:text-gray-500 transition-transform duration-200"
+            [class.rotate-180]="toOpen()">
+          </lucide-icon>
+        </button>
+        @if (toOpen()) {
+        <div
+          class="absolute left-0 top-full mt-1.5 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700/60 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden z-50 max-h-60 overflow-y-auto">
+          @for (v of versionList(); track v) {
+          <button (click)="selectToVersion(v)"
+            class="w-full text-left px-4 py-2.5 text-xs font-mono transition-colors"
+            [ngClass]="{
+              'text-primary bg-primary/5': toVersion() === v,
+              'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50': toVersion() !== v
+            }">
+            {{ v }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Summary badges -->
+    <div
+      class="md:border-l border-gray-200 dark:border-gray-700 md:pl-8 flex flex-col gap-1 w-full md:w-auto mt-4 md:mt-0"
+      [class.opacity-50]="!summary()">
+      <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5 px-2 py-1 rounded"
+          [class]="summary()?.newFeatures ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-800'">
+          <span class="w-1.5 h-1.5 rounded-full"
+            [class]="summary()?.newFeatures ? 'bg-green-500' : 'bg-gray-400'"></span>
+          <span class="text-xs font-bold" [class]="summary()?.newFeatures ? 'text-green-700 dark:text-green-400' : 'text-gray-500'">
+            {{ summary()?.newFeatures ?? 0 }} Features
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 px-2 py-1 rounded"
+          [class]="summary()?.bugFixes ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-100 dark:bg-gray-800'">
+          <span class="w-1.5 h-1.5 rounded-full"
+            [class]="summary()?.bugFixes ? 'bg-blue-500' : 'bg-gray-400'"></span>
+          <span class="text-xs font-bold" [class]="summary()?.bugFixes ? 'text-blue-700 dark:text-blue-400' : 'text-gray-500'">
+            {{ summary()?.bugFixes ?? 0 }} Fixes
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 px-2 py-1 rounded"
+          [class]="summary()?.otherChanges ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'">
+          <span class="w-1.5 h-1.5 rounded-full"
+            [class]="summary()?.otherChanges ? 'bg-gray-500' : 'bg-gray-400'"></span>
+          <span class="text-xs font-bold" [class]="summary()?.otherChanges ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500'">
+            {{ summary()?.otherChanges ?? 0 }} Changes
+          </span>
+        </div>
+      </div>
+      <p class="text-[10px] text-gray-400 font-medium px-1">
+        @if (summary()) {
+        Comparing semantic changes between versions
+        } @else {
+        Select versions to compare
+        }
+      </p>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- Removed standalone export button -->
+
+<!-- Loading -->
+@if (loading()) {
+<div class="py-12 flex justify-center">
+  <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+</div>
+}
+
+<!-- Diff content -->
+@if (!loading() && diffResult(); as result) {
+<app-upgrade-security [trust]="diffTrust()" [from]="result.fromVersion" [to]="result.toVersion"
+  [versions]="diffVersionList()" [registry]="registry()" />
+<div class="space-y-8 md:space-y-12 mb-12 md:mb-20">
+  <!-- Each version's release notes -->
+  @for (version of diffVersions(); track version.version) {
+  @if (!version.isEmpty) {
+  <section>
+    <div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 flex-wrap">
+      <h3 class="text-sm font-bold uppercase tracking-widest text-gray-400">v{{ version.version }}</h3>
+      @if (version.categories && version.categories.length > 0) {
+      @for (category of version.categories; track category) {
+      @let style = getCategoryStyle(category);
+      <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider"
+        [class]="style.bgClass + ' ' + style.textClass + ' border ' + style.borderClass">
+        {{ style.label }}
+      </span>
+      }
+      }
+      <div class="h-px flex-1 bg-gray-100 dark:bg-gray-800"></div>
+      @let releaseLink = getReleaseLink(packageId(), version.version, version.releaseNotesSource, gitHubUrl(), registry());
+      @if (releaseLink) {
+      <a [href]="releaseLink" target="_blank" rel="noopener noreferrer"
+        class="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary">
+        <lucide-icon [img]="ExternalLinkIcon" [size]="12"></lucide-icon>
+        <span class="text-[10px] font-medium">{{ getSourceLabel(version.releaseNotesSource, registry()) }}</span>
+      </a>
+      }
+    </div>
+    @if (version.compiledFrom) {
+    <app-compiled-notes-notice [source]="version.compiledFrom" />
+    }
+    @if (version.entries && version.entries.length > 0 && version.releaseNotesSource !== 'GitHub') {
+    <!-- Categorized entries -->
+    <div class="relative transition-all duration-300"
+      [class]="(!isExpanded(version.version) && version.releaseNotes && version.releaseNotes.length > 800) ? 'max-h-60 overflow-hidden' : ''">
+      <div class="space-y-2">
+        @for (entry of version.entries; track $index) {
+        @let style = getCategoryStyle(entry.category);
+        <div
+          class="flex items-start gap-2 md:gap-3 p-2.5 md:p-3 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50"
+          [class]="style.borderClass">
+          <div class="flex items-center gap-2 min-w-fit pt-0.5">
+            <lucide-icon [img]="style.icon" [size]="16" [class]="style.textClass">
+            </lucide-icon>
+          </div>
+          <div class="flex-1 markdown-content">
+            <div class="text-sm text-gray-800 dark:text-gray-200 block" [innerHTML]="entry.textHtml ?? ''"></div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    @if (!isExpanded(version.version) && version.releaseNotes.length > 800) {
+    <div class="relative -mt-16 h-16 bg-gradient-to-t from-white dark:from-background-dark to-transparent pointer-events-none"></div>
+    <div class="flex justify-center mt-1">
+      <button (click)="toggleExpand(version.version)"
+        class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary px-4 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 text-xs font-semibold transition-colors">
+        Read More
+      </button>
+    </div>
+    } @else if (isExpanded(version.version) && version.releaseNotes.length > 800) {
+    <div class="flex justify-center mt-2">
+      <button (click)="toggleExpand(version.version)"
+        class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 text-xs font-semibold transition-colors">
+        Show Less
+      </button>
+    </div>
+    }
+    } @else if (version.releaseNotes) {
+    <!-- Fallback to raw text -->
+    <div
+      class="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 relative transition-all duration-300"
+      [class]="(!isExpanded(version.version) && version.releaseNotes && version.releaseNotes.length > 800) ? 'max-h-60 overflow-hidden' : ''">
+      <div class="p-4 flex gap-4">
+        <lucide-icon [img]="InfoIcon" [size]="20" class="text-diff-modified-text mt-0.5"></lucide-icon>
+        <div>
+          <div class="text-sm text-gray-800 dark:text-gray-200 block markdown-content" [innerHTML]="version.releaseNotesHtml"></div>
+          @if (version.publishedDate) {
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ version.publishedDate | slice:0:10 }}</p>
+          }
+        </div>
+      </div>
+      @if (!isExpanded(version.version) && version.releaseNotes.length > 800) {
+      <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white dark:from-gray-900 to-transparent flex items-end justify-center pointer-events-none rounded-b-lg"></div>
+      <button (click)="toggleExpand(version.version)" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary px-4 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 pointer-events-auto text-xs font-semibold transition-colors flex items-center gap-1">
+        Read More
+      </button>
+      } @else if (isExpanded(version.version)) {
+      <div class="w-full flex justify-center py-4 border-t border-gray-100 dark:border-gray-800">
+        <button (click)="toggleExpand(version.version)" class="bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 text-xs font-semibold transition-colors">
+          Show Less
+        </button>
+      </div>
+      }
+    </div>
+    }
+  </section>
+  }
+  }
+</div>
+}
+
+<!-- The comparison failed -->
+@if (!loading() && error()) {
+<div class="py-16 flex flex-col items-center justify-center text-center max-w-md mx-auto gap-4" role="alert">
+  <lucide-icon [img]="AlertIcon" [size]="28" class="text-red-500"></lucide-icon>
+  <p class="text-sm text-gray-700 dark:text-gray-300">{{ error() }}</p>
+  <button type="button" (click)="onVersionChange()"
+    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+    <lucide-icon [img]="RefreshIcon" [size]="14"></lucide-icon>
+    Try again
+  </button>
+</div>
+}
+
+<!-- No diff data -->
+@if (!loading() && !error() && !diffResult() && fromVersion() && toVersion()) {
+<div class="py-20 flex flex-col items-center justify-center text-center max-w-md mx-auto">
+  <p class="text-sm text-gray-500 dark:text-gray-400">Select two versions to see what changed between them.</p>
+</div>
+}

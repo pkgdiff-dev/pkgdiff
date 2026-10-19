@@ -1,0 +1,178 @@
+<div class="flex flex-col items-center justify-center min-h-[calc(100vh-64px)]">
+  <div class="w-full max-w-[720px] px-4 md:px-6 py-12 md:py-20">
+    <!-- Hero text -->
+    <h1 class="text-center text-[#617589] dark:text-gray-400 text-lg md:text-xl font-medium mb-8 tracking-tight">
+      Compare package versions across NuGet, npm, PyPI & Pub. Track breaking changes, analyze release notes, and
+      understand version differences.
+    </h1>
+    <p class="text-center text-sm text-gray-500 dark:text-gray-400 -mt-5 mb-8">
+      Have a whole project? <a routerLink="/audit" class="text-primary font-medium hover:underline">Check your dependency file for known vulnerabilities →</a>
+    </p>
+
+    <!-- Search bar -->
+    <div class="relative group">
+      <div
+        class="flex flex-col md:flex-row items-stretch gap-0 bg-white dark:bg-[#1a1a1a] border border-[#dbe0e6] dark:border-gray-800 rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all duration-200 overflow-hidden">
+
+        <!-- Custom Registry Dropdown -->
+        <div class="border-b md:border-b-0 md:border-r border-[#dbe0e6] dark:border-gray-800 registry-dropdown">
+          <!-- Skeleton -->
+          @if (loading()) {
+          <div class="h-12 md:h-14 px-4 md:px-5 flex items-center gap-2 w-full md:w-auto bg-gray-50 dark:bg-gray-900/50 md:rounded-l-xl">
+            <div class="w-5 h-5 md:w-6 md:h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex-shrink-0"></div>
+            <div class="w-14 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div class="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse ml-1"></div>
+          </div>
+          } @else if (selectedRegistry(); as selected) {
+          <!-- Trigger Button -->
+          <button (click)="toggleDropdown($event)" type="button" title="Select package registry"
+            aria-label="Select package registry" aria-haspopup="true" [attr.aria-expanded]="open()"
+            class="h-12 md:h-14 px-4 md:px-5 flex items-center gap-2 w-full md:w-auto bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-medium text-[#111418] dark:text-gray-200 focus:outline-none md:rounded-l-xl">
+            <div class="w-5 h-5 md:w-6 md:h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+              <img [src]="selected.icon" alt="" width="32" height="32" class="w-6 h-6 md:w-8 md:h-8" />
+            </div>
+            <span>{{ selected.label }}</span>
+            <lucide-icon [img]="ChevronDownIcon" [size]="16" class="ml-1 transition-transform" [class.rotate-180]="open()"
+              aria-hidden="true"></lucide-icon>
+          </button>
+          }
+        </div>
+
+        <!-- Search Input -->
+        <div class="flex-1 flex items-center px-3 md:px-4">
+          <lucide-icon [img]="SearchIcon" [size]="20"
+            class="text-[#617589] dark:text-gray-500 mr-2 md:mr-3"></lucide-icon>
+          <label for="package-search" class="sr-only">Search for a package</label>
+          <input id="package-search" autofocus type="text" [(ngModel)]="searchTerm" (keydown.enter)="handleSearch()"
+            autocomplete="off" autocapitalize="off" spellcheck="false"
+            [disabled]="loading()"
+            class="w-full h-12 md:h-14 bg-transparent border-none focus:ring-0 focus:outline-none text-base md:text-lg placeholder:text-[#617589] dark:placeholder:text-gray-600 text-[#111418] dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            [placeholder]="loading() ? 'Loading registries...' : 'Search package...'" />
+          <div class="hidden md:flex items-center gap-1 opacity-40 group-focus-within:opacity-100 transition-opacity">
+            <kbd
+              class="px-2 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-[10px] font-mono">ENTER</kbd>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dropdown Panel (Outside the flex container for full width) -->
+      @if (open()) {
+<div
+        class="absolute left-0 right-0 top-[calc(100%+0.5rem)] bg-white dark:bg-[#1a1a1a] border border-[#dbe0e6] dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div class="flex flex-col md:flex-row">
+          <!-- Left: Recent Searches -->
+          <div class="p-3 md:p-4 flex-1 border-b md:border-b-0 md:border-r border-[#dbe0e6] dark:border-gray-800">
+            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-3">Recent Searches</div>
+            @if (recentSearches().length > 0) {
+            <div class="space-y-1">
+              @for (reg of recentSearches(); track reg.value) {
+<button (click)="selectRegistry(reg)" type="button"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#111418] dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                [class.bg-gray-100]="selectedRegistry()?.value === reg.value"
+                [class.dark:bg-gray-800]="selectedRegistry()?.value === reg.value">
+                <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                  <img [src]="reg.icon" alt="" width="32" height="32" loading="lazy" class="w-8 h-8" />
+                </div>
+                <span>{{ reg.label }}</span>
+              </button>
+}
+            </div>
+            } @else {
+            <div class="text-sm text-gray-400 py-2">No recent searches</div>
+            }
+          </div>
+
+          <!-- Right: All Registries -->
+          <div class="p-3 md:p-4 flex-1">
+            <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-3">All Registries</div>
+            <div class="space-y-1">
+              @for (reg of registries(); track reg.value) {
+<button (click)="selectRegistry(reg)" type="button"
+                [disabled]="reg.disabled"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-[#111418] dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                [class.bg-gray-100]="selectedRegistry()?.value === reg.value"
+                [class.dark:bg-gray-800]="selectedRegistry()?.value === reg.value">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                    <img [src]="reg.icon" alt="" width="32" height="32" loading="lazy" class="w-8 h-8" />
+                  </div>
+                  <span>{{ reg.label }}</span>
+                </div>
+                @if (reg.disabled) {
+<span class="text-[10px] text-gray-400 uppercase tracking-wider">Soon</span>
+}
+              </button>
+}
+            </div>
+          </div>
+        </div>
+      </div>
+}
+    </div>
+
+    <!-- Example searches -->
+    <div class="mt-5 md:mt-8 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-4">
+      <div class="flex items-center gap-1.5 text-[#617589] dark:text-gray-400">
+        <lucide-icon [img]="SparklesIcon" [size]="15"></lucide-icon>
+        <span class="text-xs md:text-sm font-medium">Try searching</span>
+      </div>
+
+      <div class="hidden sm:block w-px h-5 bg-[#dbe0e6] dark:bg-gray-800"></div>
+
+      <div class="flex flex-wrap gap-2 md:gap-3 justify-center">
+        @if (loading()) {
+          <div class="w-28 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          <div class="w-16 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+          <div class="w-24 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+        } @else {
+          @for (example of exampleSearches(); track example) {
+          <a [routerLink]="['/package', selectedRegistry()!.value, example]" (click)="rememberRegistry()"
+            [title]="'Search for ' + example + ' package'"
+            class="mono-text text-sm px-3 py-1.5 bg-white dark:bg-[#1a1a1a] border border-[#dbe0e6] dark:border-gray-800 rounded-lg shadow-sm text-[#111418] dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary dark:hover:text-primary hover:border-primary/30 dark:hover:border-primary/50 cursor-pointer transition-all duration-200">
+            {{ example }}
+          </a>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Live updates ticker -->
+    <div class="mt-10 md:mt-16 mb-4">
+      <app-live-ticker />
+    </div>
+
+    <!-- Features / SEO content -->
+    <section class="mt-6">
+      <div class="flex items-center justify-center mb-8">
+        <div class="h-px bg-gray-200 dark:bg-gray-800 flex-1"></div>
+        <h2 class="px-4 text-[10px] uppercase tracking-[0.15em] font-bold text-[#4a5568] dark:text-gray-400">
+          What you can do with pkgdiff
+        </h2>
+        <div class="h-px bg-gray-200 dark:bg-gray-800 flex-1"></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+        <div class="flex flex-col items-center gap-2">
+          <lucide-icon [img]="GitCompareIcon" [size]="22" class="text-primary mb-1"></lucide-icon>
+          <h3 class="text-sm font-semibold text-[#111418] dark:text-white">Compare Versions</h3>
+          <p class="text-xs text-[#617589] dark:text-gray-400 leading-relaxed">
+            Select any two versions of a package and see a side-by-side diff of release notes and breaking changes.
+          </p>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+          <lucide-icon [img]="ZapIcon" [size]="22" class="text-primary mb-1"></lucide-icon>
+          <h3 class="text-sm font-semibold text-[#111418] dark:text-white">Track Breaking Changes</h3>
+          <p class="text-xs text-[#617589] dark:text-gray-400 leading-relaxed">
+            Quickly identify breaking changes, deprecations, and new features before upgrading a dependency.
+          </p>
+        </div>
+        <div class="flex flex-col items-center gap-2">
+          <lucide-icon [img]="SparklesIcon" [size]="22" class="text-primary mb-1"></lucide-icon>
+          <h3 class="text-sm font-semibold text-[#111418] dark:text-white">4 Registries Supported</h3>
+          <p class="text-xs text-[#617589] dark:text-gray-400 leading-relaxed">
+            Works with NuGet (.NET), npm (JavaScript), PyPI (Python), and Pub (Dart / Flutter).
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

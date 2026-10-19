@@ -1,0 +1,96 @@
+<footer class="mt-auto relative overflow-hidden">
+  <!-- Gradient Background -->
+  <div class="absolute inset-0 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-900/50 dark:to-transparent">
+  </div>
+
+  <div class="relative border-t border-gray-100 dark:border-gray-800">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      <!-- Main Footer Content -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
+        <!-- Brand Section -->
+        <div class="col-span-2">
+          <div class="mb-4">
+            <a href="/" class="cursor-pointer">
+              <app-logo [size]="'md'"></app-logo>
+            </a>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-sm mb-4">
+            {{ appDescription }}
+          </p>
+        </div>
+
+
+        <!-- Explore: the pages that are not in the header -->
+        <nav aria-label="Explore" class="md:justify-self-end">
+          <h3 class="font-semibold text-sm text-[#111418] dark:text-white mb-3">Explore</h3>
+          <ul class="space-y-3">
+            @for (link of exploreLinks; track link.path) {
+            <li>
+              <a [routerLink]="link.path"
+                class="text-xs text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+                {{ link.label }}
+              </a>
+            </li>
+            }
+          </ul>
+        </nav>
+
+        <!-- Connect -->
+        <div class="justify-self-start md:justify-self-end">
+          <h3 class="font-semibold text-sm text-[#111418] dark:text-white mb-3">Connect</h3>
+          <div class="space-y-3">
+            <a href="https://github.com/pkgdiff-dev" target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors group">
+              <div class="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-primary/10 transition-colors">
+                <lucide-icon [img]="GithubIcon" [size]="14"></lucide-icon>
+              </div>
+              <span>GitHub</span>
+            </a>
+            <a href="https://twitter.com/pkgdiff" target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors group">
+              <div class="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-primary/10 transition-colors">
+                <lucide-icon [img]="TwitterIcon" [size]="14"></lucide-icon>
+              </div>
+              <span>Twitter</span>
+            </a>
+            <a href="https://www.linkedin.com/company/pkgdiff" target="_blank" rel="noopener noreferrer"
+              class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors group">
+              <div class="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-primary/10 transition-colors">
+                <lucide-icon [img]="LinkedinIcon" [size]="14"></lucide-icon>
+              </div>
+              <span>LinkedIn</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="pt-6 border-t border-gray-100 dark:border-gray-800">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-500">
+            <span>© {{ currentYear }} <a href="/" class="hover:underline; hover:text-blue-500">{{ appName }}</a>. All
+              rights
+              reserved.</span>
+            <span class="hidden md:inline">•</span>
+            <span class="hidden md:inline">every version tells a <span
+                class="font-semibold text-green-500">story</span></span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 md:gap-6">
+            <a href="/terms"
+              class="text-xs text-gray-500 dark:text-gray-500 hover:text-[#111418] dark:hover:text-gray-300 transition-colors">
+              Terms
+            </a>
+            <a href="/privacy"
+              class="text-xs text-gray-500 dark:text-gray-500 hover:text-[#111418] dark:hover:text-gray-300 transition-colors">
+              Privacy
+            </a>
+            <a href="/cookies"
+              class="text-xs text-gray-500 dark:text-gray-500 hover:text-[#111418] dark:hover:text-gray-300 transition-colors">
+              Cookies
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

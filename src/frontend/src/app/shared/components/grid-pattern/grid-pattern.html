@@ -1,0 +1,42 @@
+<div class="absolute inset-0 size-full overflow-hidden pointer-events-none">
+  <!-- Grid -->
+  <svg class="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid-pattern" width="25" height="25" patternUnits="userSpaceOnUse">
+        <path d="M 25 0 L 0 0 0 25" fill="none" class="stroke-gray-300/40 dark:stroke-gray-700/30" stroke-width="1" />
+      </pattern>
+
+      <!-- Light mode gradient mask -->
+      <linearGradient id="grid-fade-light" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0" />
+        <stop offset="25%" stop-color="white" stop-opacity="0.6" />
+        <stop offset="50%" stop-color="white" stop-opacity="1" />
+        <stop offset="75%" stop-color="white" stop-opacity="0.6" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+
+      <!-- Dark mode gradient mask -->
+      <linearGradient id="grid-fade-dark" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0" />
+        <stop offset="25%" stop-color="white" stop-opacity="0.3" />
+        <stop offset="50%" stop-color="white" stop-opacity="0.5" />
+        <stop offset="75%" stop-color="white" stop-opacity="0.3" />
+        <stop offset="100%" stop-color="white" stop-opacity="0" />
+      </linearGradient>
+
+      <mask id="grid-mask-light">
+        <rect width="100%" height="100%" fill="url(#grid-fade-light)" />
+      </mask>
+
+      <mask id="grid-mask-dark">
+        <rect width="100%" height="100%" fill="url(#grid-fade-dark)" />
+      </mask>
+    </defs>
+
+    <!-- Light mode grid -->
+    <rect width="100%" height="100%" fill="url(#grid-pattern)" mask="url(#grid-mask-light)" class="dark:hidden" />
+
+    <!-- Dark mode grid -->
+    <rect width="100%" height="100%" fill="url(#grid-pattern)" mask="url(#grid-mask-dark)" class="hidden dark:block" />
+  </svg>
+</div>

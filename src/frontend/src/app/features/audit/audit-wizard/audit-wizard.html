@@ -1,0 +1,174 @@
+<div class="max-w-4xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+  <header class="mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+      <lucide-icon [img]="ShieldIcon" [size]="26" class="text-primary" aria-hidden="true"></lucide-icon>
+      Dependency security audit
+    </h1>
+    <p class="mt-2 text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-2xl">
+      Paste your dependency file and see which of your packages have known vulnerabilities, how severe they are and
+      which version fixes them.
+    </p>
+  </header>
+
+  <!-- Steps -->
+  <ol class="flex items-center gap-2 md:gap-4 mb-8 text-xs md:text-sm" aria-label="Audit steps">
+    @for (label of steps; track label; let i = $index) {
+    <li class="flex items-center gap-2" [attr.aria-current]="step() === i + 1 ? 'step' : null">
+      <button type="button" (click)="goTo($any(i + 1))" [disabled]="i + 1 >= step()"
+        class="flex items-center gap-2 disabled:cursor-default">
+        <span class="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center font-bold border"
+          [class]="i + 1 < step() ? 'bg-primary text-white border-primary' : i + 1 === step() ? 'border-primary text-primary' : 'border-gray-300 dark:border-gray-700 text-gray-400'">
+          {{ i + 1 }}
+        </span>
+        <span class="hidden sm:inline" [class]="i + 1 === step() ? 'font-semibold' : 'text-gray-500'">{{ label }}</span>
+      </button>
+      @if (i < steps.length - 1) {
+      <span class="w-4 md:w-10 h-px bg-gray-200 dark:bg-gray-800" aria-hidden="true"></span>
+      }
+    </li>
+    }
+  </ol>
+
+  <!-- Step 1: ecosystem -->
+  @if (step() === 1) {
+  <section aria-labelledby="step1-title">
+    <h2 id="step1-title" class="text-lg font-semibold mb-4">Which ecosystem is your project?</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      @for (item of ecosystems; track item.registry) {
+      <button type="button" (click)="chooseEcosystem(item)"
+        class="text-left p-4 rounded-xl border transition-all hover:border-primary/60 hover:shadow-sm"
+        [class]="ecosystem()?.registry === item.registry ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a1a1a]'">
+        <div class="flex items-center gap-3 mb-2">
+          <img [src]="item.icon" alt="" width="28" height="28" class="w-7 h-7" />
+          <div>
+            <div class="font-semibold">{{ item.label }}</div>
+            <div class="text-xs text-gray-500">{{ item.registryLabel }}</div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ item.files.join(' · ') }}</div>
+      </button>
+      }
+    </div>
+  </section>
+  }
+
+  <!-- Step 2: the file -->
+  @if (step() === 2 && ecosystem(); as eco) {
+  <section aria-labelledby="step2-title">
+    <h2 id="step2-title" class="text-lg font-semibold mb-1">Paste your {{ eco.label }} dependency file</h2>
+    <p class="text-sm text-gray-500 mb-4">Accepted: <span class="font-mono">{{ eco.files.join(', ') }}</span>. The type is
+      recognised automatically; a lock file gives the most precise result.</p>
+
+    <label for="manifest" class="sr-only">Dependency file content</label>
+    <textarea id="manifest" rows="14" spellcheck="false" [ngModel]="content()" (ngModelChange)="content.set($event)"
+      [placeholder]="eco.placeholder"
+      class="w-full font-mono text-xs md:text-sm p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] focus:outline-none focus:ring-2 focus:ring-primary/40"></textarea>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+      <label class="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+        <lucide-icon [img]="UploadIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        Or upload a file
+        <input type="file" class="sr-only" (change)="onFileSelected($event)"
+          accept=".json,.csproj,.props,.config,.txt,.toml,.lock,.yaml,.yml,Pipfile" />
+      </label>
+      @if (fileName()) {
+      <span class="text-xs text-gray-500 inline-flex items-center gap-1">
+        <lucide-icon [img]="FileIcon" [size]="13" aria-hidden="true"></lucide-icon>{{ fileName() }}
+      </span>
+      }
+    </div>
+
+    @if (parseError()) {
+    <p role="alert" class="mt-4 text-sm text-red-600 dark:text-red-400">{{ parseError() }}</p>
+    }
+
+    <p class="mt-4 text-xs text-gray-500">
+      Only the package names and versions read from the file are kept, together with the report, for 30 days. The file
+      itself is not stored. Package names are looked up in {{ eco.registryLabel }} and OSV.dev.
+    </p>
+
+    <div class="flex items-center justify-between mt-6">
+      <button type="button" (click)="goTo(1)" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+        <lucide-icon [img]="BackIcon" [size]="16" aria-hidden="true"></lucide-icon> Back
+      </button>
+      <button type="button" (click)="readPackages()" [disabled]="!content().trim() || parsing()"
+        class="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold disabled:opacity-50">
+        {{ parsing() ? 'Reading…' : 'Read packages' }}
+      </button>
+    </div>
+  </section>
+  }
+
+  <!-- Step 3: review -->
+  @if (step() === 3 && parsed(); as result) {
+  <section aria-labelledby="step3-title">
+    <h2 id="step3-title" class="text-lg font-semibold mb-1">{{ rows().length }} packages found</h2>
+    <p class="text-sm text-gray-500 mb-4">
+      Read as <span class="font-mono">{{ result.format }}</span>. Check or change the version of each package; an empty
+      version means its latest version is checked.
+    </p>
+
+    @if (result.warnings.length) {
+    <ul class="mb-4 space-y-1 text-xs text-amber-700 dark:text-amber-400">
+      @for (warning of result.warnings; track $index) {
+      <li>{{ warning }}</li>
+      }
+    </ul>
+    }
+
+    <div class="relative overflow-x-auto border border-gray-200 dark:border-gray-800 rounded-xl">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th scope="col" class="text-left px-3 py-2">Package</th>
+            <th scope="col" class="text-left px-3 py-2">In the file</th>
+            <th scope="col" class="text-left px-3 py-2">Version to check</th>
+            <th scope="col" class="px-3 py-2"><span class="sr-only">Remove</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          @for (row of rows(); track row.name; let i = $index) {
+          <tr>
+            <td class="px-3 py-2 font-mono">
+              {{ row.name }}
+              @if (row.scope) {
+              <span class="ml-1 text-[10px] uppercase text-gray-400">{{ row.scope }}</span>
+              }
+            </td>
+            <td class="px-3 py-2 font-mono text-xs text-gray-500">{{ row.requirement || '—' }}</td>
+            <td class="px-3 py-2">
+              <input type="text" [ngModel]="row.version ?? ''" (ngModelChange)="setVersion(i, $event)"
+                placeholder="latest" [attr.aria-label]="'Version of ' + row.name"
+                class="w-24 md:w-32 font-mono text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-transparent" />
+            </td>
+            <td class="px-3 py-2 text-right">
+              <button type="button" (click)="remove(i)" [attr.aria-label]="'Remove ' + row.name"
+                class="p-1 text-gray-400 hover:text-red-500">
+                <lucide-icon [img]="TrashIcon" [size]="15" aria-hidden="true"></lucide-icon>
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (unpinned()) {
+    <p class="mt-2 text-xs text-gray-500">{{ unpinned() }} without a version: their latest version is checked.</p>
+    }
+    @if (startError()) {
+    <p role="alert" class="mt-4 text-sm text-red-600 dark:text-red-400">{{ startError() }}</p>
+    }
+
+    <div class="flex items-center justify-between mt-6">
+      <button type="button" (click)="goTo(2)" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+        <lucide-icon [img]="BackIcon" [size]="16" aria-hidden="true"></lucide-icon> Back
+      </button>
+      <button type="button" (click)="startAudit()" [disabled]="rows().length === 0 || starting()"
+        class="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold disabled:opacity-50">
+        {{ starting() ? 'Starting…' : 'Check ' + rows().length + ' packages' }}
+      </button>
+    </div>
+  </section>
+  }
+</div>

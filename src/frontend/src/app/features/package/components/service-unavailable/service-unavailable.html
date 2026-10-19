@@ -1,0 +1,58 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-6 py-8 md:py-12">
+  <div class="max-w-3xl mx-auto">
+
+    <!-- Terminal window -->
+    <div class="bg-[#0f1115] rounded-xl overflow-hidden border border-gray-800 mb-8 md:mb-12 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+      <div class="flex items-center gap-1.5 px-3 md:px-4 py-2.5 md:py-3 bg-[#1a1d23] border-b border-gray-800">
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff5f56]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ffbd2e]"></div>
+        <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#27c93f]"></div>
+        <div class="ml-3 md:ml-4 text-[10px] md:text-[11px] text-gray-500 mono-text tracking-wide">pkgdiff — status — 80x24</div>
+      </div>
+      <div class="p-4 md:p-6 mono-text text-xs md:text-sm leading-relaxed">
+        <div class="flex gap-2 mb-2">
+          <span class="text-emerald-500">$</span>
+          <span class="text-gray-300">pkgdiff health --check</span>
+        </div>
+        <div class="text-amber-400 flex items-start gap-2 mb-3">
+          <lucide-icon [img]="AlertIcon" [size]="14" class="mt-1 flex-shrink-0"></lucide-icon>
+          <div>
+            <p class="font-bold">Error: 503 - Service Temporarily Unavailable</p>
+            <p class="text-xs opacity-80 mt-1">The API is experiencing high traffic or a temporary network issue.</p>
+          </div>
+        </div>
+        <div class="flex gap-2 text-gray-500">
+          <span class="text-emerald-500">$</span>
+          <span class="animate-pulse">_</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions bar -->
+    <div class="flex items-center justify-between mb-6 md:mb-10 pb-4 md:pb-6 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-4">
+        <button (click)="goHome()"
+          class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <lucide-icon [img]="ArrowLeftIcon" [size]="14"></lucide-icon>
+          Back to home
+        </button>
+      </div>
+      <div class="text-[10px] text-gray-400 mono-text uppercase tracking-widest">
+        Status: degraded
+      </div>
+    </div>
+
+    <!-- Info + Retry -->
+    <div class="flex flex-col items-center text-center">
+      <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">What happened?</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
+        Our servers are temporarily unable to process your request. This is usually resolved within a few moments.
+      </p>
+      <button (click)="retry()"
+        class="inline-flex items-center justify-center h-11 md:h-10 px-6 bg-[#111418] dark:bg-white text-white dark:text-[#0a0a0a] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity">
+        <lucide-icon [img]="RefreshIcon" [size]="14" class="mr-2"></lucide-icon>
+        Retry request
+      </button>
+    </div>
+  </div>
+</div>

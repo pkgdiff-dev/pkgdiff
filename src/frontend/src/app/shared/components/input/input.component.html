@@ -1,0 +1,24 @@
+<div class="relative w-full">
+    @if (icon(); as leadingIcon) {
+    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <lucide-icon [img]="leadingIcon" [size]="16" aria-hidden="true"></lucide-icon>
+    </div>
+    }
+
+    <input [type]="inputType()" [value]="value()" [disabled]="disabled()" [name]="name()"
+        [autocomplete]="autocomplete()" [placeholder]="placeholder()" [attr.aria-label]="ariaLabel() || placeholder() || null"
+        (input)="onInput($event)" (blur)="onTouch()"
+        [class]="'w-full h-11 pr-4 bg-gray-50 dark:bg-gray-900/50 border border-[#dbe0e6] dark:border-gray-700 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed ' + (icon() ? 'pl-10' : 'pl-4') + (showPasswordToggle() ? ' pr-11' : '')" />
+
+    @if (showPasswordToggle()) {
+    <button type="button" (click)="togglePassword()" [attr.aria-label]="showPasswordValue() ? 'Hide password' : 'Show password'"
+        [attr.aria-pressed]="showPasswordValue()"
+        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        @if (showPasswordValue()) {
+        <lucide-icon [img]="EyeOffIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        } @else {
+        <lucide-icon [img]="EyeIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        }
+    </button>
+    }
+</div>

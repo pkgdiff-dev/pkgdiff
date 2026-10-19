@@ -1,0 +1,262 @@
+<div class="relative">
+  <app-grid-pattern />
+
+  <div class="relative z-10 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-[#111418] dark:text-white">Scrape Logs</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Track failed release note fetches and identify improvement opportunities.</p>
+      </div>
+      <button type="button"
+        (click)="clearResolved()"
+        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
+      >
+        <lucide-icon [img]="TrashIcon" [size]="16"></lucide-icon>
+        <span>Clear Resolved</span>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
+      <button type="button"
+        (click)="switchTab('summary')"
+        [class]="activeTab() === 'summary' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 dark:text-gray-500'"
+        class="px-4 py-2 text-sm font-medium transition-colors"
+      >
+        Summary
+      </button>
+      <button type="button"
+        (click)="switchTab('logs')"
+        [class]="activeTab() === 'logs' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 dark:text-gray-500'"
+        class="px-4 py-2 text-sm font-medium transition-colors"
+      >
+        All Logs
+      </button>
+    </div>
+
+    <!-- Content -->
+    @if (loading()) {
+      <div class="flex items-center justify-center py-24">
+        <div class="text-sm text-gray-500">Loading...</div>
+      </div>
+    } @else {
+      <!-- Summary Tab -->
+      @if (activeTab() === 'summary' && summary(); as data) {
+        <div class="space-y-6">
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <lucide-icon [img]="BugIcon" [size]="20" class="text-red-600 dark:text-red-400"></lucide-icon>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.totalFailures }}</div>
+                  <div class="text-xs text-gray-500">Total Failures</div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+                  <lucide-icon [img]="AlertIcon" [size]="20" class="text-orange-600 dark:text-orange-400"></lucide-icon>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.unresolvedCount }}</div>
+                  <div class="text-xs text-gray-500">Unresolved</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Failing Packages -->
+          <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+              <h2 class="text-sm font-semibold text-[#111418] dark:text-white">Top Failing Packages</h2>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="border-b border-gray-200 dark:border-gray-800">
+                  <tr class="bg-gray-50 dark:bg-gray-900/50">
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failures</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Reason</th>
+                    <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Seen</th>
+                    <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                  @for (pkg of data.topFailingPackages; track pkg.packageId) {
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                      <td class="px-5 py-4">
+                        <div class="flex items-center gap-2">
+                          <lucide-icon [img]="PackageIcon" [size]="16" class="text-gray-400"></lucide-icon>
+                          <span class="text-sm font-medium text-[#111418] dark:text-white">{{ pkg.packageId }}</span>
+                        </div>
+                      </td>
+                      <td class="px-5 py-4">
+                        <span class="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded">
+                          {{ pkg.failureCount }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-4">
+                        <span [class]="getReasonColor(pkg.latestReason || '')" class="text-sm">
+                          {{ pkg.latestReason || '-' }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">{{ formatDate(pkg.lastOccurrence) }}</td>
+                      <td class="px-5 py-4 text-right">
+                        <button type="button"
+                          (click)="resolveAllForPackage(pkg.packageId)"
+                          class="px-2.5 py-1 rounded text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 border border-green-200 dark:border-green-800 transition-colors"
+                          title="Resolve all for this package"
+                        >
+                          Resolve All
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-400">No failing packages found</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- All Logs Tab -->
+      @if (activeTab() === 'logs') {
+        <div class="space-y-4">
+          <!-- Filter -->
+          <div class="flex items-center gap-3">
+            <div class="flex-1 flex gap-3">
+              <input
+                type="text"
+                [(ngModel)]="packageFilter"
+                (keydown.enter)="filterLogs()"
+                placeholder="Filter by package name..."
+                aria-label="Filter by package name"
+                class="flex-1 h-10 px-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-[#111418] dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <button type="button" (click)="filterLogs()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors">
+                Filter
+              </button>
+              @if (packageFilter()) {
+                <button type="button" (click)="clearFilter()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors">
+                  Clear
+                </button>
+              }
+              <button type="button" (click)="loadLogs()" aria-label="Refresh" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors">
+                <lucide-icon [img]="RefreshIcon" [size]="16"></lucide-icon>
+              </button>
+            </div>
+            <label class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                [checked]="showResolved()"
+                (change)="toggleShowResolved()"
+                class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span>Show Resolved</span>
+            </label>
+          </div>
+
+          @if (logs(); as data) {
+            <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="border-b border-gray-200 dark:border-gray-800">
+                    <tr class="bg-gray-50 dark:bg-gray-900/50">
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failure Reason</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sources</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                    @for (log of data.data; track log.id) {
+                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                        <td class="px-5 py-4">
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-[#111418] dark:text-white">{{ log.packageId }}</span>
+                            @if (log.githubRepoUrl) {
+                              <a [href]="log.githubRepoUrl" target="_blank" rel="noopener" class="text-gray-400 hover:text-primary transition-colors" title="GitHub Repository" aria-label="GitHub Repository">
+                                <lucide-icon [img]="ExternalLinkIcon" [size]="14"></lucide-icon>
+                              </a>
+                            }
+                          </div>
+                        </td>
+                        <td class="px-5 py-4">
+                          <code class="text-sm font-mono text-gray-600 dark:text-gray-400">{{ log.version }}</code>
+                        </td>
+                        <td class="px-5 py-4">
+                          <span [class]="getReasonColor(log.failureReason)" class="text-sm">{{ log.failureReason }}</span>
+                          @if (log.availableVersions) {
+                            <div class="mt-1 text-xs text-gray-400 truncate max-w-xs" [title]="log.availableVersions">
+                              Available: {{ log.availableVersions }}
+                            </div>
+                          }
+                        </td>
+                        <td class="px-5 py-4">
+                          <span class="px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">{{ log.attemptedSources }}</span>
+                        </td>
+                        <td class="px-5 py-4">
+                          @if (log.isResolved) {
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded">Resolved</span>
+                          } @else {
+                            <span class="px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded">Unresolved</span>
+                          }
+                        </td>
+                        <td class="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">{{ formatDate(log.createdAt) }}</td>
+                        <td class="px-5 py-4 text-right">
+                          <div class="flex items-center justify-end gap-2">
+                            @if (!log.isResolved) {
+                              <button type="button"
+                                (click)="resolveLog(log)"
+                                class="px-2.5 py-1 rounded text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 border border-green-200 dark:border-green-800 transition-colors"
+                                title="Mark as resolved"
+                              >
+                                Resolve
+                              </button>
+                            }
+                            <button type="button"
+                              (click)="deleteLog(log)"
+                              class="px-2.5 py-1 rounded text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 transition-colors"
+                              title="Delete this log"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="7" class="px-5 py-12 text-center text-sm text-gray-400">
+                          @if (packageFilter()) {
+                            No scrape logs found for "{{ packageFilter() }}"
+                          } @else {
+                            No scrape logs found
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <app-pagination [page]="data.page" [totalPages]="data.totalPages" [total]="showResolved() ? data.total : null"
+                (pageChange)="goToPage($event)" />
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

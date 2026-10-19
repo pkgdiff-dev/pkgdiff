@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>http changelog | Dart package</title>
+</head>
+<body>
+<section class="tab-content detail-tab-changelog-content -active markdown-body"><div class="changelog-entry">
+<h2 class="changelog-version hash-header" id="160">1.6.0 <a href="#160" class="hash-link">#</a></h2>
+<div class="changelog-content">
+<ul>
+<li><strong>Breaking</strong> Change the behavior of <code>Request.body</code> so that a charset
+parameter is only added for text and XML media types. This brings the
+behavior of <code>package:http</code> in line with RFC-8259.</li>
+<li>On the web, fix cancellations for <code>StreamSubscription</code>s of response bodies
+waiting for the next chunk.</li>
+<li>Export <code>MediaType</code> from <code>package:http_parser</code>.</li>
+<li>Added a section on testing to <code>README.md</code>.</li>
+</ul>
+</div></div><div class="changelog-entry">
+<h2 class="changelog-version hash-header" id="150">1.5.0 <a href="#150" class="hash-link">#</a></h2>
+<div class="changelog-content">
+<ul>
+<li>Fixed a bug in <code>IOClient</code> where the <code>HttpClient</code>'s response stream was
+cancelled after the response stream was completed.</li>
+<li>Added support for aborting requests before they complete.</li>
+<li>Clarify that some header names may not be sent/received.</li>
+</ul>
+</div></div><div class="changelog-entry">
+<h2 class="changelog-version hash-header" id="140">1.4.0 <a href="#140" class="hash-link">#</a></h2>
+<div class="changelog-content">
+<ul>
+<li>Fixed default encoding for application/json without a charset
+to use utf8 instead of latin1, ensuring proper JSON decoding.</li>
+<li>Avoid references to <code>window</code> in <code>BrowserClient</code>, restoring support for web
+workers and NodeJS.</li>
+</ul>
+</div></div></section>
+</body>
+</html>

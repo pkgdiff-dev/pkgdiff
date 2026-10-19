@@ -1,0 +1,28 @@
+<div class="fixed inset-0 z-50 flex justify-center" [class]="layoutClass()">
+  <div class="absolute inset-0 bg-gray-900/60 dark:bg-black/70 backdrop-blur-sm" aria-hidden="true" (click)="close()"></div>
+
+  <div role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId" cdkTrapFocus cdkTrapFocusAutoCapture
+    class="relative w-full flex flex-col bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden"
+    [class]="panelClass()">
+    @if (sheetOnMobile()) {
+    <div class="sm:hidden flex justify-center pt-2.5" aria-hidden="true">
+      <span class="h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-700"></span>
+    </div>
+    }
+    <header class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+      <h2 [id]="titleId" class="text-base md:text-lg font-semibold text-gray-900 dark:text-white min-w-0 truncate">
+        {{ title() }}
+      </h2>
+      <button type="button" (click)="close()" [disabled]="!closable()" aria-label="Close dialog"
+        class="p-2 -mr-2 rounded-full text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
+        <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
+      </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6">
+      <ng-content />
+    </div>
+
+    <footer class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800 empty:hidden"><ng-content select="[modalFooter]" /></footer>
+  </div>
+</div>

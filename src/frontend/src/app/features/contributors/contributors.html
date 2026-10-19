@@ -1,0 +1,98 @@
+<div class="flex-1 w-full max-w-4xl mx-auto px-6 py-12">
+
+    <!-- Header -->
+    <header class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+            <div class="flex items-center gap-3 mb-2 sm:mb-0">
+                <span class="text-3xl">🏆</span>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Contributors
+                </h1>
+            </div>
+
+            <!-- Manual refresh + countdown -->
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+                    <lucide-icon [img]="RefreshIcon" [size]="12" class="opacity-60"></lucide-icon>
+                    <span>Auto-refreshes in <span class="text-primary font-bold">{{ countdown() }}s</span></span>
+                </div>
+                <button (click)="manualRefresh()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                 border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400
+                 hover:text-primary hover:border-primary/40 transition-colors">
+                    <lucide-icon [img]="RefreshIcon" [size]="12"></lucide-icon>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 text-sm max-w-xl mt-1">
+            Honoring developers mentioned in GitHub release notes across all tracked packages.
+            Every <span class="font-mono text-primary">&#64;mention</span> counts. Top 100 shown.
+        </p>
+    </header>
+
+    <!-- Loading Skeleton -->
+    @if (loading()) {
+<div class="space-y-3">
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+<div
+            class="flex items-center gap-4 p-4 rounded-xl border border-gray-200/60 dark:border-[#1f1f1f] animate-pulse">
+            <div class="w-10 h-5 bg-gray-200 dark:bg-gray-800 rounded"></div>
+            <div class="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+            <div class="flex-1 h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+            <div class="w-16 h-5 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+        </div>
+}
+    </div>
+}
+
+    <!-- Leaderboard -->
+    @if (!loading() && contributors().length > 0) {
+<div class="space-y-2">
+        @for (c of contributors(); track c.gitHubUsername) {
+<a [href]="c.gitHubUrl" target="_blank" rel="noopener noreferrer" class="group flex items-center gap-3 md:gap-4 px-3 md:px-5 py-3 md:py-4 rounded-xl border border-gray-200/60 dark:border-[#1f1f1f]
+              hover:bg-slate-50 dark:hover:bg-white/[0.03] hover:border-primary/30 transition-all duration-150 block">
+
+            <!-- Rank -->
+            <div class="w-7 md:w-10 text-center font-mono text-sm font-bold shrink-0" [ngClass]="getRankClass(c.rank)">
+                {{ getRankIcon(c.rank) }}
+            </div>
+
+            <!-- Avatar -->
+            <img [src]="'https://avatars.githubusercontent.com/' + c.gitHubUsername + '?s=40'" [alt]="c.gitHubUsername"
+                width="32" height="32" class="w-8 h-8 rounded-full ring-1 ring-gray-200 dark:ring-gray-700 shrink-0 object-cover"
+                loading="lazy" />
+
+            <!-- Username -->
+            <div class="flex-1 min-w-0">
+                <span
+                    class="font-mono text-sm font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors truncate block">
+                    &#64;{{ c.gitHubUsername }}
+                </span>
+                <span class="text-[11px] text-slate-400 font-mono truncate block">github.com/{{ c.gitHubUsername }}</span>
+            </div>
+
+            <!-- Mention count badge -->
+            <div
+                class="shrink-0 flex items-center gap-1.5 px-2.5 md:px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/40 rounded-full">
+                <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-400">{{ c.mentionCount }}</span>
+                <span class="hidden sm:inline text-[10px] text-blue-500 dark:text-blue-500 uppercase tracking-wider">mentions</span>
+            </div>
+        </a>
+}
+    </div>
+}
+
+    <!-- Empty State -->
+    @if (!loading() && contributors().length === 0) {
+<div class="py-24 text-center">
+        <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+            <lucide-icon [img]="UsersIcon" class="w-8 h-8 text-slate-400"></lucide-icon>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No contributors yet</h3>
+        <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
+            Contributors will appear here as GitHub release notes are analyzed.
+        </p>
+    </div>
+}
+
+</div>
