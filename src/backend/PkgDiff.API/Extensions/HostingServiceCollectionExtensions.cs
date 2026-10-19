@@ -4,6 +4,7 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PkgDiff.API.Filters;
 using PkgDiff.API.Jobs;
 using PkgDiff.API.Middleware;
 using PkgDiff.API.Options;
@@ -84,10 +85,12 @@ public static class HostingServiceCollectionExtensions
 
     public static IServiceCollection AddPkgDiffBackgroundJobs(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddHangfire(config => config
+        services.AddHttpContextAccessor();
+        services.AddHangfire((provider, config) => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
+            .UseFilter(new JobTriggerFilter(provider.GetRequiredService<IHttpContextAccessor>()))
             .UsePostgreSqlStorage(options =>
                 options.UseNpgsqlConnection(configuration.GetConnectionString("DefaultConnection"))));
 

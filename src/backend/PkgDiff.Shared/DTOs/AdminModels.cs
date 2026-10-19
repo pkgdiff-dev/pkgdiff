@@ -129,12 +129,16 @@ public class RecentJobInfo
 {
     public string JobId { get; set; } = string.Empty;
     public string JobName { get; set; } = string.Empty;
+    public string JobType { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public DateTime? CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public long? Duration { get; set; }
     public string? ExceptionMessage { get; set; }
     public string? PackageId { get; set; }
+    public string? Registry { get; set; }
+    public string? Detail { get; set; }
+    public string? TriggeredBy { get; set; }
     public List<RecentJobInfo> ChildJobs { get; set; } = new();
 }
 
@@ -142,11 +146,15 @@ public class QueuedJobInfo
 {
     public string JobId { get; set; } = string.Empty;
     public string JobName { get; set; } = string.Empty;
+    public string JobType { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public DateTime? EnqueuedAt { get; set; }
     public DateTime? StartedAt { get; set; }
     public string? ServerId { get; set; }
     public string? PackageId { get; set; }
+    public string? Registry { get; set; }
+    public string? Detail { get; set; }
+    public string? TriggeredBy { get; set; }
 }
 
 public class SystemSettingDto

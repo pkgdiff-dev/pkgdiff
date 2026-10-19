@@ -1,10 +1,9 @@
 using PkgDiff.Application.Interfaces;
-using PkgDiff.Domain.Entities;
-using PkgDiff.Domain.Interfaces;
+using PkgDiff.Application.Jobs;
 using PkgDiff.Shared.DTOs;
 using Hangfire;
 using Hangfire.Storage;
-using Microsoft.AspNetCore.Identity;
+using Hangfire.Storage.Monitoring;
 
 namespace PkgDiff.Application.Services;
 
@@ -35,30 +34,40 @@ public class AdminJobService : IAdminJobService
         foreach (var job in succeeded)
         {
             var details = monitor.JobDetails(job.Key);
+            var target = JobDescriptions.Target(job.Value.Job);
             allJobs.Add(new RecentJobInfo
             {
                 JobId = job.Key,
-                JobName = GetJobDisplayName(job.Value.Job),
+                JobName = JobDescriptions.TechnicalName(job.Value.Job),
+                JobType = JobDescriptions.Label(job.Value.Job),
                 State = "Succeeded",
                 CreatedAt = details?.CreatedAt,
                 CompletedAt = job.Value.SucceededAt,
                 Duration = job.Value.TotalDuration,
-                PackageId = ExtractPackageId(job.Value.Job)
+                PackageId = target.PackageId,
+                Registry = target.Registry,
+                Detail = target.Detail,
+                TriggeredBy = DescribeTrigger(details)
             });
         }
 
         foreach (var job in failed)
         {
             var details = monitor.JobDetails(job.Key);
+            var target = JobDescriptions.Target(job.Value.Job);
             allJobs.Add(new RecentJobInfo
             {
                 JobId = job.Key,
-                JobName = GetJobDisplayName(job.Value.Job),
+                JobName = JobDescriptions.TechnicalName(job.Value.Job),
+                JobType = JobDescriptions.Label(job.Value.Job),
                 State = "Failed",
                 CreatedAt = details?.CreatedAt,
                 CompletedAt = job.Value.FailedAt,
                 ExceptionMessage = job.Value.ExceptionMessage,
-                PackageId = ExtractPackageId(job.Value.Job)
+                PackageId = target.PackageId,
+                Registry = target.Registry,
+                Detail = target.Detail,
+                TriggeredBy = DescribeTrigger(details)
             });
         }
 
@@ -104,13 +113,18 @@ public class AdminJobService : IAdminJobService
             var enqueuedJobs = monitor.EnqueuedJobs(queue.Name, 0, 50);
             foreach (var job in enqueuedJobs)
             {
+                var target = JobDescriptions.Target(job.Value.Job);
                 queuedJobs.Add(new QueuedJobInfo
                 {
                     JobId = job.Key,
-                    JobName = GetJobDisplayName(job.Value.Job),
+                    JobName = JobDescriptions.TechnicalName(job.Value.Job),
+                    JobType = JobDescriptions.Label(job.Value.Job),
                     State = "Enqueued",
                     EnqueuedAt = job.Value.EnqueuedAt,
-                    PackageId = ExtractPackageId(job.Value.Job)
+                    PackageId = target.PackageId,
+                    Registry = target.Registry,
+                    Detail = target.Detail,
+                    TriggeredBy = DescribeTrigger(monitor.JobDetails(job.Key))
                 });
             }
         }
@@ -118,14 +132,19 @@ public class AdminJobService : IAdminJobService
         var processingJobs = monitor.ProcessingJobs(0, 50);
         foreach (var job in processingJobs)
         {
+            var target = JobDescriptions.Target(job.Value.Job);
             queuedJobs.Add(new QueuedJobInfo
             {
                 JobId = job.Key,
-                JobName = GetJobDisplayName(job.Value.Job),
+                JobName = JobDescriptions.TechnicalName(job.Value.Job),
+                JobType = JobDescriptions.Label(job.Value.Job),
                 State = "Processing",
                 StartedAt = job.Value.StartedAt,
                 ServerId = job.Value.ServerId,
-                PackageId = ExtractPackageId(job.Value.Job)
+                PackageId = target.PackageId,
+                Registry = target.Registry,
+                Detail = target.Detail,
+                TriggeredBy = DescribeTrigger(monitor.JobDetails(job.Key))
             });
         }
 
@@ -142,35 +161,31 @@ public class AdminJobService : IAdminJobService
         });
     }
 
-    private static string GetJobDisplayName(Hangfire.Common.Job? job)
+    private static string? DescribeTrigger(JobDetailsDto? details)
     {
-        if (job == null) return "Unknown";
-        return $"{job.Type.Name}.{job.Method.Name}";
+        if (details?.Properties == null) return null;
+
+        if (details.Properties.TryGetValue(JobDescriptions.TriggerParameter, out var trigger))
+            return ReadParameter(trigger);
+
+        if (details.Properties.TryGetValue("RecurringJobId", out var recurringJobId))
+            return $"Schedule · {ReadParameter(recurringJobId)}";
+
+        return null;
     }
 
-    private static string? ExtractPackageId(Hangfire.Common.Job? job)
+    private static string? ReadParameter(string? value)
     {
-        if (job?.Args == null || job.Args.Count == 0) return null;
-
-        if (job.Args[0] is AnalyzeRequest request)
-            return request.PackageId;
+        if (string.IsNullOrEmpty(value)) return null;
 
         try
         {
-            var json = job.Args[0]?.ToString();
-            if (json != null && json.Contains("PackageId"))
-            {
-                using var doc = System.Text.Json.JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("PackageId", out var prop))
-                    return prop.GetString();
-            }
+            return System.Text.Json.JsonSerializer.Deserialize<string>(value);
         }
         catch (System.Text.Json.JsonException)
         {
-            // The argument is not JSON: this job has no package to show
+            return value.Trim('"');
         }
-
-        return null;
     }
 
     public Task TriggerJobAsync(string jobId)
