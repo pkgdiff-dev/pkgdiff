@@ -12,7 +12,6 @@ using PkgDiff.Infrastructure.Security;
 
 namespace PkgDiff.Tests.Secrets;
 
-// WR-03: the Data Protection key ring stored in the database must be encrypted with key material kept outside it.
 public class DataProtectionKeyRingTests
 {
     private sealed class InMemoryXmlRepository : IXmlRepository

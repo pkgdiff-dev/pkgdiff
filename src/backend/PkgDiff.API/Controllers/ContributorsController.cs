@@ -18,9 +18,6 @@ public class ContributorsController : ControllerBase
         _jobs = jobs;
     }
 
-    /// <summary>
-    /// Returns the top contributors leaderboard ranked by GitHub @mention count.
-    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetLeaderboard([FromQuery] int limit = 100)
     {
@@ -45,9 +42,6 @@ public class ContributorsController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Triggers a one-time backfill job to scan ALL existing release notes and populate Contributors table.
-    /// </summary>
     [HttpPost("backfill")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Contributors.Manage)]
     public IActionResult TriggerBackfill()

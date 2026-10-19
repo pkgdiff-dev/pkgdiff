@@ -23,9 +23,7 @@ public static class AutoPilotOutputCleaner
         AutoPilotQualityGate.UpgradeNotesHeading
     };
 
-    // Small models rarely reproduce the exact heading text; these are the variants seen in practice.
-    // Synonyms only apply to top-level headings (H1/H2), bold lines and bare lines, so an H3 such as
-    // "### Changes" inside a section is not promoted to a second required section.
+    // Heading variants small models produce; synonyms apply only to H1/H2, bold and bare lines
     private static readonly Dictionary<string, string> HeadingSynonyms = new(StringComparer.Ordinal)
     {
         ["summary"] = AutoPilotQualityGate.OverviewHeading,
@@ -253,8 +251,7 @@ public static class AutoPilotOutputCleaner
         return line[..start] + body;
     }
 
-    // Returns the canonical "## ..." heading when the line is a required section in any common form
-    // (H1-H3, **bold**, bare "Summary:" line, numbered, curly apostrophe), otherwise null
+    // The canonical "## ..." heading when the line is a required section in any common form, else null
     private static string? CanonicalizeHeading(string trimmed)
     {
         if (trimmed.Length == 0)

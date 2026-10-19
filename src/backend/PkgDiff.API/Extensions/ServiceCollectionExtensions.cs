@@ -11,18 +11,14 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBusinessServices(this IServiceCollection services)
     {
-        // SSRF-guarded defaults for every HttpClient, the named clients and the Ollama exception
         services.AddPkgDiffOutboundHttp();
 
-        // Secret settings protector (key from Security:SettingsEncryptionKey) and decrypting settings reader
         services.AddPkgDiffSecrets();
 
-        // Rate Limiting (Singleton - global state)
         services.AddSingleton<IRateLimiterService, RateLimiterService>();
         services.AddSingleton<IGitHubRateLimitHandler, GitHubRateLimitHandler>();
         services.AddSingleton<IWorkTrackerService, WorkTrackerService>();
 
-        // Core Registry Services
         services.AddScoped<INugetService, NugetService>();
         services.AddScoped<INpmService, NpmService>();
         services.AddScoped<IPyPIService, PyPIService>();
@@ -38,30 +34,25 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0");
         });
 
-        // Scrape Log Service
         services.AddScoped<IScrapeLogService, ScrapeLogService>();
 
-        // Scraping Strategies
         services.AddScoped<GitHubFirstScrapingStrategy>();
         services.AddScoped<NuGetFirstScrapingStrategy>();
         services.AddScoped<PubDevScrapingStrategy>();
 
-        // One client per registry, found by name through the factory
         services.AddScoped<IRegistryClient, NuGetRegistryClient>();
         services.AddScoped<IRegistryClient, NpmRegistryClient>();
         services.AddScoped<IRegistryClient, PyPIRegistryClient>();
         services.AddScoped<IRegistryClient, PubDevRegistryClient>();
 
-        // Factory & Cache Services
         services.AddScoped<IRegistryServiceFactory, RegistryServiceFactory>();
         services.AddScoped<IPackageCacheService, PackageCacheService>();
         services.AddScoped<ILiveUpdateService, LiveUpdateService>();
         services.AddScoped<ICachedLookups, CachedLookups>();
 
-        // Analysis Services
         services.AddSingleton<IReleaseNotesRenderer, ReleaseNotesRenderer>();
         services.AddScoped<PackageAnalysisService>(); // Concrete class for Hangfire
-        services.AddScoped<IPackageAnalysisService, PackageAnalysisService>(); // Interface
+        services.AddScoped<IPackageAnalysisService, PackageAnalysisService>();
         services.AddScoped<IProgressReporter, SignalrProgressReporter>();
         services.AddScoped<IExportService, ExportService>();
         services.AddScoped<IOsvClient, OsvClient>();
@@ -84,7 +75,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GitHubUserValidatorService>();
         services.AddScoped<AuthService>();
 
-        // AutoPilot & LLM (the Ollama typed client is registered by AddPkgDiffOutboundHttp)
+        // The Ollama typed client is registered by AddPkgDiffOutboundHttp
         services.AddScoped<IAutoPilotService, AutoPilotService>();
         services.AddScoped<ISocialMediaService, SocialMediaService>();
         services.AddScoped<BlogSocialPostJob>();

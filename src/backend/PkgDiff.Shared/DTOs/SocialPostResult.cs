@@ -2,14 +2,12 @@ namespace PkgDiff.Shared.DTOs;
 
 public enum SocialPostOutcome
 {
-    // The platform confirmed the post (2xx)
     Succeeded,
 
-    // Definitely not posted: the request was never sent, or the platform answered with a 4xx
+    // Definitely not posted: never sent, or the platform answered with a 4xx
     Rejected,
 
-    // The request may have reached the platform but its fate is unknown (timeout, reset, 5xx);
-    // retrying could publish a duplicate
+    // May have reached the platform (timeout, reset, 5xx); retrying could publish a duplicate
     Unknown
 }
 

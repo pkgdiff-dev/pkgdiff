@@ -2,7 +2,6 @@
   <app-grid-pattern />
 
   <div class="relative z-10 space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold text-[#111418] dark:text-white">Security & IP Blocking</h1>
@@ -17,7 +16,6 @@
       </button>
     </div>
 
-    <!-- Tabs -->
     <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
       <button type="button"
         (click)="switchTab('blocked')"
@@ -42,16 +40,13 @@
       </button>
     </div>
 
-    <!-- Content -->
     @if (loading()) {
       <div class="flex items-center justify-center py-24">
         <div class="text-sm text-gray-500">Loading...</div>
       </div>
     } @else {
-      <!-- Blocked IPs Tab -->
       @if (activeTab() === 'blocked' && blockedIps(); as data) {
         <div class="space-y-4">
-          <!-- Filter and Options -->
           <div class="flex items-center gap-3">
             <div class="flex-1 flex gap-3">
               <input
@@ -139,10 +134,8 @@
         </div>
       }
 
-      <!-- Request Logs Tab -->
       @if (activeTab() === 'logs' && requestLogs(); as data) {
         <div class="space-y-4">
-          <!-- Filter -->
           <div class="flex items-center gap-3">
             <div class="flex-1 flex gap-3">
               <input
@@ -228,10 +221,8 @@
         </div>
       }
 
-      <!-- IP Statistics Tab -->
       @if (activeTab() === 'stats') {
         <div class="space-y-4">
-          <!-- Options -->
           <div class="flex justify-end">
             <label class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors cursor-pointer">
               <input

@@ -9,7 +9,6 @@ public class WorkCancellationTests
 {
     private readonly WorkTrackerService _tracker = new();
 
-    // The shared work of these tests: it reports the token it runs under and ends only when told to or when cancelled
     private sealed class SharedWork
     {
         private readonly TaskCompletionSource<string> _result = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -30,7 +29,6 @@ public class WorkCancellationTests
         }
     }
 
-    // What an endpoint does: the request's token is the ambient one while the call is made
     private Task<string> CallAsync(SharedWork work, CancellationToken requestToken)
     {
         using (WorkCancellation.Use(requestToken))

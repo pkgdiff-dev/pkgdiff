@@ -64,7 +64,6 @@ public class PaginatedResult<T>
     public int TotalPages { get; set; }
 }
 
-// Admin - Packages
 public class AdminPackageInfo
 {
     public int Id { get; set; }
@@ -76,7 +75,6 @@ public class AdminPackageInfo
     public DateTime ExpiresAt { get; set; }
 }
 
-// Admin - Registries
 public class AdminRegistryInfo
 {
     public int Id { get; set; }
@@ -106,7 +104,6 @@ public class RegistryUpdateRequest
     public int DisplayOrder { get; set; }
 }
 
-// Admin - Jobs
 public class JobsOverview
 {
     public long Enqueued { get; set; }
@@ -152,7 +149,6 @@ public class QueuedJobInfo
     public string? PackageId { get; set; }
 }
 
-// Admin - Settings
 public class SystemSettingDto
 {
     public int Id { get; set; }
@@ -171,7 +167,6 @@ public class UpdateSettingRequest
     public bool Clear { get; set; }
 }
 
-// Admin - Users
 public class AdminUserInfo
 {
     public string Id { get; set; } = string.Empty;
@@ -206,7 +201,6 @@ public class ResetUserPasswordRequest
     public string NewPassword { get; set; } = string.Empty;
 }
 
-// Admin - Roles
 public class AdminRoleInfo
 {
     public string Id { get; set; } = string.Empty;
@@ -219,7 +213,6 @@ public class CreateRoleRequest
     public string Name { get; set; } = string.Empty;
 }
 
-// Admin - Security & IP Blocking
 public class RequestLogInfo
 {
     public int Id { get; set; }
@@ -261,7 +254,6 @@ public class IpStatistics
     public bool IsBlocked { get; set; }
 }
 
-// Admin - Scrape Logs
 public class ScrapeLogInfo
 {
     public int Id { get; set; }
@@ -291,7 +283,6 @@ public class ScrapeLogPackageSummary
     public DateTime LastOccurrence { get; set; }
 }
 
-// Permissions
 public class PermissionDto
 {
     public string Name { get; set; } = string.Empty;
@@ -313,7 +304,6 @@ public class UpdateRolePermissionsRequest
     public List<string> Permissions { get; set; } = new();
 }
 
-// Sitemap
 public class SitemapEntry
 {
     public string PackageId { get; set; } = string.Empty;

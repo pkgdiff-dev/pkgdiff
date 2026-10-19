@@ -15,9 +15,6 @@ export class ExportService {
     private api = inject(ApiService);
     private toast = inject(ToastService);
 
-    /**
-     * Export package metadata to specified format
-     */
     async exportReleaseNotes(
         metadata: PackageMetadata,
         versions: VersionInfo[],
@@ -53,9 +50,6 @@ export class ExportService {
         }
     }
 
-    /**
-     * Export diff results to specified format
-     */
     async exportDiff(
         diff: AnalysisResult,
         registry: string,
@@ -90,8 +84,6 @@ export class ExportService {
         }
     }
 
-    // ===== JSON Export =====
-
     private exportToJson(metadata: PackageMetadata, versions: VersionInfo[]): Blob {
         const json = JSON.stringify({
             ...metadata,
@@ -116,8 +108,6 @@ export class ExportService {
             entries: (rest.entries ?? []).map(({ textHtml: _textHtml, ...entry }) => entry),
         };
     }
-
-    // ===== Markdown Export =====
 
     private exportToMarkdown(metadata: PackageMetadata, versions: VersionInfo[]): Blob {
         let md = `# ${metadata.packageId}\n\n`;
@@ -198,8 +188,6 @@ export class ExportService {
         return new Blob([md], { type: 'text/markdown' });
     }
 
-    // ===== TOML Export =====
-
     private exportToToml(metadata: PackageMetadata, versions: VersionInfo[]): Blob {
         const tomlObject = {
             package: {
@@ -261,14 +249,13 @@ export class ExportService {
         return new Blob([this.toToml(tomlObject)], { type: 'application/toml' });
     }
 
-    // Without the newline option j-toml returns an array of lines, which a Blob joins with commas
+    // Without the newline option j-toml returns lines, which a Blob would join with commas
     private toToml(table: object): string {
         const rootTable = this.toTomlValue(table) as Parameters<typeof tomlStringify>[0];
         return tomlStringify(rootTable, { newline: '\n' });
     }
 
-    // TOML has no null: j-toml throws on null/undefined, so those keys are left out.
-    // j-toml writes a JS number as a float (2 becomes 2.0) and a bigint as an integer; the counts are integers.
+    // j-toml throws on null and writes numbers as floats: drop nulls, write ints as bigint
     private toTomlValue(value: unknown): unknown {
         if (typeof value === 'number' && Number.isInteger(value)) {
             return BigInt(value);
@@ -285,8 +272,6 @@ export class ExportService {
         }
         return value;
     }
-
-    // ===== PDF Export (via Backend) =====
 
     private async exportToPdfViaBackend(registry: string, packageId: string): Promise<void> {
         try {
@@ -315,12 +300,10 @@ export class ExportService {
     }
 
     private reportPdfFailure(error: unknown): void {
-        // The error interceptor has already said these two
+        // The error interceptor already reports these
         if (error instanceof HttpErrorResponse && (error.status === 0 || error.status === 429)) return;
         this.toast.error('PDF export failed. Please try again.', 3000);
     }
-
-    // ===== Helper Methods =====
 
     private packageSecurityMarkdown(trust: PackageTrust | null | undefined, latestVersion: string, versions: string[]): string {
         if (!trust || trust.status !== 'ready') return '';

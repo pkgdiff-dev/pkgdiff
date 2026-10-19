@@ -35,7 +35,6 @@ public class BlogController : ControllerBase
                 b.PackageId,
                 b.Version,
                 b.PublishedAt,
-                // Only send a small snippet of the content for the list view
                 Excerpt = b.Content.Length > 200 ? b.Content.Substring(0, 200) + "..." : b.Content
             },
             page,

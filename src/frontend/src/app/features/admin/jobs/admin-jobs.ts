@@ -157,7 +157,7 @@ export class AdminJobsComponent {
   }
 
   openDashboard(): void {
-    // Opened synchronously inside the click handler so the popup blocker allows it after the async call.
+    // Opened synchronously in the click handler so the popup blocker allows it
     const tab = window.open('about:blank', '_blank');
     this.openingDashboard.set(true);
     this.api.post<{ url: string }>('admin/jobs/dashboard-ticket', {}).subscribe({

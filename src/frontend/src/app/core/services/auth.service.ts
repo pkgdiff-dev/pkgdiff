@@ -28,7 +28,7 @@ export class AuthService {
       this.armExpiry(stored.expiresAt);
     }
 
-    // A timer does not run while the machine sleeps; the session is checked again when the tab comes back
+    // Timers stall while the machine sleeps, so the session is rechecked when the tab returns
     if (this.isBrowser) {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') this.hasValidSession();
@@ -58,12 +58,10 @@ export class AuthService {
   hasPermission(permission: string): boolean {
     const user = this.currentUser();
     if (!user) return false;
-    // Admin role has all permissions by default
     if (user.role === 'Admin') return true;
     return (user.permissions || []).includes(permission);
   }
 
-  // Ends the session if its time is up, however late the timer is
   hasValidSession(): boolean {
     const user = this.currentUser();
     if (!user) return false;
@@ -79,7 +77,6 @@ export class AuthService {
     this.router.navigate(['/admin/login']);
   }
 
-  // The server refused the token: it expired, the user was removed or the signing key changed
   handleUnauthorized(): void {
     this.endSession();
   }
@@ -88,7 +85,6 @@ export class AuthService {
     return this.hasValidSession() ? this.currentUser()!.token : null;
   }
 
-  // A visitor on a public page stays where they are; only the admin area leads to the login page
   private endSession(): void {
     this.clear();
     if (this.router.url.startsWith('/admin')) {

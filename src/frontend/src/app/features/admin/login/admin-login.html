@@ -2,12 +2,10 @@
   <app-grid-pattern />
 
   <div class="relative z-10 w-full max-w-[400px] px-6">
-    <!-- Logo -->
     <div class="flex justify-center mb-8">
       <app-logo size="md" />
     </div>
 
-    <!-- Login Card -->
     <div class="bg-white dark:bg-[#1a1a1a] border border-[#dbe0e6] dark:border-gray-800 rounded-xl p-6 sm:p-8 shadow-sm">
       <div class="flex items-center gap-2 mb-6">
         <lucide-icon [img]="LockIcon" [size]="18" class="text-primary"></lucide-icon>
@@ -15,14 +13,12 @@
       </div>
 
       <form (ngSubmit)="handleLogin()" class="space-y-4">
-        <!-- Username -->
         <div>
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Username</label>
           <app-input type="text" [(ngModel)]="username" name="username" autocomplete="username"
             placeholder="Enter username" ariaLabel="Username" [icon]="UserIcon"></app-input>
         </div>
 
-        <!-- Password -->
         <div>
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Password</label>
           <app-input type="password" [(ngModel)]="password" name="password" autocomplete="current-password"
@@ -30,7 +26,7 @@
             (keydown.enter)="handleLogin()"></app-input>
         </div>
 
-        <!-- Submit: app-button is an inline element, so the form's spacing reaches it only through a block -->
+        <!-- app-button is inline, so the form spacing reaches it only through a block -->
         <div class="pt-2">
           <app-button type="submit" [block]="true" [loading]="loading()">
             {{ loading() ? 'Signing in...' : 'Sign In' }}
@@ -39,7 +35,6 @@
       </form>
     </div>
 
-    <!-- Back Link -->
     <div class="text-center mt-6">
       <a href="/"
         class="text-xs text-gray-500 dark:text-gray-500 hover:text-primary transition-colors cursor-pointer flex items-center justify-center gap-1">

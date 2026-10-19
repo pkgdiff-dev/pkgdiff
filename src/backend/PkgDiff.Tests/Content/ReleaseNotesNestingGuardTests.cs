@@ -5,9 +5,7 @@ using PkgDiff.Infrastructure.Services;
 
 namespace PkgDiff.Tests.Content;
 
-// Every input here is above the guard's limits (64 levels, 128 KiB) but at most 500 levels deep, an order of
-// magnitude below the depth that overflows the stack (about 5,400 nested elements on a 1.5 MB stack).
-// Crash-depth input must never be used in these tests: it would take down the test host.
+// Inputs stay far below stack-overflow depth: a crash-depth input would take down the test host
 public class ReleaseNotesNestingGuardTests
 {
     private const string Marker = "SECRET-NOTE-TEXT";

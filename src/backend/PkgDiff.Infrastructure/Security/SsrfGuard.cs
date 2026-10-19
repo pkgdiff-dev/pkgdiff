@@ -31,8 +31,7 @@ public static class SsrfGuard
             MaxAutomaticRedirections = MaxRedirects,
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
             AutomaticDecompression = DecompressionMethods.All,
-            // Every new host (including redirect targets) re-enters this callback, and the socket
-            // connects only to the addresses validated here, so DNS rebinding cannot swap the target.
+            // Every host, redirects included, re-enters here and connects only to validated addresses
             ConnectCallback = async (context, cancellationToken) =>
             {
                 var endPoint = context.DnsEndPoint;

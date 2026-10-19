@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace PkgDiff.API.Middleware;
 
-// Last line of defence for an exception no action caught: a status code that fits, the detail in
-// the log only, and a ProblemDetails body that also carries the "error" field the SPA reads
+// Detail goes to the log only; the ProblemDetails body also carries the SPA's "error" field
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private const int ClientClosedRequest = 499;

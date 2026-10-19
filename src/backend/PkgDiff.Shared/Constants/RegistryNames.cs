@@ -1,6 +1,5 @@
 namespace PkgDiff.Shared.Constants;
 
-// The registries the application serves, by the name used in URLs and in the Registries table
 public static class RegistryNames
 {
     public const string NuGet = "nuget";
@@ -10,14 +9,12 @@ public static class RegistryNames
 
     public static readonly IReadOnlyList<string> All = new[] { NuGet, Npm, PyPI, PubDev };
 
-    // Other spellings a registry is also known by
     private static readonly IReadOnlyDictionary<string, string> Aliases =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["pub"] = PubDev
         };
 
-    // The registry a spelling stands for; null when it is none of them
     public static string? Canonical(string? registry)
     {
         if (string.IsNullOrEmpty(registry))
@@ -29,7 +26,7 @@ public static class RegistryNames
         return All.FirstOrDefault(name => name.Equals(registry, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Every spelling of the same registry: its row may be stored under any of them
+    // A registry's row may be stored under any of its spellings
     public static IReadOnlyList<string> SpellingsOf(string registry)
     {
         var canonical = Canonical(registry);

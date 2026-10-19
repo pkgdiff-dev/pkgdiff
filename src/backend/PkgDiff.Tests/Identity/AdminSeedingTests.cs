@@ -4,7 +4,6 @@ using PkgDiff.Tests.TestDoubles;
 
 namespace PkgDiff.Tests.Identity;
 
-// WR-02: the seeder bootstraps the first administrator only and never overrides admin decisions afterwards.
 public class AdminSeedingTests
 {
     private const string AdminUserName = "pkgdiff_admin";

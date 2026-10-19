@@ -2,22 +2,18 @@
   <app-grid-pattern />
 
   <div class="relative z-10">
-    <!-- Loading State -->
     @if (loading()) {
   <div class="flex items-center justify-center py-24">
     <div class="text-sm text-gray-500 dark:text-gray-500">Loading dashboard...</div>
   </div>
 } @else if (stats(); as data) {
   <div class="space-y-6">
-    <!-- Page Title -->
     <div>
       <h1 class="text-xl font-bold text-[#111418] dark:text-white">Dashboard</h1>
       <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Overview of pkgdiff usage and analytics.</p>
     </div>
 
-    <!-- Stat Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Total Searches -->
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Total Searches</span>
@@ -28,7 +24,6 @@
         <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.totalSearches.toLocaleString() }}</div>
       </div>
 
-      <!-- Cached Packages -->
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Cached Packages</span>
@@ -39,7 +34,6 @@
         <div class="text-2xl font-bold text-[#111418] dark:text-white">{{ data.cachedPackages.toLocaleString() }}</div>
       </div>
 
-      <!-- Unique Packages -->
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wider">Unique Packages</span>
@@ -51,9 +45,7 @@
       </div>
     </div>
 
-    <!-- Two Column Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Top Packages -->
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <lucide-icon [img]="TrendingIcon" [size]="16" class="text-primary"></lucide-icon>
@@ -74,7 +66,6 @@
         </div>
       </div>
 
-      <!-- Searches by Day -->
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <lucide-icon [img]="ClockIcon" [size]="16" class="text-primary"></lucide-icon>
@@ -100,7 +91,6 @@
       </div>
     </div>
 
-    <!-- Recent Searches -->
     <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
       <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
         <lucide-icon [img]="SearchIcon" [size]="16" class="text-primary"></lucide-icon>

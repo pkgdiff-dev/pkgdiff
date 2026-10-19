@@ -1,7 +1,5 @@
-<!-- Version selector panel -->
 <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 md:p-5 mb-6 md:mb-8">
   <div class="flex flex-col md:flex-row items-center gap-3 md:gap-8">
-    <!-- From -->
     <div class="flex-1 w-full md:w-auto">
       <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">From</label>
       <div class="relative w-full">
@@ -31,12 +29,10 @@
       </div>
     </div>
 
-    <!-- Swap icon -->
     <div class="flex items-center justify-center md:pt-5">
       <lucide-icon [img]="ArrowIcon" [size]="20" class="text-gray-400"></lucide-icon>
     </div>
 
-    <!-- To -->
     <div class="flex-1 w-full md:w-auto">
       <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">To</label>
       <div class="relative w-full">
@@ -66,7 +62,6 @@
       </div>
     </div>
 
-    <!-- Summary badges -->
     <div
       class="md:border-l border-gray-200 dark:border-gray-700 md:pl-8 flex flex-col gap-1 w-full md:w-auto mt-4 md:mt-0"
       [class.opacity-50]="!summary()">
@@ -109,21 +104,16 @@
   </div>
 </div>
 
-<!-- Removed standalone export button -->
-
-<!-- Loading -->
 @if (loading()) {
 <div class="py-12 flex justify-center">
   <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
 </div>
 }
 
-<!-- Diff content -->
 @if (!loading() && diffResult(); as result) {
 <app-upgrade-security [trust]="diffTrust()" [from]="result.fromVersion" [to]="result.toVersion"
   [versions]="diffVersionList()" [registry]="registry()" />
 <div class="space-y-8 md:space-y-12 mb-12 md:mb-20">
-  <!-- Each version's release notes -->
   @for (version of diffVersions(); track version.version) {
   @if (!version.isEmpty) {
   <section>
@@ -152,7 +142,6 @@
     <app-compiled-notes-notice [source]="version.compiledFrom" />
     }
     @if (version.entries && version.entries.length > 0 && version.releaseNotesSource !== 'GitHub') {
-    <!-- Categorized entries -->
     <div class="relative transition-all duration-300"
       [class]="(!isExpanded(version.version) && version.releaseNotes && version.releaseNotes.length > 800) ? 'max-h-60 overflow-hidden' : ''">
       <div class="space-y-2">
@@ -189,7 +178,6 @@
     </div>
     }
     } @else if (version.releaseNotes) {
-    <!-- Fallback to raw text -->
     <div
       class="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 relative transition-all duration-300"
       [class]="(!isExpanded(version.version) && version.releaseNotes && version.releaseNotes.length > 800) ? 'max-h-60 overflow-hidden' : ''">
@@ -222,7 +210,6 @@
 </div>
 }
 
-<!-- The comparison failed -->
 @if (!loading() && error()) {
 <div class="py-16 flex flex-col items-center justify-center text-center max-w-md mx-auto gap-4" role="alert">
   <lucide-icon [img]="AlertIcon" [size]="28" class="text-red-500"></lucide-icon>
@@ -235,7 +222,6 @@
 </div>
 }
 
-<!-- No diff data -->
 @if (!loading() && !error() && !diffResult() && fromVersion() && toVersion()) {
 <div class="py-20 flex flex-col items-center justify-center text-center max-w-md mx-auto">
   <p class="text-sm text-gray-500 dark:text-gray-400">Select two versions to see what changed between them.</p>

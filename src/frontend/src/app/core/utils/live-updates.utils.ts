@@ -3,7 +3,6 @@ import { LiveUpdate } from '../models/package.models';
 const sameEntry = (a: LiveUpdate, b: LiveUpdate) =>
   a.packageId === b.packageId && a.registry === b.registry;
 
-// A package appears once: a pushed update replaces its entry and the list stays newest first
 export function mergeLiveUpdate(items: LiveUpdate[], update: LiveUpdate, limit: number): LiveUpdate[] {
   return [update, ...items.filter((item) => !sameEntry(item, update))]
     .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))

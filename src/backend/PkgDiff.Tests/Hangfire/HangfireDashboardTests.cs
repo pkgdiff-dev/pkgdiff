@@ -41,8 +41,6 @@ public class HangfireDashboardTests
         new(provider ?? new EphemeralDataProtectionProvider(),
             new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())));
 
-    // Ticket and cookie ------------------------------------------------------------------------
-
     [Fact]
     public async Task RedeemTicket_ValidTicket_ReturnsUserIdOnce()
     {
@@ -92,8 +90,6 @@ public class HangfireDashboardTests
         Assert.Null(access.ReadCookieValue("garbage"));
         Assert.Null(access.ReadCookieValue(null));
     }
-
-    // Per-request authorization ----------------------------------------------------------------
 
     private static DefaultHttpContext ContextWithCookie(string? cookieValue, ClaimsPrincipal? user = null)
     {
@@ -151,7 +147,6 @@ public class HangfireDashboardTests
         Assert.True(await access.IsAuthorizedAsync(ContextWithCookie(null, principal), new FakeAdminRoleChecker(AdminUser)));
     }
 
-    // WR-04: a demoted, locked-out or deleted Admin keeps an unexpired JWT Admin role claim
     [Fact]
     public async Task IsAuthorized_NoCookieAdminPrincipalNoLongerAdmin_False()
     {
@@ -170,8 +165,6 @@ public class HangfireDashboardTests
 
         Assert.False(await access.IsAuthorizedAsync(ContextWithCookie(null, principal), new FakeAdminRoleChecker(AdminUser)));
     }
-
-    // Ticket middleware ------------------------------------------------------------------------
 
     private static async Task<WebApplication> StartTicketHostAsync(HangfireDashboardAccess access)
     {
@@ -254,8 +247,6 @@ public class HangfireDashboardTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("dashboard", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
-
-    // Ticket endpoint --------------------------------------------------------------------------
 
     private static async Task<WebApplication> StartEndpointHostAsync()
     {

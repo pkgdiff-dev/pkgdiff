@@ -18,7 +18,6 @@ builder.Services.AddPkgDiffSwagger();
 
 builder.Services.AddPkgDiffPersistence(builder.Configuration);
 
-// JWT authentication (validated JwtSettings) and permission policies
 builder.Services.AddPkgDiffAuthentication(builder.Configuration);
 builder.Services.AddPkgDiffAuthorization();
 
@@ -28,7 +27,6 @@ builder.Services.AddPkgDiffBackgroundJobs(builder.Configuration);
 builder.Services.AddPkgDiffCaching(builder.Configuration);
 builder.Services.AddPkgDiffDiagnostics();
 
-// Forwarded headers (trusted proxy networks from ForwardedHeaders:TrustedNetworks)
 builder.Services.AddPkgDiffForwardedHeaders(builder.Configuration);
 builder.Services.AddPkgDiffCors();
 
@@ -40,8 +38,7 @@ _ = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
 await app.MigrateDatabaseAsync();
 await app.LogGitHubStatusAsync();
 
-// The HTTP request pipeline; the order below matters.
-// Must run first so every later middleware sees the real client IP and scheme.
+// Pipeline order matters; forwarded headers first so later middleware sees the real client IP
 app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
@@ -55,7 +52,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // No HTTPS redirect here: TLS ends at the host nginx, which redirects HTTP itself; the container has no HTTPS port
+    // No HTTPS redirect: TLS ends at the host nginx
     app.UseCors(HostingServiceCollectionExtensions.ProductionCorsPolicy);
     app.UseHsts();
 }
@@ -63,20 +60,18 @@ else
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Security middleware (must be before authentication)
+// Must run before authentication
 app.UseMiddleware<RateLimitingMiddleware>();
 app.UseMiddleware<IpBlockingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseAuthentication(); // Must be before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Prometheus metrics: internal scrape (trusted network, not the bridge gateway) or Admin only
 app.UseMiddleware<MetricsAccessMiddleware>();
-app.UseMetricServer(); // Exposes /metrics
-app.UseHttpMetrics();  // Captures HTTP metrics
+app.UseMetricServer();
+app.UseHttpMetrics();
 
-// Hangfire dashboard, active Admins only: /hangfire?ticket= becomes a scoped cookie, re-checked on every request
 app.UseMiddleware<HangfireTicketMiddleware>();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
@@ -101,7 +96,6 @@ app.MapFallbackToFile("index.html");
 
 await app.SeedDatabaseAsync();
 
-// After all middleware and initialization
 await app.ScheduleRecurringJobsAsync();
 
 app.Run();

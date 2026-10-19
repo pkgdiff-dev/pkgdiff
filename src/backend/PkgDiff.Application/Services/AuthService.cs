@@ -38,17 +38,14 @@ public class AuthService
             return null;
         }
 
-        // No account lockout: with a public user name anyone could keep the admin locked out by failing on
-        // purpose. Guessing is slowed per address instead (the sign-in rate tier and AuthController).
+        // No lockout: anyone could lock out a known admin name; guessing is throttled per address
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
         if (!result.Succeeded)
             return null;
 
-        // Update last login
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
 
-        // Generate JWT token
         var token = await GenerateJwtToken(user);
         var roles = await _userManager.GetRolesAsync(user);
         var permissions = new List<string>();
@@ -153,7 +150,6 @@ public class AuthService
             new Claim(SecurityStampClaim, await _userManager.GetSecurityStampAsync(user) ?? string.Empty)
         };
 
-        // Add role claims and permissions
         foreach (var roleName in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, roleName));

@@ -27,7 +27,6 @@ public class AdminJobService : IAdminJobService
             LastJobState = j.LastJobState ?? "None"
         }).ToList();
 
-        // Recent completed jobs — fetch more to capture full batches
         var succeeded = monitor.SucceededJobs(0, 50);
         var failed = monitor.FailedJobs(0, 50);
 
@@ -63,7 +62,6 @@ public class AdminJobService : IAdminJobService
             });
         }
 
-        // Group: parent (ExecuteAsync) jobs get children attached
         var parentJobs = allJobs
             .Where(j => j.JobName.Contains("ExecuteAsync"))
             .OrderByDescending(j => j.CreatedAt)
@@ -77,7 +75,6 @@ public class AdminJobService : IAdminJobService
 
         foreach (var parent in parentJobs)
         {
-            // Match children created within 5 seconds of parent's CreatedAt
             var children = childPool
                 .Where(c => parent.CreatedAt.HasValue && c.CreatedAt.HasValue &&
                             Math.Abs((c.CreatedAt.Value - parent.CreatedAt.Value).TotalSeconds) < 5)
@@ -92,7 +89,6 @@ public class AdminJobService : IAdminJobService
             recentJobs.Add(parent);
         }
 
-        // Any unmatched children as standalone entries
         recentJobs.AddRange(childPool);
 
         recentJobs = recentJobs
@@ -100,7 +96,6 @@ public class AdminJobService : IAdminJobService
             .Take(20)
             .ToList();
 
-        // Active queue jobs (enqueued + processing)
         var queuedJobs = new List<QueuedJobInfo>();
 
         var queues = monitor.Queues();
@@ -157,11 +152,9 @@ public class AdminJobService : IAdminJobService
     {
         if (job?.Args == null || job.Args.Count == 0) return null;
 
-        // Try direct cast (Hangfire deserializes to the actual type)
         if (job.Args[0] is AnalyzeRequest request)
             return request.PackageId;
 
-        // Fallback: parse from serialized JSON string
         try
         {
             var json = job.Args[0]?.ToString();

@@ -1,7 +1,6 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-// localStorage that is simply empty where there is none: on the server, and in a browser that blocks it
 @Injectable({ providedIn: 'root' })
 export class BrowserStorage {
   private readonly storage = isPlatformBrowser(inject(PLATFORM_ID)) ? this.open() : null;

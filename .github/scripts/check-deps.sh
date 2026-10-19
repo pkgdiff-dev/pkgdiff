@@ -1,32 +1,6 @@
 #!/usr/bin/env bash
-# Supply-chain gate for pkgdiff: NuGet, npm and (optionally) the built images.
-#
-#   bash .github/scripts/check-deps.sh         run from any directory
-#
-#   TRIVY=1                  also scan ${BACKEND_IMAGE:-ghcr.io/pkgdiff-dev/pkgdiff-backend:local} and
-#                            ${FRONTEND_IMAGE:-ghcr.io/pkgdiff-dev/pkgdiff-frontend:local} with the
-#                            pinned Trivy image (the defaults are what docker-compose.build.yml builds)
-#   CHECK_DEPS_DOCKER=auto   auto (default): use dotnet / npm from PATH, and the pinned SDK / Node
-#                            image for a tool that is missing; 1: always containers; 0: never
-#   PKGDIFF_ROOT=<dir>       check another checkout (default: the checkout this script is in)
-#
-# Checks (every check runs, also after a failure):
-#   sdk-image-pin          the SDK image is pinned by digest and is the same reference in
-#                          src/backend/Dockerfile, src/backend/Directory.Build.props and the QuestPDF harness
-#   nuget-locked-restore   dotnet restore --locked-mode with the audit gate (lock drift, NU1901-NU1904)
-#   nuget-vulnerable       dotnet list package --vulnerable --include-transitive, read as JSON
-#   npm-audit-prod         npm audit --omit=dev (production dependencies must be clean)
-#   npm-audit-high         .github/scripts/npm-audit-gate.mjs with src/frontend/audit-allowlist.json
-#   trivy-backend          TRIVY=1 only: fixable HIGH/CRITICAL in the backend image
-#   trivy-frontend         TRIVY=1 only: fixable HIGH/CRITICAL in the frontend image
-#
-# Output: one "PASS <check>" or "FAIL <check>: <detail>" line per check (evidence is indented
-# above it), then "check-deps: N passed, M failed". A check that could not be carried out is a
-# FAIL whose detail starts with "could not check"; it is never reported as a pass.
-# Exit status: 0 when every check passed, otherwise 1.
-#
-# The checkout is never modified: the manifests are copied to a temporary directory and the
-# tools run on that copy, either on this machine or inside a container.
+# Supply-chain gate: NuGet and npm audits, plus image scans with TRIVY=1. Exit 0 when all pass.
+# Env: TRIVY=1, CHECK_DEPS_DOCKER=auto|1|0, PKGDIFF_ROOT=<dir>, BACKEND_IMAGE, FRONTEND_IMAGE.
 set -uo pipefail
 
 export DOTNET_CLI_UI_LANGUAGE=en DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -51,8 +25,7 @@ case "$MODE" in
     ;;
 esac
 
-# Git Bash rewrites arguments that look like POSIX paths (/work, /var/run/docker.sock) before
-# docker.exe sees them; turn that off and use the socket form Docker Desktop accepts.
+# Git Bash rewrites POSIX-looking arguments before docker.exe sees them; turn that off.
 DOCKER_SOCKET='/var/run/docker.sock'
 case "$(uname -s 2>/dev/null)" in
   MINGW* | MSYS* | CYGWIN*)
@@ -121,7 +94,6 @@ one_line() {
   tr '\r\n' '  ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //; s/ $//'
 }
 
-# Prints the image of the "AS build" stage of a Dockerfile.
 build_stage_image() {
   [ -f "$1" ] || return 1
   tr -d '\r' <"$1" |
@@ -129,13 +101,11 @@ build_stage_image() {
     head -n 1
 }
 
-# A status that decides something never comes from `writer | grep -q`: under pipefail a writer
-# killed by SIGPIPE makes a match read as "no match". These tests read a here-string or a file.
+# No `writer | grep -q` for decisions: under pipefail a SIGPIPE'd writer turns a match into a miss.
 is_pinned() {
   grep -Eq '^[A-Za-z0-9][A-Za-z0-9./_-]*:[A-Za-z0-9._-]+@sha256:[0-9a-f]{64}$' <<<"$1"
 }
 
-# Decides whether a tool set runs in a container: 0 = container, 1 = this machine.
 use_container() {
   local tool
   case "$MODE" in
@@ -148,9 +118,7 @@ use_container() {
   return 1
 }
 
-# run_in_container <image> <dir> [docker create options]
-# Copies <dir> to /work in a fresh container, runs /work/run.sh there and copies /work/out back.
-# No bind mount is used, so nothing depends on how this machine shares its file system with Docker.
+# Copies files in and out instead of bind-mounting, so host file sharing with Docker doesn't matter.
 run_in_container() {
   local image="$1" dir="$2" cid rc
   shift 2
@@ -168,8 +136,6 @@ run_in_container() {
   docker rm -f "$cid" >/dev/null 2>&1
   return "$rc"
 }
-
-# ---------------------------------------------------------------- sdk-image-pin
 
 check_sdk_image_pin() {
   local name='sdk-image-pin'
@@ -205,8 +171,6 @@ check_sdk_image_pin() {
   pass "$name"
 }
 
-# ---------------------------------------------------------------- NuGet
-
 prepare_nuget() {
   local dir="$1" rel
   mkdir -p "$dir" || return 1
@@ -240,7 +204,6 @@ echo "$?" >out/vulnerable.rc
 EOF
 }
 
-# Unique "error XX0000: message" lines of a restore log, without the trailing "[project path]".
 restore_errors() {
   tr -d '\r' <"$1" | sed -n 's/.*\(error [A-Z][A-Z]*[0-9][0-9]*: .*\)$/\1/p' | sed 's/ \[[^][]*\]$//' | sort -u
 }
@@ -286,11 +249,9 @@ check_nuget() {
     return
   fi
 
-  # nuget-locked-restore
   rc="$(read_rc "$out/locked-restore.rc")"
   if [ "$rc" = "0" ] && grep -Eq 'NU190[05]' "$out/locked-restore.log"; then
-    # With packages in the local cache, a restore still succeeds when the advisory data cannot be
-    # downloaded; it only warns (NU1900 / NU1905). The audit did not run, so this is not a pass.
+    # A cached restore succeeds with only a warning when advisory data can't load: no audit ran.
     tr -d '\r' <"$out/locked-restore.log" | grep -oE 'warning NU190[05]: [^[]*' | sort -u | evidence
     unchecked nuget-locked-restore "the restore succeeded, but the advisory data could not be loaded (NU1900/NU1905), so the audit did not run"
   elif [ "$rc" = "0" ]; then
@@ -315,7 +276,6 @@ check_nuget() {
     fi
   fi
 
-  # nuget-vulnerable
   rc="$(read_rc "$out/plain-restore.rc")"
   if [ "$rc" != "0" ]; then
     restore_errors "$out/plain-restore.log" 2>/dev/null | head -n 10 | evidence
@@ -343,7 +303,6 @@ check_nuget() {
     return
   fi
   if grep -q '"vulnerabilities"' "$out/vulnerable.json"; then
-    # The report lists only affected packages, so every id / resolvedVersion pair in it is a finding.
     findings="$(grep -oE '"(id|resolvedVersion|severity|advisoryurl)": *"[^"]*"' "$out/vulnerable.json" |
       awk -F'"' '
         $2 == "id" { id = $4 }
@@ -357,8 +316,6 @@ check_nuget() {
   fi
   pass nuget-vulnerable
 }
-
-# ---------------------------------------------------------------- npm
 
 prepare_npm() {
   local dir="$1" file
@@ -437,7 +394,7 @@ check_npm() {
     return
   fi
 
-  # npm-audit-prod: npm audit --omit=dev exits non-zero on findings and on errors; the JSON tells them apart.
+  # npm audit exits non-zero on findings and on errors; only the JSON tells them apart.
   rc="$(read_rc "$out/audit-prod.rc")"
   if ! grep -q '"auditReportVersion"' "$out/audit-prod.json" 2>/dev/null; then
     cat "$out/audit-prod.json" "$out/audit-prod.err" 2>/dev/null | tail -n 10 | evidence
@@ -451,13 +408,9 @@ check_npm() {
     fail npm-audit-prod "production dependencies have advisories: $(printf '%s' "$packages" | one_line)"
   fi
 
-  # npm-audit-high: replaces a bare `npm audit --audit-level=high`, which cannot tell a reviewed,
-  # time-boxed exception from a new advisory. The gate keeps its own 0 / 1 / 2 exit status visible.
   rc="$(read_rc "$out/gate.rc")"
   case "$rc" in
     0)
-      # Only the entries of the "Accepted exceptions" block are reviewed exceptions. The "Not gated"
-      # blocks list advisories below high that nobody reviewed; they keep their own label.
       tr -d '\r' <"$out/gate.log" | sed -n \
         -e '1p' \
         -e '/^Accepted exceptions/,/^$/s/^  - \(GHSA-.*\)$/accepted exception: \1/p' \
@@ -480,8 +433,6 @@ check_npm() {
       ;;
   esac
 }
-
-# ---------------------------------------------------------------- Trivy
 
 check_trivy() {
   local name="$1" image="$2" log="$WORK/$1.log" rc detail
@@ -513,23 +464,15 @@ check_trivy() {
       unchecked "$name" "trivy exit 0, but it detected no OS packages in $image, so nothing was scanned"
     fi
   elif [ "$rc" -eq 1 ] && grep -Eq '^Total: [1-9][0-9]* \(' "$log"; then
-    # Exit 1 together with a report is the only result that means "findings".
-    # grep reads the file itself: behind a pipe, `grep -q` stops at the first match, the writer
-    # dies of SIGPIPE on a large report, and pipefail turns the match into "false". The pattern
-    # has no end anchor, so a trailing CR does not matter.
-    # The whole report: whoever fixes the image needs the package and the fixed version.
+    # Only exit 1 together with a report means findings.
     grep -v "$(printf '\tINFO\t')" "$log" | evidence
     fail "$name" "fixable HIGH/CRITICAL findings in $image: $(tr -d '\r' <"$log" | grep -E '^Total: ' | one_line)"
   else
-    # No report: the scanner never started (docker run exits 125, 126 or 127 when the image cannot
-    # be pulled or run) or it stopped before the scan finished. Nothing is known about the image.
     tail -n 10 "$log" | evidence
     detail="$(grep -E 'FATAL|[Ee]rror' "$log" | head -n 1 | one_line)"
     unchecked "$name" "trivy did not complete (exit $rc)${detail:+: $detail}"
   fi
 }
-
-# ---------------------------------------------------------------- run
 
 echo "check-deps: root $ROOT"
 

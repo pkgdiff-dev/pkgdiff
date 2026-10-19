@@ -2,7 +2,6 @@
   <app-grid-pattern />
 
   <div class="relative z-10 space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold text-[#111418] dark:text-white">Jobs</h1>
@@ -27,7 +26,6 @@
       <div class="text-sm text-gray-500 dark:text-gray-500">Loading jobs...</div>
     </div>
     } @else if (data(); as jobs) {
-    <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
       <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl p-4">
         <div class="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1">Enqueued</div>
@@ -51,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Active Queue -->
     @if (jobs.queuedJobs.length > 0) {
     <div class="bg-white dark:bg-[#1a1a1a] border border-blue-200 dark:border-blue-900/50 rounded-xl">
       <div class="px-5 py-4 border-b border-blue-100 dark:border-blue-900/30 flex items-center gap-2">
@@ -124,7 +121,6 @@
     </div>
     }
 
-    <!-- Recurring Jobs -->
     <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
       <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
         <lucide-icon [img]="ClockIcon" [size]="16" class="text-primary"></lucide-icon>
@@ -183,7 +179,6 @@
       </div>
     </div>
 
-    <!-- Recent Job History -->
     <div class="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl">
       <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
         <lucide-icon [img]="ActivityIcon" [size]="16" class="text-primary"></lucide-icon>
@@ -206,11 +201,9 @@
           </thead>
           <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
             @for (job of jobs.recentJobs; track job.jobId) {
-            <!-- Parent / Standalone Row -->
             <tr class="transition-colors" [class.hover:bg-gray-50/50]="true" [class.dark:hover:bg-gray-800/30]="true"
               [class.cursor-pointer]="job.childJobs.length"
               (click)="job.childJobs.length ? toggleExpand(job.jobId) : null">
-              <!-- Expand Toggle -->
               <td class="pl-4 pr-0 py-3 w-10">
                 @if (job.childJobs.length) {
                 <lucide-icon [img]="ChevronIcon" [size]="14" class="text-gray-400 transition-transform duration-200"
@@ -244,7 +237,6 @@
               <td class="px-5 py-3 text-xs text-gray-500 text-right font-mono">{{ formatDuration(job.duration) }}</td>
             </tr>
 
-            <!-- Expanded Child Rows -->
             @if (job.childJobs.length && isExpanded(job.jobId)) {
             @for (child of job.childJobs; track child.jobId) {
             <tr class="bg-gray-50/50 dark:bg-gray-800/20">

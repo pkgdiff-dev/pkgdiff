@@ -3,18 +3,15 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// What the GitHub scraper remembers between requests. These used to be static dictionaries that
-// only ever grew and never forgot; here every entry expires and the number of entries is capped.
+// What the GitHub scraper remembers between requests; entries expire and their count is capped
 public sealed class GitHubScrapeCache : IDisposable
 {
     private const int MaxEntries = 2000;
 
-    // A background scrape asks for the releases of a repository once per version of the package, so
-    // the list has to outlive a whole scrape; an empty list is kept as long, or every version of a
-    // package whose repository publishes no releases would ask GitHub again
+    // Outlives a whole background scrape (one lookup per version); empty lists are kept as long
     private static readonly TimeSpan ReleasesLifetime = TimeSpan.FromHours(3);
 
-    // What GitHub did not answer (an error, a page that failed) is asked again, but not for every version
+    // Failed lookups are retried, but not for every version
     private static readonly TimeSpan UnansweredLifetime = TimeSpan.FromMinutes(15);
 
     // A repository that had no changelog file may get one, so this knowledge is not kept for good
@@ -81,8 +78,7 @@ public sealed class GitHubScrapeCache : IDisposable
     private static string ReleasesKey(string repositoryUrl) => "releases:" + repositoryUrl;
 }
 
-// Which changelog files a repository has, as far as earlier lookups could tell. Shared between
-// requests, so every access is locked.
+// Which changelog files a repository has, as far as lookups could tell; shared, so locked
 public sealed class RepoChangelogKnowledge
 {
     public const int FailuresBeforeMissing = 3;

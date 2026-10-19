@@ -57,7 +57,7 @@ export class AdminBlogsComponent {
     previewHtml = signal('');
     previewLoading = signal(false);
 
-    // Escape or a click beside the dialog must not throw away an edited post; Cancel still closes it
+    // Escape or a backdrop click must not discard an edited post; Cancel still closes it
     editDirty = computed(() => {
         const blog = this.editingBlog();
         return blog !== null && (this.editTitle() !== blog.title || this.editContent() !== blog.content);
@@ -92,14 +92,12 @@ export class AdminBlogsComponent {
         this.editingBlog.set(null);
     }
 
-    // The preview is rendered by the same server-side renderer as the public blog page
     togglePreview(): void {
         if (this.previewMode()) {
             this.previewMode.set(false);
             return;
         }
         const blog = this.editingBlog();
-        // An answer that arrives after the dialog moved on to another post belongs to nothing on screen
         const stillOpen = () => this.editingBlog() === blog;
 
         this.previewLoading.set(true);

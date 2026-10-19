@@ -13,7 +13,7 @@ Console.Out.Flush();
 
 QuestPDF.Settings.License = LicenseType.Community;
 
-// The missing-glyph switch was renamed in 2026.9; reflection keeps one source for every version
+// The missing-glyph switch was renamed between versions; reflection handles both names
 var glyphSetting = new[] { "ThrowOnMissingTextGlyphs", "CheckIfAllTextGlyphsAreAvailable" }
     .Select(name => typeof(QuestPDF.Settings).GetProperty(name, BindingFlags.Public | BindingFlags.Static))
     .FirstOrDefault(property => property is { CanWrite: true });

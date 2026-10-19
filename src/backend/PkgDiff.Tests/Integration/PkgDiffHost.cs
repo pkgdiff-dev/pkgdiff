@@ -18,9 +18,6 @@ using PkgDiff.Tests.Postgres;
 
 namespace PkgDiff.Tests.Integration;
 
-// The real application (Program.cs: every registration, the whole pipeline, migrations, seeding,
-// the job schedule) on a PostgreSQL database of its own. Only the outside world is replaced: the
-// npm registry and the job queue.
 public sealed class PkgDiffHost : WebApplicationFactory<Program>
 {
     public const string PeerHeader = "X-Test-Peer";
@@ -72,8 +69,7 @@ public sealed class PkgDiffHost : WebApplicationFactory<Program>
 
     public override async ValueTask DisposeAsync()
     {
-        // Hangfire keeps its log provider in a static. Left pointing at this host, every Hangfire object
-        // built later in the test run would ask the disposed logger factory for a logger and fail.
+        // Hangfire's log provider is static; left on this host, later Hangfire objects would fail
         global::Hangfire.Logging.LogProvider.SetCurrentLogProvider(null);
 
         await base.DisposeAsync();
@@ -83,8 +79,7 @@ public sealed class PkgDiffHost : WebApplicationFactory<Program>
         await context.Database.EnsureDeletedAsync();
     }
 
-    // TestServer has no socket, so a request has no peer address. A test names the peer it wants
-    // to be in a header, and this puts it on the connection before the application's own pipeline.
+    // TestServer has no socket, so a test names the peer address it wants in a header
     private sealed class PeerAddressFilter : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>

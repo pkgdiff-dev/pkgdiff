@@ -306,7 +306,6 @@ public class AutoPilotApprovalTests
         Assert.Equal(["LinkedIn"], _social.Calls);
     }
 
-    // WR-06: an unconfigured platform is skipped, not a failure that makes Hangfire retry
     [Fact]
     public async Task SocialJob_OnlyLinkedInConfigured_SucceedsWithoutTouchingTwitter()
     {
@@ -402,7 +401,6 @@ public class AutoPilotApprovalTests
         Assert.Empty(_unitOfWork.SocialMediaPosts.Items);
     }
 
-    // WR-06: the platform accepted the post but recording the outcome failed; the retry must not post again
     [Fact]
     public async Task SocialJob_RetryAfterUnrecordedSuccess_DoesNotPostTwice()
     {
@@ -427,7 +425,6 @@ public class AutoPilotApprovalTests
         Assert.Equal(SocialMediaPostStatus.Pending, twitter.Status);
     }
 
-    // WR-03: a timeout or 5xx may already have published the post, so it stays Pending and is never retried
     [Fact]
     public async Task SocialJob_UnknownOutcome_StaysPending_DoesNotThrow_AndIsNotRepostedLater()
     {

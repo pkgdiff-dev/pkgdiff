@@ -274,8 +274,7 @@ export class AdminSecurityComponent {
     return ip === '::1' || ip === '127.0.0.1' || ip.startsWith('127.') || ip === 'localhost';
   }
 
-  // The server pages over every address, so with this machine's rows left out a page can be short
-  // and its total no longer says how many rows there are
+  // Filtered client-side, so a page can come up short and its total counts the hidden rows
   private withoutLocalhost<T extends { ipAddress: string }>(page: PaginatedResult<T>): PaginatedResult<T> {
     if (!this.hideLocalhost()) return page;
 

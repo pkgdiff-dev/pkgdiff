@@ -1,19 +1,13 @@
 namespace PkgDiff.Infrastructure.Services;
 
-// Markdig, HtmlSanitizer and AngleSharp walk nested structures recursively, and a stack overflow cannot be
-// caught: it ends the whole process. Nested raw HTML overflows a 1.5 MB thread stack (the Linux default) in the
-// sanitizer's AngleSharp Node.Normalize at about 5,400 levels. This scan is linear, never recurses, and runs
-// before either library sees the text. It over-estimates rather than under-estimates, so hostile input is
-// rejected long before it gets anywhere near the crash depth.
+// Rejects input nested deep enough to overflow the recursive parsers' stack, which ends the
+// process. Linear scan that over-estimates depth so hostile input is rejected early.
 internal static class MarkdownComplexityGuard
 {
-    // 128 KiB of UTF-16 text. GitHub caps a release body at 125,000 characters and blog posts are a few tens of
-    // KiB. The sanitizer's cost grows faster than linearly with sibling count, so this also keeps the worst
-    // hostile note to about two seconds of CPU.
+    // Also bounds the sanitizer's superlinear cost on hostile notes
     internal const int MaxLength = 128 * 1024;
 
-    // Real notes stay below about 10 levels. The HTML parser can build at most about twice the counted depth
-    // (implied table sections and rows), which is still about 40 times below the measured crash.
+    // The HTML parser builds at most about twice the counted depth, far below the crash depth
     internal const int MaxDepth = 64;
 
     internal enum Limit
@@ -34,13 +28,12 @@ internal static class MarkdownComplexityGuard
 
     private static readonly HashSet<string> VoidTags = new(StringComparer.Ordinal) { "br", "img", "hr" };
 
-    // Closed by the HTML parser's adoption agency, which can keep or re-create them, so only an exact match closes them
+    // The adoption agency may keep or re-create these, so only an exact match closes them
     private static readonly HashSet<string> FormattingTags = new(StringComparer.Ordinal)
     {
         "a", "b", "strong", "i", "em", "code", "s"
     };
 
-    // Elements the HTML parser closes implicitly when an enclosing element ends
     private static readonly HashSet<string> ImpliedEndTags = new(StringComparer.Ordinal)
     {
         "p", "li", "td", "th", "tr", "thead", "tbody", "tfoot"
@@ -276,8 +269,7 @@ internal static class MarkdownComplexityGuard
         return (leftFlanking, rightFlanking);
     }
 
-    // Tracks open raw HTML elements the way the HTML parser does, but only closes an element when the parser
-    // certainly would, so the count never falls below the depth the parser builds
+    // Mirrors the parser's open elements but closes only when it certainly would (never undercounts)
     private static Limit CheckHtml(ReadOnlySpan<char> line, List<string> openElements, out int measured)
     {
         measured = 0;

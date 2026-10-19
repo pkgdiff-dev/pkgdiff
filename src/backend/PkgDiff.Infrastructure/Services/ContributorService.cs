@@ -45,7 +45,6 @@ public class ContributorService : IContributorService
             .Take(pageSize)
             .ToListAsync();
 
-        // Global rank = position in full ordered set
         var offset = (page - 1) * pageSize;
         var items = contributors
             .Select((c, i) => new ContributorDto(
@@ -65,7 +64,6 @@ public class ContributorService : IContributorService
 
         foreach (var username in usernames)
         {
-            // Validate against GitHub API - skip if not a real user
             if (!await _validator.IsValidGitHubUserAsync(username))
                 continue;
 
@@ -109,7 +107,6 @@ public class ContributorService : IContributorService
             var mentions = _analyzerService.ExtractMentions(note.ReleaseNotes);
             foreach (var username in mentions)
             {
-                // Validate against GitHub API during backfill too
                 if (!await _validator.IsValidGitHubUserAsync(username))
                     continue;
 

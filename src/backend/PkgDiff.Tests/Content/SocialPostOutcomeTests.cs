@@ -14,7 +14,6 @@ using PkgDiff.Tests.TestDoubles;
 
 namespace PkgDiff.Tests.Content;
 
-// WR-03: only a definite refusal may be retried; anything that may already have published the post is Unknown.
 public class SocialPostOutcomeTests
 {
     private readonly FakeUnitOfWork _uow = new();

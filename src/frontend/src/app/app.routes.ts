@@ -27,7 +27,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/package/package').then(m => m.PackageComponent)
       },
       {
-        // A scoped npm name typed with its slash, with a version: /package/npm/@scope/name/1.0.0
         path: 'package/:registry/:scope/:name/:version',
         loadComponent: () => import('./features/package/package').then(m => m.PackageComponent)
       },
@@ -159,7 +158,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/social-media/admin-social-media').then(m => m.AdminSocialMediaComponent)
       },
       {
-        // LinkedIn OAuth redirect target - uses the same component, reads ?code= in ngOnInit
         path: 'social-media/linkedin/callback',
         canActivate: [permissionGuard],
         data: { permission: 'Permissions.SocialMedia.Manage' },

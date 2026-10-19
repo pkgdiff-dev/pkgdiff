@@ -49,7 +49,6 @@ export class AuditReportComponent {
     return report && report.total > 0 ? Math.round((report.progress / report.total) * 100) : 0;
   });
 
-  // Malware first, then by the worst severity, then clean, then the ones that could not be checked
   sortedItems = computed(() => {
     const items = [...(this.report()?.items ?? [])];
     const rank = (item: AuditItem) => {
@@ -75,7 +74,7 @@ export class AuditReportComponent {
       title: 'Dependency audit report | pkgdiff',
       description: 'Known vulnerabilities of the packages of a dependency file, with the versions that fix them.',
     });
-    // A report belongs to whoever has its link; search engines keep out
+    // Reports are private to whoever has the link
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
 
     if (!isPlatformBrowser(inject(PLATFORM_ID))) return;

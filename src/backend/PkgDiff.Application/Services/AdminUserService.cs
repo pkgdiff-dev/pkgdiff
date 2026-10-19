@@ -307,7 +307,7 @@ public class AdminUserService : IAdminUserService
         var user = await _userManager.FindByIdAsync(id);
         if (user == null) throw new KeyNotFoundException($"User with id {id} not found");
 
-        // Resetting an Admin's password is an account takeover, so it needs the same Admin-only rule as granting Admin.
+        // Resetting an Admin's password is an account takeover, so it is Admin-only
         await ThrowIfNonAdminTargetsAdminAsync(user, callerIsAdmin, "Only administrators can reset an administrator's password.");
         await ThrowIfTargetExceedsCallerAsync(user, callerIsAdmin, callerPermissions, "You cannot reset the password of a user with permissions you do not hold.");
 

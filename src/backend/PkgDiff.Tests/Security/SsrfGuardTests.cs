@@ -38,7 +38,7 @@ public class SsrfGuardTests
     [InlineData("::ffff:10.0.0.1")]
     [InlineData("::ffff:169.254.169.254")]
     [InlineData("64:ff9b::a9fe:a9fe")]
-    // WR-05: IPv4-compatible, 6to4, deprecated site-local, Teredo and local-use NAT64
+    // IPv4-compatible, 6to4, deprecated site-local, Teredo and local-use NAT64
     [InlineData("::7f00:1")]
     [InlineData("::a9fe:a9fe")]
     [InlineData("::a00:1")]

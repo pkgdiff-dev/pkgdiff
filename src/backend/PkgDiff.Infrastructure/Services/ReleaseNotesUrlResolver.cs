@@ -15,35 +15,29 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
     private readonly AsyncRetryPolicy _retryPolicy;
     private readonly ILogger<ReleaseNotesUrlResolver> _logger;
 
-    // URL extraction regex
     private static readonly Regex UrlRegex = new(
         @"https?://[^\s""'<>\)]+",
         RegexOptions.Compiled | RegexOptions.IgnoreCase,
         TimeSpan.FromSeconds(1));
 
-    // GitHub releases page: github.com/{owner}/{repo}/releases
     private static readonly Regex GitHubReleasesRegex = new(
         @"^https?://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+)/releases/?$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase,
         TimeSpan.FromSeconds(1));
 
-    // GitHub blob file: github.com/{owner}/{repo}/blob/{branch}/{path}
     private static readonly Regex GitHubBlobRegex = new(
         @"^https?://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+)/blob/(?<branch>[^/]+)/(?<path>.+)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase,
         TimeSpan.FromSeconds(1));
 
-    // GitHub repo root: github.com/{owner}/{repo}
     private static readonly Regex GitHubRepoRegex = new(
         @"^https?://github\.com/(?<owner>[^/]+)/(?<repo>[^/]+?)(?:\.git)?/?$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase,
         TimeSpan.FromSeconds(1));
 
-    // Changelog-like filenames
     private static readonly string[] ChangelogFilenames =
         ["changelog", "changes", "release-notes", "releasenotes", "history"];
 
-    // Filler phrases commonly found around URL-only release notes
     private static readonly string[] FillerPhrases =
     [
         "see", "please see", "please read", "read the",
@@ -65,7 +59,7 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         _httpClient = httpClient;
         _logger = logger;
 
-        // Only a transient failure is retried: a 404 or a blocked (SSRF) target stays what it is.
+        // Only transient failures are retried; a 404 or an SSRF-blocked target is final
         _retryPolicy = Policy
             .Handle<Exception>(TransientHttp.IsTransient)
             .WaitAndRetryAsync(2, retryAttempt =>
@@ -92,7 +86,7 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
             "[UrlResolver] Detected URL-dominated release notes for {PackageId} v{Version}, attempting resolution...",
             packageId, version);
 
-        // The first few links only: each one may wait for a slow host, and a note can list hundreds
+        // Capped: each link may wait on a slow host and a note can list hundreds
         var classifiedUrls = ClassifyUrls(urls).Take(MaxUrlsFollowed);
 
         foreach (var (url, urlType) in classifiedUrls)
@@ -110,7 +104,7 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
             }
             catch (GitHubRateLimitedException)
             {
-                // The link may still resolve: the version is scraped again once the limit resets
+                // Rethrown so the version is scraped again once the rate limit resets
                 throw;
             }
             catch (Exception ex)
@@ -124,8 +118,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         return new UrlResolverResult(rawReleaseNotes, false);
     }
 
-    // ==================== URL EXTRACTION & CLASSIFICATION ====================
-
     private const int MaxUrlsFollowed = 3;
 
     private static List<string> ExtractUrls(string text)
@@ -136,10 +128,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
             .ToList();
     }
 
-    /// <summary>
-    /// Determines whether release notes text is "URL-dominated" - minimal substantive
-    /// content beyond URLs and filler phrases.
-    /// </summary>
     private static bool IsUrlDominated(string text, List<string> urls)
     {
         var strippedText = text;
@@ -150,15 +138,11 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         foreach (var filler in FillerPhrases)
             remaining = Regex.Replace(remaining, Regex.Escape(filler), "", RegexOptions.IgnoreCase);
 
-        // Strip punctuation and whitespace
         remaining = Regex.Replace(remaining, @"[^\w]", "");
 
         return remaining.Length < 80;
     }
 
-    /// <summary>
-    /// Classifies URLs by type and sorts by resolution priority.
-    /// </summary>
     private static List<(string Url, UrlType Type)> ClassifyUrls(List<string> urls)
     {
         var classified = new List<(string Url, UrlType Type)>();
@@ -189,8 +173,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         return ChangelogFilenames.Any(name => path.Contains(name));
     }
 
-    // ==================== URL RESOLUTION HANDLERS ====================
-
     private async Task<UrlResolverResult?> ResolveUrlAsync(
         string url, UrlType urlType, string version)
     {
@@ -205,9 +187,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         };
     }
 
-    /// <summary>
-    /// GitHub releases page → delegate to existing IGitHubScraperService
-    /// </summary>
     private async Task<UrlResolverResult?> ResolveGitHubReleasesAsync(string url, string version)
     {
         var repoUrl = url.Replace("/releases", "").TrimEnd('/');
@@ -219,9 +198,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         return null;
     }
 
-    /// <summary>
-    /// Bare GitHub repo URL → try releases page
-    /// </summary>
     private async Task<UrlResolverResult?> ResolveGitHubRepoAsync(string url, string version)
     {
         var repoUrl = url.TrimEnd('/');
@@ -233,9 +209,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         return null;
     }
 
-    /// <summary>
-    /// GitHub blob CHANGELOG → convert to raw URL, fetch, extract version section
-    /// </summary>
     private async Task<UrlResolverResult?> ResolveGitHubChangelogAsync(string url, string version)
     {
         return await _retryPolicy.ExecuteAsync(async () =>
@@ -261,9 +234,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         });
     }
 
-    /// <summary>
-    /// Non-changelog GitHub blob file (e.g., upgrade guide)
-    /// </summary>
     private async Task<UrlResolverResult?> ResolveGitHubBlobAsync(string url, string version)
     {
         return await _retryPolicy.ExecuteAsync(async () =>
@@ -274,7 +244,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
             var content = await _httpClient.GetStringAsync(rawUrl);
             if (string.IsNullOrWhiteSpace(content)) return null;
 
-            // Try version section first, fallback to full content
             var versionSection = ExtractVersionSection(content, version);
             var result = !string.IsNullOrWhiteSpace(versionSection) ? versionSection : content;
 
@@ -285,9 +254,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         });
     }
 
-    /// <summary>
-    /// External (non-GitHub) URL → fetch HTML, extract main content
-    /// </summary>
     private async Task<UrlResolverResult?> ResolveExternalPageAsync(string url)
     {
         return await _retryPolicy.ExecuteAsync(async () =>
@@ -306,7 +272,7 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
                 ".post-content",
                 ".entry-content",
                 ".document-content",
-                ".rst-content" // ReadTheDocs
+                ".rst-content"
             };
 
             foreach (var selector in contentSelectors)
@@ -329,11 +295,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         });
     }
 
-    // ==================== HELPERS ====================
-
-    /// <summary>
-    /// Converts github.com blob URL to raw.githubusercontent.com URL
-    /// </summary>
     private static string? ConvertToRawGitHubUrl(string blobUrl)
     {
         var match = GitHubBlobRegex.Match(blobUrl);
@@ -347,11 +308,6 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
         return $"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}";
     }
 
-    /// <summary>
-    /// Extracts the section of a CHANGELOG markdown file for a specific version.
-    /// Looks for headings like: ## [1.2.3], ## v1.2.3, ## 1.2.3 - 2024-01-01
-    /// Returns content between that heading and the next heading of same/higher level.
-    /// </summary>
     internal static string? ExtractVersionSection(string changelogContent, string version)
     {
         var cleanVersion = version.TrimStart('v', 'V');

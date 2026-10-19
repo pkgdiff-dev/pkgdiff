@@ -12,7 +12,6 @@ public static class GitHubUrls
 
         url = url.TrimEnd('/');
 
-        // Remove common GitHub paths to get base repository URL
         var segments = new[] { "/releases", "/issues", "/wiki", "/pulls", "/actions", "/tree", "/blob", "/commit" };
         foreach (var segment in segments)
         {
@@ -27,8 +26,7 @@ public static class GitHubUrls
         return url;
     }
     
-    // The folder a repository URL points into: "packages/core" for
-    // https://github.com/o/r/tree/main/packages/core; null for the repository itself or a file
+    // The folder a repository URL points into; null for the repository itself or a file
     public static string? SubPath(string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -38,16 +36,14 @@ public static class GitHubUrls
         if (!match.Success)
             return null;
         var path = Uri.UnescapeDataString(match.Groups["path"].Value).Trim('/');
-        // A link to a file (packages/core/README.md) points into the folder that holds it
+        // A link to a file points into the folder that holds it
         var lastSlash = path.LastIndexOf('/');
         if (System.Text.RegularExpressions.Regex.IsMatch(path[(lastSlash + 1)..], @"\.(md|markdown|rst|txt|adoc)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             path = lastSlash < 0 ? string.Empty : path[..lastSlash];
         return path.Length == 0 || path.Contains("..") ? null : path;
     }
 
-    // The https URL of a repository as a package manifest names it: "github:o/r", the bare "o/r" npm
-    // takes for GitHub, "git@github.com:o/r.git", "ssh://git@github.com/o/r", "git+https://github.com/o/r.git".
-    // Anything else comes back without its git decorations.
+    // The https URL of a repository in any spelling a manifest uses (shorthand, ssh, git+https)
     public static string? FromRepositoryField(string? repository)
     {
         if (string.IsNullOrWhiteSpace(repository))
@@ -71,8 +67,7 @@ public static class GitHubUrls
         return TrimGitSuffix(url.TrimEnd('/'));
     }
 
-    // True for an address on github.com in any spelling a manifest uses; a host that merely contains
-    // "github.com" (github.com.example.org) is not GitHub
+    // True for github.com in any manifest spelling; a host merely containing it is not GitHub
     public static bool IsGitHub(string? url)
     {
         var normalized = FromRepositoryField(url);
@@ -81,7 +76,7 @@ public static class GitHubUrls
                    || uri.Host.Equals("www.github.com", StringComparison.OrdinalIgnoreCase));
     }
 
-    // Only the ending: "bar.github.io" keeps its ".git"
+    // Only the ending is trimmed; a ".git" inside a host name stays
     private static string TrimGitSuffix(string url) =>
         url.EndsWith(".git", StringComparison.OrdinalIgnoreCase) ? url[..^4] : url;
 

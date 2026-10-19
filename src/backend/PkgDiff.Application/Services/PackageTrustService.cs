@@ -9,21 +9,17 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Application.Services;
 
-// Security data is never fetched while a visitor waits: a request reads what is stored and, when
-// that is missing or old, queues a background refresh. The refresh asks the providers, stores the
-// result and tells the open pages over SignalR.
+// Security data is never fetched inline: requests read stored data and queue a background refresh
 public class PackageTrustService : IPackageTrustService
 {
     private const int DefaultCacheHours = 24;
     private const int MinCacheHours = 1;
     private const int MaxCacheHours = 168;
-    // OSV answers up to 1000 queries per batch; a package with more versions is checked for its newest 1000
+    // OSV takes at most 1000 queries per batch; larger packages are checked for the newest 1000
     private const int MaxVersionsChecked = 1000;
     private const int ExpiredPerRun = 100;
     private const int MaxErrorLength = 1000;
-    // One refresh per package is queued at most this often, however many visitors open it
     private static readonly TimeSpan RequeueAfter = TimeSpan.FromMinutes(10);
-    // A failed refresh is tried again after this long instead of on the next visit
     private static readonly TimeSpan RetryAfterFailure = TimeSpan.FromHours(1);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);

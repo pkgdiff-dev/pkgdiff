@@ -44,7 +44,7 @@ public class NugetService : INugetService
         var metadataResource = await GetMetadataResourceAsync();
         var metadata = await metadataResource.GetMetadataAsync(
             packageId,
-            includePrerelease: true, // Always fetch all versions, filter below
+            includePrerelease: true,
             includeUnlisted: false,
             _cache,
             NullLogger.Instance,
@@ -52,10 +52,8 @@ public class NugetService : INugetService
 
         var versions = metadata.Select(m => m.Identity.Version);
 
-        // Get active exclude patterns
         var excludePatterns = await _versionFilterService.GetActiveExcludePatternsAsync();
 
-        // Filter out prerelease versions if not requested
         if (!includePrerelease)
         {
             versions = versions
@@ -65,7 +63,6 @@ public class NugetService : INugetService
         }
         else
         {
-            // Even when including prerelease, filter out excluded patterns (dev, ci, etc.)
             versions = versions
                 .Where(v => !_versionFilterService.ShouldExcludeVersion(v.ToString(), excludePatterns));
         }
@@ -140,13 +137,11 @@ public class NugetService : INugetService
             throw new ArgumentException($"Package '{packageId}' not found on NuGet.");
         }
 
-        // Get active exclude patterns
         var excludePatterns = await _versionFilterService.GetActiveExcludePatternsAsync();
 
         _logger.LogDebug("[NugetService] Fetched {TotalCount} versions for {PackageId}", 
             metadata.Count, packageId);
 
-        // Filter out excluded versions (dev, ci, etc.)
         var filteredMetadata = metadata
             .Where(m => !_versionFilterService.ShouldExcludeVersion(m.Identity.Version.ToString(), excludePatterns))
             .ToList();
@@ -154,7 +149,6 @@ public class NugetService : INugetService
         _logger.LogDebug("[NugetService] After filtering: {FilteredCount}/{TotalCount} versions remain for {PackageId}", 
             filteredMetadata.Count, metadata.Count, packageId);
 
-        // Use filtered metadata for latest version
         var latest = filteredMetadata.OrderByDescending(m => m.Identity.Version).First();
         var projectUrl = latest.ProjectUrl?.ToString();
 

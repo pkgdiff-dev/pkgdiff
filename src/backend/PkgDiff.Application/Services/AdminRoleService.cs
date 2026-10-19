@@ -66,8 +66,7 @@ public class AdminRoleService : IAdminRoleService
             throw new InvalidOperationException("The 'Admin' role is a system role and cannot be deleted.");
         }
 
-        // Deleting a role revokes its permissions from every member: a non-Admin may do that only for
-        // permissions they hold, as when editing the role
+        // Deleting a role revokes its permissions, so a non-Admin must hold them, as when editing
         if (!callerIsAdmin)
         {
             var rolePermissions = (await _roleManager.GetClaimsAsync(role)).Where(c => c.Type == "Permission").Select(c => c.Value);
@@ -143,8 +142,7 @@ public class AdminRoleService : IAdminRoleService
         var currentClaims = await _roleManager.GetClaimsAsync(role);
         var permissionClaims = currentClaims.Where(c => c.Type == "Permission").ToList();
 
-        // Permission policies pass on the claim alone, so a non-Admin may only grant or revoke what they hold;
-        // otherwise Roles.Edit would let them hand their own role every permission
+        // Policies check the claim alone, so a non-Admin may only grant or revoke permissions they hold
         if (!callerIsAdmin)
         {
             var currentPermissions = permissionClaims.Select(c => c.Value).ToHashSet(StringComparer.Ordinal);
@@ -156,13 +154,11 @@ public class AdminRoleService : IAdminRoleService
             }
         }
 
-        // Remove existing permission claims
         foreach (var claim in permissionClaims)
         {
             await _roleManager.RemoveClaimAsync(role, claim);
         }
 
-        // Add new permission claims
         foreach (var permission in requestedPermissions)
         {
             await _roleManager.AddClaimAsync(role, new System.Security.Claims.Claim("Permission", permission));

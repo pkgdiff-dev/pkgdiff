@@ -7,8 +7,6 @@ using PkgDiff.Infrastructure.Repositories;
 
 namespace PkgDiff.Tests.Postgres;
 
-// A database of its own for one test, on the server PKGDIFF_TEST_POSTGRES points to, with every
-// migration applied. The default suite has no server and skips these tests; CI provides one.
 public sealed class PostgresDatabase : IAsyncDisposable
 {
     public const string ConnectionVariable = "PKGDIFF_TEST_POSTGRES";
@@ -44,7 +42,6 @@ public sealed class PostgresDatabase : IAsyncDisposable
         }
     }
 
-    // Migrated to the newest migration, or only as far as the one named
     public static async Task<PostgresDatabase> CreateAsync(string? targetMigration = null)
     {
         var connection = new NpgsqlConnectionStringBuilder(Environment.GetEnvironmentVariable(ConnectionVariable))
@@ -75,7 +72,6 @@ public sealed class PostgresDatabase : IAsyncDisposable
 
     public ApplicationDbContext CreateContext() => new(_options);
 
-    // A fresh context each time, as each request gets its own
     public UnitOfWork CreateUnitOfWork() => new(CreateContext());
 
     public async ValueTask DisposeAsync()

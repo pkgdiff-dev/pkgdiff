@@ -250,7 +250,6 @@ export class AdminUsersComponent {
     this.showModal.set(true);
   }
 
-  // The dialog stays open while the request runs and after a failure, so nothing typed is lost
   private submit(request: Observable<unknown>, done: string, failed: string, reload = true): void {
     this.saving.set(true);
     request.subscribe({

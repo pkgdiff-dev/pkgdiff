@@ -28,7 +28,6 @@ public class SitemapController : ControllerBase
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
 
-            // Static pages
             xml.AppendLine("  <url>");
             xml.AppendLine("    <loc>https://pkgdiff.dev/</loc>");
             xml.AppendLine("    <changefreq>daily</changefreq>");
@@ -71,7 +70,6 @@ public class SitemapController : ControllerBase
             xml.AppendLine($"    <lastmod>{DateTime.UtcNow:yyyy-MM-dd}</lastmod>");
             xml.AppendLine("  </url>");
 
-            // Package pages
             foreach (var package in packages)
             {
                 var encodedPackageId = Uri.EscapeDataString(package.PackageId);

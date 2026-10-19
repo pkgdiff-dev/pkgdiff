@@ -31,13 +31,11 @@ public class GitHubReleaseHtmlScraper
 
         _logger.LogDebug("[GitHubScraper] Fetching all releases via HTML: {ReleasesUrl}", baseReleasesUrl);
         
-        // OPTIMIZATION: Add timeout to prevent long waits due to rate limiting
-        // If timeout occurs, return partial results (user shouldn't wait too long)
+        // Bounded: on timeout the releases read so far are returned
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_htmlScrapingTimeoutSeconds));
         
         try
         {
-            // Scrape first page with rate limiting
             using var document = await _rateLimiter.ExecuteAsync("github-scraping", () => _htmlDocumentLoader.LoadAsync(baseReleasesUrl));
             if (document == null)
             {
@@ -47,25 +45,20 @@ public class GitHubReleaseHtmlScraper
 
             _logger.LogDebug("[GitHubScraper] Page title: {Title}", document.Title);
 
-            // Extract releases from first page
             GitHubReleasePage.ExtractReleases(document, releases, _logger);
 
-            // Check for pagination
             var totalPages = GitHubReleasePage.GetTotalPages(document);
             _logger.LogDebug("[GitHubScraper] Total pages detected: {TotalPages}", totalPages);
 
-            // Scrape all pages (rate limiter will manage speed)
             var maxPagesToScrape = totalPages;
             
             for (int page = 2; page <= maxPagesToScrape; page++)
             {
-                // Check for timeout before each page fetch
                 if (cts.Token.IsCancellationRequested)
                 {
                     _logger.LogWarning("[GitHubScraper] TIMEOUT after {Timeout}s - Returning partial results ({ReleasesCount} releases from {PagesScraped}/{TotalPages} pages)", 
                         _htmlScrapingTimeoutSeconds, releases.Count, page - 1, totalPages);
                     
-                    // Return partial results to user (don't make them wait)
                     return releases;
                 }
                 
@@ -74,7 +67,6 @@ public class GitHubReleaseHtmlScraper
 
                 try
                 {
-                    // Use rate limiter - it will automatically wait if needed
                     using var pageDocument = await _rateLimiter.ExecuteAsync("github-scraping", () => _htmlDocumentLoader.LoadAsync(pageUrl));
                     if (pageDocument != null)
                     {
@@ -106,13 +98,11 @@ public class GitHubReleaseHtmlScraper
         
         _logger.LogDebug("[GitHubScraper] Using LAZY HTML scraping for version {Version}", cleanVersion);
 
-        // Add timeout for lazy scraping too (half of full scraping timeout)
         var timeoutSeconds = _htmlScrapingTimeoutSeconds / 2;
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
 
         try
         {
-            // Fetch first page
             using var document = await _rateLimiter.ExecuteAsync("github-scraping", () => _htmlDocumentLoader.LoadAsync(baseReleasesUrl));
             if (document == null)
             {
@@ -120,11 +110,9 @@ public class GitHubReleaseHtmlScraper
                 return null;
             }
 
-            // Extract releases from first page and check if our version is there
             var releases = new Dictionary<string, string>();
             GitHubReleasePage.ExtractReleases(document, releases, _logger);
             
-            // Check if we found it on first page
             var result = TryFindVersion(releases, cleanVersion);
             if (result != null)
             {
@@ -132,15 +120,12 @@ public class GitHubReleaseHtmlScraper
                 return result;
             }
 
-            // Check pagination
             var totalPages = GitHubReleasePage.GetTotalPages(document);
             
             _logger.LogDebug("[GitHubScraper] Version not found on page 1, checking up to {TotalPages} more pages", totalPages - 1);
 
-            // Fetch additional pages until we find the version or timeout
             for (int page = 2; page <= totalPages; page++)
             {
-                // Check for timeout before each page fetch
                 if (cts.Token.IsCancellationRequested)
                 {
                     _logger.LogWarning("[GitHubScraper] TIMEOUT after {Timeout}s while searching for version {Version} - Version not found in first {Pages} pages", 
@@ -152,14 +137,13 @@ public class GitHubReleaseHtmlScraper
                 
                 try
                 {
-                    releases.Clear(); // Clear previous page releases
+                    releases.Clear();
                     using var pageDocument = await _rateLimiter.ExecuteAsync("github-scraping", () => _htmlDocumentLoader.LoadAsync(pageUrl));
                     
                     if (pageDocument != null)
                     {
                         GitHubReleasePage.ExtractReleases(pageDocument, releases, _logger);
                         
-                        // Check if we found it on this page
                         result = TryFindVersion(releases, cleanVersion);
                         if (result != null)
                         {
@@ -187,19 +171,16 @@ public class GitHubReleaseHtmlScraper
     
     private static string? TryFindVersion(Dictionary<string, string> releases, string targetVersion)
     {
-        // Try exact match
         if (releases.TryGetValue(targetVersion, out var notes))
         {
             return notes;
         }
 
-        // Try with 'v' prefix
         if (releases.TryGetValue($"v{targetVersion}", out notes))
         {
             return notes;
         }
 
-        // Try fuzzy match
         var fuzzyMatch = releases.FirstOrDefault(kvp =>
             kvp.Key.Replace(".", "").Replace("-", "").Replace("_", "")
                 .Equals(targetVersion.Replace(".", "").Replace("-", "").Replace("_", ""),

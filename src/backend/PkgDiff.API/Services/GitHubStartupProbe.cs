@@ -11,7 +11,7 @@ public static class GitHubStartupProbe
     private const int UnauthenticatedHourlyLimit = 60;
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(5);
 
-    // Never log any part of the token: prefixes/suffixes narrow brute force and identify the token in leaked logs.
+    // Never log any part of the token: even fragments identify it in leaked logs
     public static async Task LogStatusAsync(
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,

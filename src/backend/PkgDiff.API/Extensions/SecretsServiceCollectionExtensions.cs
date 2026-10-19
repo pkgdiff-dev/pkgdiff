@@ -12,8 +12,7 @@ public static class SecretsServiceCollectionExtensions
 
     public static IServiceCollection AddPkgDiffSecrets(this IServiceCollection services)
     {
-        // The key is validated when the protector is first resolved, never during registration,
-        // so the EF design-time host keeps working without SETTINGS_ENCRYPTION_KEY.
+        // Key validated on first resolve so EF design-time tooling works without it
         services.AddSingleton<ISecretProtector>(sp => new AesGcmSecretProtector(ResolveSettingsKey(sp, warnOnDevelopmentFallback: true)));
 
         services.AddScoped<ISystemSettingsReader, SystemSettingsReader>();
@@ -21,8 +20,7 @@ public static class SecretsServiceCollectionExtensions
         return services;
     }
 
-    // Same key policy as the settings: required outside Development, derived dev-only key in Development.
-    // Resolved lazily when the key ring is first loaded, never during registration.
+    // Same key policy as the settings; resolved lazily for EF design-time tooling
     public static IDataProtectionBuilder ProtectKeysWithSettingsEncryptionKey(this IDataProtectionBuilder builder)
     {
         builder.Services.AddSingleton(sp => new KeyRingEncryptionKey(ResolveSettingsKey(sp, warnOnDevelopmentFallback: false)));

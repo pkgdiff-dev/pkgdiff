@@ -47,7 +47,6 @@ describe('HTTP interceptors', () => {
     backend.expectOne(api('admin/users')).flush({ error: 'expired' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(auth.handleUnauthorized).toHaveBeenCalledTimes(1);
-    // The caller still gets the failure and resets its own state
     expect(failures).toEqual([401]);
   });
 

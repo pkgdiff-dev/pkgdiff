@@ -82,15 +82,15 @@ public class AdminSettingsService : IAdminSettingsService
     {
         return dailyFrequency switch
         {
-            1 => "0 12 * * *", // Once a day at noon
-            2 => "0 0,12 * * *", // Every 12 hours
-            3 => "0 8,14,20 * * *", // 3 times a day
-            4 => "0 0,6,12,18 * * *", // Every 6 hours
-            6 => "0 0,4,8,12,16,20 * * *", // Every 4 hours
-            8 => "0 0,3,6,9,12,15,18,21 * * *", // Every 3 hours
-            12 => "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *", // Every 2 hours
-            _ when dailyFrequency >= 24 => "0 * * * *", // Every hour
-            _ => "0 8,14,20 * * *" // Default fallback
+            1 => "0 12 * * *",
+            2 => "0 0,12 * * *",
+            3 => "0 8,14,20 * * *",
+            4 => "0 0,6,12,18 * * *",
+            6 => "0 0,4,8,12,16,20 * * *",
+            8 => "0 0,3,6,9,12,15,18,21 * * *",
+            12 => "0 0,2,4,6,8,10,12,14,16,18,20,22 * * *",
+            _ when dailyFrequency >= 24 => "0 * * * *",
+            _ => "0 8,14,20 * * *"
         };
     }
 }

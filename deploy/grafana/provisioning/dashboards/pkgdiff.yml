@@ -1,4 +1,4 @@
-# Dashboards from deploy/grafana/dashboards, read-only in Grafana: a change belongs in the repository
+# Read-only in Grafana: dashboards are changed in the repository
 apiVersion: 1
 
 providers:

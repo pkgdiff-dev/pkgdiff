@@ -4,13 +4,11 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.API.Controllers;
 
-// Dependency audit: a visitor pastes a dependency file, checks the packages read from it and gets a
-// report of their known vulnerabilities. The report is made by a background job and polled here.
 [ApiController]
 [Route("api/[controller]")]
 public class AuditController : ControllerBase
 {
-    // Audits waiting or running at the same time, all visitors together; each one takes a job worker
+    // All visitors together; each audit takes a job worker
     private const int MaxActiveAudits = 20;
     private const long MaxRequestBytes = 2 * 1024 * 1024;
 
@@ -25,7 +23,6 @@ public class AuditController : ControllerBase
         _logger = logger;
     }
 
-    // Reads the packages out of the file; nothing is fetched and nothing is stored
     [HttpPost("parse")]
     [RequestSizeLimit(MaxRequestBytes)]
     public ActionResult<ManifestParseResult> Parse([FromBody] ManifestParseRequest request)

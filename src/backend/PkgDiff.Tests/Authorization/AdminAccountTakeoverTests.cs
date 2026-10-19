@@ -16,7 +16,6 @@ using static PkgDiff.Tests.Authorization.AuthorizationTestHost;
 
 namespace PkgDiff.Tests.Authorization;
 
-// CR-01: a non-Admin holding Users.Edit must not be able to take over an Admin account.
 public class AdminAccountTakeoverTests
 {
     private const string NewPassword = "N3w-Passw0rd!";

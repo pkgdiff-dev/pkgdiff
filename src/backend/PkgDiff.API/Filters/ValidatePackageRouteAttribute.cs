@@ -79,7 +79,6 @@ public sealed class ValidatePackageRouteAttribute : ActionFilterAttribute
         var services = context.HttpContext.RequestServices;
         var unitOfWork = services.GetRequiredService<IUnitOfWork>();
 
-        // pub and pub.dev are aliases for the same registry row
         var keys = RegistryNames.SpellingsOf(registry);
 
         try

@@ -3,18 +3,15 @@ using PkgDiff.Application.Interfaces;
 
 namespace PkgDiff.Infrastructure.Services;
 
-/// <summary>
-/// Singleton service for tracking GitHub API rate limits from response headers
-/// </summary>
 public class GitHubRateLimitHandler : IGitHubRateLimitHandler
 {
-    private const int SafetyBufferThreshold = 10; // Minimum requests before waiting for reset
-    private const int WarningThreshold = 100; // Threshold for logging warnings
+    private const int SafetyBufferThreshold = 10;
+    private const int WarningThreshold = 100;
     
     private readonly ILogger<GitHubRateLimitHandler> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     
-    private int _remaining = 5000; // Default for authenticated
+    private int _remaining = 5000;
     private int _limit = 5000;
     private DateTime? _resetTime;
 
@@ -37,8 +34,7 @@ public class GitHubRateLimitHandler : IGitHubRateLimitHandler
                 _resetTime = null;
             }
 
-            // Safety buffer: the caller stops instead of waiting, so background workers are not held
-            // for up to an hour and its work can be scheduled for the reset
+            // Stops instead of waiting so background workers are not held until the reset
             if (_remaining <= SafetyBufferThreshold && _resetTime.HasValue)
             {
                 _logger.LogDebug(
@@ -50,7 +46,6 @@ public class GitHubRateLimitHandler : IGitHubRateLimitHandler
             // Counted before the answer arrives, so requests running in parallel cannot spend the buffer
             _remaining--;
 
-            // Log warning when approaching limit
             if (_remaining < WarningThreshold && _remaining > SafetyBufferThreshold)
             {
                 _logger.LogWarning(
@@ -71,7 +66,6 @@ public class GitHubRateLimitHandler : IGitHubRateLimitHandler
         await _semaphore.WaitAsync();
         try
         {
-            // Parse x-ratelimit-remaining
             if (response.Headers.TryGetValues("x-ratelimit-remaining", out var remainingValues))
             {
                 var remainingStr = remainingValues.FirstOrDefault();
@@ -81,7 +75,6 @@ public class GitHubRateLimitHandler : IGitHubRateLimitHandler
                 }
             }
 
-            // Parse x-ratelimit-limit
             if (response.Headers.TryGetValues("x-ratelimit-limit", out var limitValues))
             {
                 var limitStr = limitValues.FirstOrDefault();
@@ -91,7 +84,6 @@ public class GitHubRateLimitHandler : IGitHubRateLimitHandler
                 }
             }
 
-            // Parse x-ratelimit-reset (Unix timestamp)
             if (response.Headers.TryGetValues("x-ratelimit-reset", out var resetValues))
             {
                 var resetStr = resetValues.FirstOrDefault();

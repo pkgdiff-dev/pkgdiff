@@ -5,7 +5,6 @@ using PkgDiff.Domain.Entities;
 
 namespace PkgDiff.Tests.TestDoubles;
 
-// Just enough of the Identity store surface for UserManager/RoleManager role operations, without a database.
 public sealed class InMemoryIdentityStore :
     IUserRoleStore<ApplicationUser>,
     IUserPasswordStore<ApplicationUser>,
@@ -72,7 +71,6 @@ public sealed class InMemoryIdentityStore :
     {
     }
 
-    // IUserStore
     public Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken) => Task.FromResult(user.Id);
     public Task<string?> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken) => Task.FromResult(user.UserName);
 
@@ -114,7 +112,6 @@ public sealed class InMemoryIdentityStore :
     public Task<ApplicationUser?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken) =>
         Task.FromResult(_users.FirstOrDefault(u => u.NormalizedUserName == normalizedUserName));
 
-    // IUserPasswordStore
     public Task SetPasswordHashAsync(ApplicationUser user, string? passwordHash, CancellationToken cancellationToken)
     {
         user.PasswordHash = passwordHash;
@@ -127,7 +124,7 @@ public sealed class InMemoryIdentityStore :
     public Task<bool> HasPasswordAsync(ApplicationUser user, CancellationToken cancellationToken) =>
         Task.FromResult(user.PasswordHash is not null);
 
-    // IUserRoleStore (role names arrive normalized)
+    // Role names arrive normalized
     public Task AddToRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
     {
         _userRoles[user.Id].Add(roleName);
@@ -149,7 +146,6 @@ public sealed class InMemoryIdentityStore :
     public Task<IList<ApplicationUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken) =>
         Task.FromResult<IList<ApplicationUser>>(_users.Where(u => _userRoles[u.Id].Contains(roleName)).ToList());
 
-    // IRoleStore
     public Task<IdentityResult> CreateAsync(IdentityRole role, CancellationToken cancellationToken)
     {
         _roles.Add(role);
@@ -183,7 +179,6 @@ public sealed class InMemoryIdentityStore :
         return Task.CompletedTask;
     }
 
-    // IRoleClaimStore
     public IReadOnlyCollection<string> PermissionsOf(string roleName) =>
         _roleClaims.TryGetValue(RoleNamed(roleName).Id, out var claims)
             ? claims.Where(c => c.Type == "Permission").Select(c => c.Value).ToList()

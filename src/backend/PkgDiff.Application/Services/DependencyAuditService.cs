@@ -10,9 +10,7 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Application.Services;
 
-// A dependency audit: the visitor's packages are stored, a background job looks each one up in its
-// registry (does it exist, what is its latest version), asks OSV about all of them in one batch and
-// stores the report. Nothing is fetched while the visitor waits; the page polls the report.
+// Audits run in a background job and are stored; nothing is fetched while the visitor waits
 public class DependencyAuditService : IDependencyAuditService
 {
     private static readonly TimeSpan Lifetime = TimeSpan.FromDays(30);
@@ -207,7 +205,7 @@ public class DependencyAuditService : IDependencyAuditService
             }
             else
             {
-                // The registry's own spelling of the same version (NuGet writes 1.0 as 1.0.0)
+                // The registry's own spelling of the same version
                 item.Version = PackageVersion.TryParse(client.VersionScheme, dependency.Version, out var parsed)
                     ? versions.FirstOrDefault(v => v.Equals(parsed))?.Value ?? dependency.Version
                     : dependency.Version;
@@ -228,8 +226,7 @@ public class DependencyAuditService : IDependencyAuditService
         return item;
     }
 
-    // The lowest version that fixes every advisory: for each advisory its first fixed version above
-    // the checked one, and the highest of those
+    // Lowest version fixing every advisory: the highest first-fixed version above the checked one
     private static (string? Safe, bool HasUnfixed) SafeVersionOf(VersionScheme scheme, string current, List<SecurityAdvisory> advisories)
     {
         if (!PackageVersion.TryParse(scheme, current, out var checkedVersion))

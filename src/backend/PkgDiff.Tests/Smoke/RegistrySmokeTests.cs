@@ -22,7 +22,7 @@ public class RegistrySmokeTests
     private const string PubDevVersionsUrl = "https://pub.dev/packages/http/versions";
     private const string PubDevChangelogUrl = "https://pub.dev/packages/http/changelog";
 
-    // Mirrors the defaults seeded by DatabaseSeeder (a private local there, so it cannot be referenced)
+    // Mirrors the defaults seeded by DatabaseSeeder, which keeps them private
     private static readonly string[] SeededExcludePatterns =
     [
         "dev", "ci", "build", "nightly", "snapshot", "local", "test", "rc", "alpha", "beta",
@@ -113,7 +113,6 @@ public class RegistrySmokeTests
 
         Assert.Equal(new[] { "21.0.1", "21.1.0", "21.2.0" }, inRange);
 
-        // The registry lists 20.3.14 after 21.0.1 (publish order), so this also proves the sort
         Assert.Equal(new[] { "20.3.14", "21.0.0", "21.0.1", "21.1.0", "21.2.0", "21.2.1", "22.2.1" }, stable);
 
         Assert.Equal("@angular/core", metadata.PackageId);
@@ -146,7 +145,6 @@ public class RegistrySmokeTests
 
         Assert.Equal(new[] { "2.32.0", "2.32.3" }, inRange);
 
-        // PyPI lists 2.4.0 after 2.34.2 (text order) and 2.34.0.dev1 is a pre-release
         Assert.Equal(new[] { "2.4.0", "2.31.0", "2.32.0", "2.32.3", "2.34.2" }, stable);
 
         Assert.Equal("requests", metadata.PackageId);
@@ -211,7 +209,7 @@ public class RegistrySmokeTests
         var filter = await CreateSeededVersionFilterAsync();
         var patterns = (await filter.GetActiveExcludePatternsAsync()).ToList();
 
-        // Parsed from the reversed list, so the order below comes from NuGetVersion and not from the fixture
+        // Reversed first, so the order comes from NuGetVersion and not from the fixture
         var parsed = listed.AsEnumerable().Reverse().Select(NuGetVersion.Parse).OrderBy(v => v).ToList();
         var stable = parsed
             .Where(v => !v.IsPrerelease && !filter.ShouldExcludeVersion(v.ToString(), patterns))
@@ -226,11 +224,9 @@ public class RegistrySmokeTests
 
         Assert.Equal(new[] { "13.0.2", "13.0.3" }, inRange);
 
-        // The flat container lists versions in ascending SemVer order (4.5.9 < 4.5.10, 13.0.1-beta2 < 13.0.1)
         Assert.Equal(listed, parsed.Select(v => v.ToString()));
         Assert.Equal(listed.Where(v => !v.Contains('-')), stable.Select(v => v.ToString()));
 
-        // Every Newtonsoft.Json pre-release is a -betaN, which the seeded "beta" pattern drops on its own
         Assert.Contains("13.0.2-beta1", listed);
         Assert.Equal(stable, notExcluded);
     }

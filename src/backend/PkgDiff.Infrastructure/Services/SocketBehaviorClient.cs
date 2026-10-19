@@ -10,11 +10,8 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Socket.dev behaviour analysis (install scripts, network or shell access, obfuscation, malware) for
-// npm, PyPI and NuGet. Off unless Security:Socket:Enabled is true and a token and organization are
-// set: Socket's terms for showing its data publicly are not settled yet (docs/ops/socket-permission.md).
-// The free tier allows about five batch calls an hour, so one call covers the newest versions of a
-// package and this process makes at most four calls in any hour.
+// Socket.dev behaviour analysis for npm, PyPI and NuGet; off unless enabled with a token and org.
+// The free tier allows about five batch calls an hour, so calls are batched and capped.
 public partial class SocketBehaviorClient : IBehaviorClient
 {
     private const int MaxVersionsPerCall = 20;

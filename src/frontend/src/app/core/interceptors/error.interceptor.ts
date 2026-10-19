@@ -4,8 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { catchError, throwError } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 
-// Says what no caller can say better: the server cannot be reached, or it is refusing requests for now.
-// Every other failure stays with the caller, which knows what was being loaded and resets its own state.
+// Reports only unreachable or throttled responses; every other failure stays with the caller
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
   const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));

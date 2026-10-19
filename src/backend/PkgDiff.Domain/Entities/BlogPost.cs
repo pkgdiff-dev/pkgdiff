@@ -15,7 +15,6 @@ public class BlogPost : BaseEntity
     public DateTime? PublishedAt { get; set; }
     public string LlmModelUsed { get; set; } = string.Empty;
 
-    // Optional relation back to the release note this blog was generated from
     public int? CachedReleaseNoteId { get; set; }
     public CachedReleaseNote? CachedReleaseNote { get; set; }
 }

@@ -15,7 +15,6 @@ public class RegistryVersionListingTests
 {
     private readonly FakeUnitOfWork _unitOfWork = new();
 
-    // Listing versions needs neither pub.dev nor a scraping strategy
     private RegistryServiceFactory CreateFactory(IEnumerable<string> listed)
     {
         var listing = new StubListing(listed);
@@ -77,7 +76,6 @@ public class RegistryVersionListingTests
         Assert.Equal(new[] { "1.0.0", "1.1.0-canary.1", "1.1.0" }, all.Select(v => v.Value));
     }
 
-    // The behaviour each registry has always had: NuGet leaves the starting version out, the others list it
     [Theory]
     [InlineData("nuget", new[] { "2.0.0", "1.5.0" })]
     [InlineData("npm", new[] { "2.0.0", "1.5.0", "1.0.0" })]

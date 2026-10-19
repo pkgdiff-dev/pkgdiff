@@ -1,10 +1,7 @@
 namespace PkgDiff.Infrastructure.Security;
 
-// AngleSharp builds and walks the DOM recursively: a page nested some thousands of elements deep
-// overflows the stack while it is parsed or its text is read, and a stack overflow ends the whole
-// process. Pages come from addresses package authors choose, so their depth is measured first, in
-// one pass and without recursion. Elements whose end tag may be left out (p, li, td...) and void
-// elements do not count, so ordinary sloppy HTML stays well below the limit.
+// AngleSharp recurses over the DOM, so a deeply nested page overflows the stack and kills the process.
+// Depth is measured first without recursion; optional-end-tag and void elements do not count.
 public static class HtmlNestingGuard
 {
     public const int MaxDepth = 512;

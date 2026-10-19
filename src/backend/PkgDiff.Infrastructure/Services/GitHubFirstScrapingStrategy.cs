@@ -5,7 +5,6 @@ using PkgDiff.Application.Interfaces;
 namespace PkgDiff.Infrastructure.Services;
 
 // GitHub releases first, then the notes the registry itself publishes, when it publishes any.
-// Used for registries whose notes only come from a repository and for NuGet packages with a known repository.
 public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 {
     private readonly IGitHubScraperService _githubScraperService;
@@ -36,7 +35,6 @@ public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 
         string? discoveredUrl = null;
 
-        // If no GitHub URL yet, try to discover from registry
         if (string.IsNullOrWhiteSpace(githubRepoUrl))
         {
             _logger.LogDebug("[GitHubFirstStrategy] No GitHub URL, trying registry lookup for {PackageId} (Registry: {Registry})", packageId, registry.Id);
@@ -56,12 +54,11 @@ public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
             }
         }
 
-        // Try GitHub first
         if (!string.IsNullOrWhiteSpace(githubRepoUrl))
         {
             _logger.LogDebug("[GitHubFirstStrategy] Trying GitHub releases for {PackageId} v{Version} from {GitHubUrl}",
                 packageId, version, githubRepoUrl);
-            // A monorepo package keeps its changelog in its own folder; the URL tells the scraper where
+            // A monorepo package keeps its changelog in its own folder, which the URL names
             var lookupUrl = githubRepoUrl;
             if (GitHubUrls.SubPath(githubRepoUrl) is null)
             {
@@ -81,7 +78,6 @@ public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
                 packageId, version, registry.PublishesReleaseNotes);
         }
 
-        // Fall back to the registry's own notes, when it publishes any
         if (registry.PublishesReleaseNotes)
         {
             _logger.LogDebug("[GitHubFirstStrategy] Trying {Registry} notes for {PackageId} v{Version}", registry.Id, packageId, version);
@@ -91,7 +87,6 @@ public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
                 _logger.LogDebug("[GitHubFirstStrategy] {Registry} returned notes for {PackageId} v{Version} (length: {Length}): {Preview}...",
                     registry.Id, packageId, version, ownNotes.Length, ownNotes[..Math.Min(150, ownNotes.Length)]);
 
-                // Check if the registry's notes are URL-dominated and try to resolve actual content
                 var resolved = await _urlResolver.ResolveAsync(ownNotes, packageId, version, githubRepoUrl);
                 if (resolved.WasResolved)
                 {
@@ -109,7 +104,6 @@ public class GitHubFirstScrapingStrategy : IReleaseNotesScrapingStrategy
 
         _logger.LogWarning("[GitHubFirstStrategy] ALL SOURCES EMPTY for {PackageId} v{Version}", packageId, version);
 
-        // Persist failure to scrape logs for admin review
         var allReleases = !string.IsNullOrWhiteSpace(githubRepoUrl)
             ? await _githubScraperService.GetAllReleasesAsync(githubRepoUrl)
             : new Dictionary<string, string>();

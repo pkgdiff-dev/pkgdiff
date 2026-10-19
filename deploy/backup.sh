@@ -5,21 +5,8 @@
 #   bash deploy/backup.sh --check         restore the newest nightly backup into a scratch database and report
 #   bash deploy/backup.sh --check <file>  the same for one dump (a dump deploy/deploy.sh took works too)
 #   bash deploy/backup.sh --list          show the backups that exist
-#
-# A backup is a plain pg_dump, gzipped: the format deploy/deploy.sh writes before a deploy, so one
-# restore procedure (docs/ops/operations.md) fits both. Nightly backups live in their own folder,
-# because the deploy script keeps a fixed number of its own dumps and must not count these.
-#
-# A dump that cannot be taken or is cut off is deleted and the script exits 1; older backups are
-# only deleted after a new one was verified. --check never touches the live database: it creates
-# the scratch database, loads the dump, counts what arrived and drops the scratch database again.
-#
-# Environment:
-#   PKGDIFF_BACKUP_DIR         where backups go (default ~/pkgdiff-backups; nightly ones in nightly/)
-#   PKGDIFF_NIGHTLY_KEEP_DAYS  days a nightly backup is kept (default 14)
-#   PKGDIFF_DB_CONTAINER       the database container (default pkgdiff-db)
 set -euo pipefail
-# A dump holds password hashes and encrypted settings: nobody but the owner reads it, from its first byte on
+# Dumps hold password hashes and encrypted settings: owner-only from the first byte
 umask 077
 
 # cron runs with a short PATH
@@ -71,8 +58,7 @@ nightly_files() {
 
 newest_nightly() { nightly_files | sort | tail -n 1; }
 
-# The names carry the time of the dump, so a name is compared with the name a dump taken exactly
-# KEEP_DAYS ago would have. The newest backup is never deleted, whatever the clock says.
+# Names sort by dump time, so they compare against a cutoff name; the newest is always kept.
 prune() {
   local cutoff newest old
   cutoff="pkgdiffdb-$(date -u -d "-$KEEP_DAYS days" +%Y%m%dT%H%M%SZ).sql.gz"
@@ -103,7 +89,6 @@ backup() {
 
 drop_scratch() { sql -d postgres -c "DROP DATABASE IF EXISTS $SCRATCH" >/dev/null 2>&1 || true; }
 
-# Tables in the public schema, applied migrations, users: enough to tell a real restore from an empty one
 figures() {
   sql -d "$1" -c "SELECT (SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE') || ' tables, ' || (SELECT count(*) FROM \"__EFMigrationsHistory\") || ' migrations, ' || (SELECT count(*) FROM \"AspNetUsers\") || ' users, ' || (SELECT count(*) FROM \"CachedPackages\") || ' cached packages'"
 }

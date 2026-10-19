@@ -13,9 +13,7 @@ public class AutoPilotService : IAutoPilotService
     private const int MaxReleaseNotesChars = 6000;
     private const string ReleaseNotesTruncatedMarker = "[Release notes truncated]";
 
-    // Low temperature and a repeat penalty keep small models close to the source notes.
-    // The prod host runs Ollama on a CPU without AVX2 (~1-2 tokens/s), so the context and
-    // output budget stay small enough for a draft to finish well inside the HTTP timeout.
+    // Low temperature keeps small models close to the notes; small budgets suit a slow CPU-only host
     private static readonly OllamaGenerationOptions BlogGenerationOptions = new(
         Temperature: 0.2,
         TopP: 0.9,
@@ -43,7 +41,6 @@ public class AutoPilotService : IAutoPilotService
     [DisableConcurrentExecution(timeoutInSeconds: 600)]
     public async Task RunAutoPilotJobAsync()
     {
-        // Check if AutoPilot is enabled in DB settings
         var enabledSetting = (await _unitOfWork.SystemSettings.FindAsync(s => s.Key == "AutoPilot:Enabled")).FirstOrDefault();
         if (enabledSetting != null && enabledSetting.Value.Equals("false", StringComparison.OrdinalIgnoreCase))
         {
@@ -51,7 +48,6 @@ public class AutoPilotService : IAutoPilotService
             return;
         }
 
-        // Read LLM model from DB, fall back to config/default
         var modelSetting = (await _unitOfWork.SystemSettings.FindAsync(s => s.Key == "AutoPilot:LlmModel")).FirstOrDefault();
         var llmModel = modelSetting?.Value ?? _defaultLlmModel;
 
@@ -91,7 +87,6 @@ public class AutoPilotService : IAutoPilotService
             if (!AutoPilotQualityGate.Passes(cleaned, targetPackage.PackageId, out var reason))
             {
                 // Returning instead of throwing: a Hangfire retry would only replay the same bad model output
-                // The model's own headings are logged so a rejection can be diagnosed without the full output
                 var modelHeadings = llmResponse.Split('\n')
                     .Select(l => l.Trim())
                     .Where(l => l.StartsWith('#') || l.StartsWith("**", StringComparison.Ordinal))
@@ -106,7 +101,7 @@ public class AutoPilotService : IAutoPilotService
             var post = BuildDraftPost(cleaned, targetPackage, latestReleaseNote, version, llmModel);
 
             await _unitOfWork.BlogPosts.AddAsync(post);
-            await _unitOfWork.SaveChangesAsync(); // Save blog to get the ID
+            await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("AutoPilot: Created draft blog post for {PackageId}: {Slug}", targetPackage.PackageId, post.Slug);
         }
@@ -119,11 +114,9 @@ public class AutoPilotService : IAutoPilotService
 
     private async Task<(CachedPackage? Package, CachedReleaseNote? ReleaseNote)> SelectInterestingPackageAsync()
     {
-        // Fetch 50 most recently searched / cached packages (include Registry for Value)
         var recentPackages = await _unitOfWork.CachedPackages.GetTopDescendingWithIncludeAsync(
             p => p.CachedAt, p => p.Registry, 50);
 
-        // Avoid duplicates: skip packages whose current version already has a blog post
         var allBlogs = await _unitOfWork.ToListAsync(_unitOfWork.BlogPosts.Query()
             .Select(b => new { b.PackageId, b.Version, b.CachedReleaseNoteId }));
         var bloggedVersionKeys = allBlogs
@@ -135,20 +128,17 @@ public class AutoPilotService : IAutoPilotService
             .Select(b => b.CachedReleaseNoteId!.Value)
             .ToHashSet();
 
-        // Find the first candidate that has meaningful release notes
         foreach (var package in recentPackages)
         {
             var releaseNote = await GetLatestReleaseNote(package.Id);
             
             if (releaseNote != null && bloggedReleaseNoteIds.Contains(releaseNote.Id))
             {
-                // We've already written a blog post specifically for this release note
                 continue;
             }
 
             string versionToCheck = releaseNote?.Version ?? package.LatestVersion ?? "Unknown";
             
-            // Legacy / fallback checks by version string
             if (bloggedVersionKeys.Contains($"{package.PackageId}::{versionToCheck}") || 
                 bloggedVersionKeys.Contains($"{package.PackageId}::{package.LatestVersion}"))
             {
@@ -227,9 +217,8 @@ public class AutoPilotService : IAutoPilotService
     {
         string str = Regex.Replace(phrase.ToLowerInvariant(), @"[^a-z0-9\s-]", "");
         str = Regex.Replace(str, @"[\s-]+", " ").Trim();
-        str = Regex.Replace(str, @"\s", "-"); // hyphens
+        str = Regex.Replace(str, @"\s", "-");
         
-        // add random hash to prevent conflicts
         str = $"{str}-{Guid.NewGuid().ToString().Substring(0, 5)}";
         return str;
     }

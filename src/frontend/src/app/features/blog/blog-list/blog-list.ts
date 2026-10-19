@@ -60,7 +60,7 @@ export class BlogListComponent {
   private reload$ = new Subject<void>();
 
   constructor() {
-    // The page number lives in the URL, so every page of the list can be linked and crawled
+    // Page number in the URL so every page of the list can be linked and crawled
     this.route.queryParamMap.pipe(
       map(params => Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1)),
       distinctUntilChanged(),

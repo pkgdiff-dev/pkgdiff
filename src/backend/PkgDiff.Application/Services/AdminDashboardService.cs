@@ -19,8 +19,6 @@ public class AdminDashboardService : IAdminDashboardService
 
     private const string SystemCaller = "System";
 
-    // ───── Dashboard ─────
-
     public async Task<DashboardStats> GetDashboardStatsAsync()
     {
         // Background refreshes record "System" as their caller; they are not searches
@@ -70,8 +68,6 @@ public class AdminDashboardService : IAdminDashboardService
             SearchesByDay = searchesByDay
         };
     }
-
-    // ───── Search History ─────
 
     public async Task<PaginatedResult<RecentSearch>> GetSearchHistoryAsync(int page = 1, int pageSize = 20)
     {

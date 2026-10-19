@@ -6,7 +6,6 @@ import { LiveUpdate } from '../models/package.models';
 const MAX_RETRY_DELAY_MS = 30000;
 const retryDelay = (attempt: number) => Math.min(MAX_RETRY_DELAY_MS, 1000 * 2 ** Math.min(attempt, 5));
 
-// The part of a SignalR connection this service uses
 export interface HubConnectionLike {
     connectionId: string | null;
     on<T extends unknown[]>(event: string, handler: (...args: T) => void): void;
@@ -16,7 +15,7 @@ export interface HubConnectionLike {
     invoke<T>(method: string): Promise<T>;
 }
 
-// The SignalR client is loaded only when a connection is opened, which never happens on the server
+// Loaded lazily on first connect, which never happens on the server
 export const HUB_CONNECTION_FACTORY = new InjectionToken<() => Promise<HubConnectionLike>>('HUB_CONNECTION_FACTORY', {
     providedIn: 'root',
     factory: () => async () => {
@@ -29,8 +28,7 @@ export const HUB_CONNECTION_FACTORY = new InjectionToken<() => Promise<HubConnec
     },
 });
 
-// A new object for every event: the same package updated twice is two events, where its id alone
-// would be the same signal value twice and notify nobody
+// A new object per event, so two updates of the same package both notify
 export interface PackageEvent {
     packageId: string;
     sequence: number;
@@ -56,20 +54,17 @@ export class SignalrService {
     connectionId = signal<string | null>(null);
     progressToken = signal<string | null>(null);
     liveUpdate = signal<LiveUpdate | null>(null);
-    // Counts reconnects: whatever was pushed while the connection was down has to be fetched again
     reconnected = signal<number>(0);
     packageUpdated = signal<PackageEvent | null>(null);
     packageUpdateStarted = signal<PackageEvent | null>(null);
-    // New security data of a package was stored
     securityUpdated = signal<PackageEvent | null>(null);
     backgroundProgress = signal<BackgroundProgress | null>(null);
 
-    // The number of the newest package event: a page that opens later can tell old events from new ones
+    // Lets a page that opens later tell old events from new ones
     get lastSequence(): number {
         return this.eventSequence;
     }
 
-    // One connection for the whole app: every caller gets the same start
     startConnection(): Promise<void> {
         if (!this.isBrowser) {
             return Promise.resolve();
@@ -80,7 +75,6 @@ export class SignalrService {
         return this.started;
     }
 
-    // Progress belongs to one package page; the next page starts without the last one's messages
     resetProgress(): void {
         this.progressMessage.set('');
         this.backgroundProgress.set(null);
@@ -143,14 +137,13 @@ export class SignalrService {
             await this.refreshProgressToken();
         } catch (err) {
             console.error('Error while starting SignalR connection: ' + err);
-            // Automatic reconnect only covers a connection that was up once, so the first start retries here
+            // Auto-reconnect only covers a connection that was up once
             this.started = null;
             setTimeout(() => this.startConnection().catch(() => undefined), retryDelay(this.startAttempts++));
             throw err;
         }
     }
 
-    // Without a token the analysis still runs; it just gets no progress messages
     private refreshProgressToken(): Promise<void> {
         const connection = this.hubConnection;
         if (!connection) {

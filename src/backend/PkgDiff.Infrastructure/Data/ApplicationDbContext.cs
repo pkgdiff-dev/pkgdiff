@@ -35,9 +35,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataPro
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder); // CRITICAL: Call base for Identity tables
+        base.OnModelCreating(modelBuilder);
         
-        // Apply all configurations from assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
 }

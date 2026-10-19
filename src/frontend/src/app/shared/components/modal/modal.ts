@@ -14,14 +14,7 @@ const WIDTHS: Record<ModalSize, string> = {
 
 let nextId = 0;
 
-// A dialog: labelled by its title, keeps the keyboard focus inside while it is open, gives it back to
-// whatever had it before, and closes on Escape or a click on the backdrop. The parent decides when it
-// is in the page (@if) and removes it when it emits "closed".
-//
-//   <app-modal title="Edit user" (closed)="close()">
-//     ...body...
-//     <div modalFooter>...buttons...</div>
-//   </app-modal>
+// The parent adds it with @if and removes it when it emits "closed"
 @Component({
   selector: 'app-modal',
   standalone: true,
@@ -33,9 +26,7 @@ let nextId = 0;
 export class ModalComponent {
   title = input.required<string>();
   size = input<ModalSize>('md');
-  // False while a request is under way that closing would leave without an answer
   closable = input(true);
-  // On phones the dialog rises from the bottom edge, within reach of the thumb
   sheetOnMobile = input(false);
 
   closed = output<void>();

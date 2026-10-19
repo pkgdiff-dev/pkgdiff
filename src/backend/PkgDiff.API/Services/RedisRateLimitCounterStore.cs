@@ -4,8 +4,7 @@ namespace PkgDiff.API.Services;
 
 public class RedisRateLimitCounterStore : IRateLimitCounterStore
 {
-    // One script, so a counter can never be left without an expiry: INCR followed by a separate
-    // EXPIRE would block an address for good if the process stopped between the two commands
+    // One script, so a crash between INCR and EXPIRE cannot leave a counter without expiry
     private const string IncrementScript = @"
 local count = redis.call('INCR', KEYS[1])
 if count == 1 then

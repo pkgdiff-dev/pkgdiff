@@ -22,8 +22,6 @@ using static PkgDiff.Tests.Authorization.AuthorizationTestHost;
 
 namespace PkgDiff.Tests.Authorization;
 
-// WR-01 (iteration 2): a non-Admin with Users.Create / Users.Edit must not obtain permissions they lack through
-// role membership (for themselves or a new account) or by taking over a richer account.
 public class RoleMembershipEscalationTests
 {
     private const string SupportRole = "Support";

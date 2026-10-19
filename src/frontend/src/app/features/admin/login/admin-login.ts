@@ -31,7 +31,7 @@ export class AdminLoginComponent {
   loading = signal(false);
 
   constructor() {
-    // This page has no layout around it, so nothing else creates the service that applies the stored theme
+    // No layout wraps this page, so nothing else instantiates the theme service
     inject(ThemeService);
   }
 

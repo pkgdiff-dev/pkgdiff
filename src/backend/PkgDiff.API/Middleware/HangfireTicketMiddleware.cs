@@ -2,8 +2,7 @@ using PkgDiff.API.Services;
 
 namespace PkgDiff.API.Middleware;
 
-// Exchanges a one-time dashboard ticket for the /hangfire cookie. This cannot live in the Hangfire
-// authorization filter because Hangfire overwrites the response status when a filter denies access.
+// Not in the authorization filter: Hangfire overwrites the response status when one denies
 public class HangfireTicketMiddleware
 {
     private readonly RequestDelegate _next;

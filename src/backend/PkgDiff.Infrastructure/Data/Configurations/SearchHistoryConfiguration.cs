@@ -25,7 +25,6 @@ public class SearchHistoryConfiguration : IEntityTypeConfiguration<SearchHistory
         builder.Property(x => x.IpAddress)
             .HasMaxLength(45); // IPv6 max length
             
-        // Indexes for common queries
         builder.HasIndex(x => x.PackageId);
         builder.HasIndex(x => x.SearchedAt);
     }

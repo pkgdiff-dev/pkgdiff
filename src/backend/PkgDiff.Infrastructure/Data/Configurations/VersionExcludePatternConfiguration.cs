@@ -21,7 +21,6 @@ public class VersionExcludePatternConfiguration : IEntityTypeConfiguration<Versi
             .IsRequired()
             .HasDefaultValue(true);
 
-        // Seed data with common exclude patterns
         builder.HasData(
             new VersionExcludePattern { Id = 1, Pattern = "dev", Description = "Development builds (e.g., 1.0.0-dev-123)", IsActive = true },
             new VersionExcludePattern { Id = 2, Pattern = "ci", Description = "Continuous Integration builds (e.g., 1.0.0-ci-456)", IsActive = true },

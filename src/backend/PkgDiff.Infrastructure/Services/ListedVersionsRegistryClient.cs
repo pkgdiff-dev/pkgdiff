@@ -54,8 +54,7 @@ public abstract class ListedVersionsRegistryClient : IRegistryClient
 
     public abstract Task<DateTime?> GetPublishedDateAsync(string packageId, string version);
 
-    // The version list of the package page is what the background scrape walks, so it is cut by the
-    // same exclude patterns as the versions of an analysis
+    // The background scrape walks this list, so it gets the same exclude patterns as an analysis
     public async Task<PackageMetadata> GetMetadataAsync(string packageId)
     {
         var metadata = await FetchMetadataAsync(packageId);

@@ -10,7 +10,6 @@
     </div>
 
     @if (isLoading() && tickerItems().length === 0) {
-    <!-- Skeleton Loading State -->
     <div class="relative w-full overflow-hidden mask-fade-edges py-2">
         <div class="flex gap-12 text-xs">
             @for (i of [1, 2, 3, 4, 5, 6, 7]; track i) {
