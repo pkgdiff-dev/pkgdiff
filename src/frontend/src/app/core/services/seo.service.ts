@@ -29,7 +29,6 @@ export class SeoService {
 
   private readonly siteName = 'pkgdiff';
   private readonly baseUrl = 'https://pkgdiff.dev';
-  // 1200x630
   private readonly defaultOgImage = '/og-image/home.png';
 
   updateMeta(config: SeoConfig): void {
@@ -47,7 +46,6 @@ export class SeoService {
       this.updateCanonicalUrl(`${this.baseUrl}${config.url}`);
     }
 
-    // Open Graph: Slack, Reddit and Discord read these as well
     this.meta.updateTag({ property: 'og:title', content: config.title });
     this.meta.updateTag({ property: 'og:description', content: config.description });
 
@@ -60,7 +58,6 @@ export class SeoService {
       this.meta.updateTag({ property: 'og:type', content: config.type });
     }
 
-    // Always an absolute URL, with the site image as the fallback
     const rawImageUrl = config.image || this.defaultOgImage;
     const imageUrl = rawImageUrl.startsWith('http') ? rawImageUrl : `${this.baseUrl}${rawImageUrl}`;
     this.meta.updateTag({ property: 'og:image', content: imageUrl });
@@ -78,7 +75,6 @@ export class SeoService {
     this.meta.updateTag({ name: 'theme-color', content: '#0a0a0a' });
   }
 
-  // For a page that does not exist: a title, and a request not to index it
   setNotFound(title: string, description: string): void {
     this.title.setTitle(title);
     this.meta.updateTag({ name: 'description', content: description });
@@ -96,7 +92,6 @@ export class SeoService {
     this.removeJsonLd('page');
   }
 
-  // One breadcrumb per page: setting it again replaces the one that is there
   setBreadcrumb(items: BreadcrumbItem[]): void {
     this.setJsonLd('breadcrumb', {
       '@context': 'https://schema.org',
@@ -114,13 +109,11 @@ export class SeoService {
     this.removeJsonLd('breadcrumb');
   }
 
-  // What a page added for itself and the next page must not inherit
   clearPageData(): void {
     this.removeStructuredData();
     this.removeBreadcrumb();
   }
 
-  // Before the package is loaded only its name is known
   setPackagePlaceholder(packageId: string, registry: string, version?: string): void {
     const registryName = registry.toUpperCase();
     this.updateMeta({
@@ -147,7 +140,6 @@ export class SeoService {
     }
     description += `. View ${versionCount} version${versionCount !== 1 ? 's' : ''} and compare release notes.`;
 
-    // Search results cut a description at about 160 characters
     if (description.length > 160) {
       description = description.substring(0, 157) + '...';
     }

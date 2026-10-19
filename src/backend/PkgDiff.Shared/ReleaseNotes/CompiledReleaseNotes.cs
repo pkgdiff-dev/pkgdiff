@@ -3,9 +3,7 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Shared.ReleaseNotes;
 
-// Notes pkgdiff compiles itself (from a GitHub milestone, when the maintainers publish no changelog) start
-// with a notice line naming their source. The stored notes keep it, so copies and exports say it too; the
-// page shows it as a warning apart from the notes.
+// Notes pkgdiff compiles itself start with a notice line naming their source
 public static partial class CompiledReleaseNotes
 {
     private const string Marker = "Compiled by pkgdiff from the closed issues and pull requests of the ";
@@ -13,7 +11,6 @@ public static partial class CompiledReleaseNotes
     public static string WithNotice(string notes, string label, string url) =>
         $"> {Marker}[{label}]({url}); the maintainers publish no changelog for this version.\n\n{notes}";
 
-    // The notes without the notice and the source it names; no source for notes the maintainers wrote
     public static (string Body, CompiledNotesSource? Source) Split(string? notes)
     {
         notes ??= string.Empty;

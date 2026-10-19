@@ -1,7 +1,6 @@
 <div class="flex flex-col min-h-screen w-full font-display min-h-[calc(100vh-64px)]">
 
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 md:px-6 py-6 md:py-10 pb-20">
-        <!-- Sticky Search Header -->
         <div
             class="sticky top-0 z-40 bg-white/80 dark:bg-black/0 backdrop-blur-md pb-4 pt-2 -mt-2 mb-6 transition-colors duration-300">
             <div class="flex items-center gap-4">
@@ -20,10 +19,8 @@
             </div>
         </div>
 
-        <!-- Filters & Sort Bar -->
         <div
             class="flex flex-wrap items-center gap-3 mb-6 pb-5 border-b border-gray-100 dark:border-gray-800/60">
-            <!-- Ecosystem Filters -->
             <div class="flex flex-wrap items-center gap-2">
                 @for (reg of registries(); track reg.value) {
                 <button type="button" (click)="!reg.disabled && toggleRegistry(reg.value)" [class.opacity-40]="reg.disabled"
@@ -41,10 +38,8 @@
                 }
             </div>
 
-            <!-- Spacer -->
             <div class="flex-1"></div>
 
-            <!-- Results Count & Sort -->
             <div class="flex items-center gap-4">
                 <span class="text-xs text-gray-400 dark:text-gray-500 font-medium">
                     {{ filteredPackages().length }} of {{ packages().length }}
@@ -78,7 +73,6 @@
             </div>
         </div>
 
-        <!-- Package List -->
         @if (isLoading()) {
         <div class="space-y-4 animate-pulse">
             @for (i of [1,2,3,4,5]; track i) {
@@ -122,7 +116,6 @@
             }
         </div>
 
-        <!-- Load More -->
         @if (hasMore()) {
         <div class="mt-8 flex justify-center">
             <button type="button" (click)="loadMore()"
@@ -132,7 +125,6 @@
         </div>
         }
         } @else {
-        <!-- Empty State -->
         <div
             class="py-24 text-center border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/20">
             <div

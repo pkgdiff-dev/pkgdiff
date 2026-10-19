@@ -61,8 +61,7 @@ public class BlogSocialPostJob
             if (previousPosts.Any(p => p.Platform == platform && p.Status == SocialMediaPostStatus.Success))
                 continue;
 
-            // A Pending row means an earlier attempt reached the platform but its outcome was never recorded;
-            // posting again could publish a duplicate, so it is left for an admin to check
+            // Pending means an earlier attempt's outcome is unknown; reposting could publish a duplicate
             if (previousPosts.Any(p => p.Platform == platform && p.Status == SocialMediaPostStatus.Pending))
             {
                 _logger.LogWarning(

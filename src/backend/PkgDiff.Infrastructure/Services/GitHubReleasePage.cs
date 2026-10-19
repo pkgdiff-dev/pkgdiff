@@ -7,20 +7,17 @@ namespace PkgDiff.Infrastructure.Services;
 // Reads a GitHub releases page: the releases on it, its page count, and the notes as Markdown
 public static class GitHubReleasePage
 {
-    // Regex to extract semantic version from release titles like "Aspire 13.1.1", "v9.5.0 Release", "Package Name 1.2.3-preview.1"
     private static readonly Regex SemVerRegex = new(
         @"(?<version>\d+\.\d+\.\d+(?:[-\.][a-zA-Z0-9\.]+)?)",
         RegexOptions.Compiled);
 
     public static void ExtractReleases(IDocument document, Dictionary<string, string> releases, ILogger logger)
     {
-        // Find all release sections
         var releaseSections = document.QuerySelectorAll("section[aria-labelledby]");
         logger.LogDebug("[GitHubScraper] Found {Count} release sections on current page", releaseSections.Length);
 
         foreach (var section in releaseSections)
         {
-            // Extract version from the heading
             var versionElement = section.QuerySelector(".f1.text-bold a, h2 a");
             if (versionElement == null)
             {
@@ -30,20 +27,17 @@ public static class GitHubReleasePage
 
             var rawVersion = versionElement.TextContent.Trim();
 
-            // Extract semantic version from release title (handles "Aspire 13.1.1", "v9.5.0 Release", etc.)
             var semVerMatch = SemVerRegex.Match(rawVersion);
             var version = semVerMatch.Success
                 ? semVerMatch.Groups["version"].Value
                 : rawVersion.TrimStart('v', 'V');
 
-            // Skip if already added (avoid duplicates)
             if (releases.ContainsKey(version))
             {
                 logger.LogDebug("[GitHubScraper] Skipping duplicate version {Version}", version);
                 continue;
             }
 
-            // Extract release notes from markdown body
             var notesElement = section.QuerySelector(".markdown-body");
             if (notesElement != null)
             {
@@ -68,7 +62,6 @@ public static class GitHubReleasePage
 
     public static int GetTotalPages(IDocument document)
     {
-        // Try to find pagination element with data-total-pages attribute
         var paginationElement = document.QuerySelector("em.current[data-total-pages]");
         if (paginationElement != null)
         {
@@ -79,14 +72,13 @@ public static class GitHubReleasePage
             }
         }
 
-        // Fallback: check if there's a "Next" button (means at least 2 pages)
         var nextButton = document.QuerySelector("a.next_page");
         if (nextButton != null)
         {
-            return 2; // At least 2 pages
+            return 2;
         }
 
-        return 1; // Only 1 page
+        return 1;
     }
 
     public static string CleanReleaseNotes(string text)
@@ -94,14 +86,11 @@ public static class GitHubReleasePage
         if (string.IsNullOrWhiteSpace(text))
             return string.Empty;
 
-        // Normalize line endings
         text = text.Replace("\r\n", "\n").Replace("\r", "\n");
 
-        // Runs of spaces inside a line collapse. Indentation stays: in Markdown it decides what belongs
-        // to a list item and what is a code block, and code inside fences keeps every space
+        // Indentation stays: in Markdown it decides list membership and code blocks
         text = CollapseInlineSpaces(text);
 
-        // Collapse more than 2 consecutive blank lines into 2
         text = Regex.Replace(text, @"\n{3,}", "\n\n");
 
         return text.Trim();

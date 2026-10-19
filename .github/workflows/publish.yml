@@ -1,12 +1,4 @@
-# Builds the backend and frontend images once and pushes them to GHCR, but only after the CI gate
-# and the image scan pass. The server never builds: it pulls a tag with deploy/deploy.sh.
-#
-# A push to develop is also deployed, by deploy.yml, while the repository variable
-# PKGDIFF_AUTO_DEPLOY is "true" (Settings > Secrets and variables > Actions > Variables).
-#
-# Tags: sha-<7 hex> on every run (never moves), the branch name (develop, master) on a branch push,
-# and <major>.<minor>.<patch> plus <major>.<minor> on a v* tag. ":buildcache" holds build layers
-# only; it is not a runnable image.
+# Builds, scans and pushes the images to GHCR after the CI gate; the server only pulls them.
 name: Publish images
 
 on:
@@ -74,11 +66,9 @@ jobs:
         run: |
           docker buildx create --name pkgdiff --driver docker-container --use
           created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          # Every build reruns the OS upgrade layer: a fix published during the day (libx11 on 2026-10-18)
-          # is in the next image, not only in tomorrow's. The layers after it are small.
+          # Rerun the OS upgrade layer on every build so same-day security fixes are included
           upgrade_key="$GITHUB_RUN_ID.$GITHUB_RUN_ATTEMPT"
 
-          # $1 image name, $2 build context, $3 build argument that reruns the OS upgrade layer
           build() {
             docker buildx build "$2" \
               --tag "$IMAGE_PREFIX-$1:$PRIMARY" \
@@ -96,8 +86,6 @@ jobs:
           build backend src/backend APT_UPGRADE_DATE
           build frontend src/frontend APK_UPGRADE_DATE
 
-      # The frontend image has two roles, nginx and the render server; both have to start. The
-      # render server runs as it does in compose: unprivileged, on a read-only file system.
       - name: Start the frontend image in both roles
         run: |
           image="$IMAGE_PREFIX-frontend:$PRIMARY"
@@ -115,7 +103,6 @@ jobs:
           docker exec pkgdiff-ssr-check wget -q -O - http://127.0.0.1:4000/terms | grep -q 'ng-server-context="ssr"'
           docker rm -f pkgdiff-ssr-check
 
-      # The package checks ran in the gate; this run adds the scan of the two images just built
       - name: Scan the images
         run: |
           CHECK_DEPS_DOCKER=1 TRIVY=1 \
@@ -146,8 +133,7 @@ jobs:
             echo "Deploy on the server: \`bash deploy/deploy.sh $PRIMARY\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # develop is the branch the server runs. The switch is a repository variable, so a release that
-  # needs a manual step on the server first can be held back without touching this file.
+  # A repository variable, so a release can be held back without editing this file
   deploy:
     name: Deploy
     needs: publish

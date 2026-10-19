@@ -30,8 +30,7 @@ public static class AuthorizationTestHost
         Permissions.ScrapeLogs.View
     ];
 
-    // Controller dependencies are intentionally not registered: authorization runs before controller
-    // activation, so a 500 from the activation failure means "authorization passed".
+    // Controllers are not registered: a 500 from their activation means authorization passed
     public static async Task<WebApplication> StartAsync(Action<IServiceCollection>? configure = null)
     {
         var builder = WebApplication.CreateBuilder();

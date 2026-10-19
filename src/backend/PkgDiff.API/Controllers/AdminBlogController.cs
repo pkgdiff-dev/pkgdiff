@@ -113,7 +113,6 @@ public class AdminBlogController : ControllerBase
         return Ok(blog);
     }
 
-    // The editor previews through the same renderer the public blog page uses
     [HttpPost("preview")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Blog.Manage)]
     public IActionResult PreviewBlog([FromBody] BlogPreviewRequest request)

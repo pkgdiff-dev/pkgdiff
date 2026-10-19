@@ -50,7 +50,6 @@ export class HomeComponent {
   open = signal(false);
   loading = signal(true);
 
-  // Registries fetched from backend
   registries = signal<RegistryInfo[]>([]);
   recentSearches = signal<RegistryInfo[]>([]);
   selectedRegistry = signal<RegistryInfo | null>(null);
@@ -63,8 +62,7 @@ export class HomeComponent {
       url: '/',
     });
 
-    // Which registry is selected depends on what this browser remembers, so the selector is
-    // only filled in the browser; the server renders its placeholder
+    // The selection depends on browser storage, so the server renders only the placeholder
     afterNextRender(() => this.loadRegistries());
   }
 
@@ -96,7 +94,6 @@ export class HomeComponent {
     this.router.navigate(['/package', registry.value, term]);
   }
 
-  // The registry a search started from is the one offered first next time
   rememberRegistry(): void {
     const registry = this.selectedRegistry();
     if (!registry) return;

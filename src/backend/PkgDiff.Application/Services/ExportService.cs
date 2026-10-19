@@ -13,7 +13,6 @@ public class ExportService : IExportService
     // QuestPDF settings are process-wide: set them once, not on every request that resolves this scoped service
     static ExportService()
     {
-        // Configure QuestPDF license (Community license for open source projects)
         QuestPDF.Settings.License = LicenseType.Community;
 
         // Release notes carry arbitrary Unicode; a glyph missing from the bundled font must not fail the export
@@ -42,7 +41,6 @@ public class ExportService : IExportService
                     {
                         column.Spacing(5);
 
-                        // Package Info
                         column.Item().Text($"Latest Version: {metadata.LatestVersion}").FontSize(12);
                         if (!string.IsNullOrEmpty(metadata.Description))
                         {
@@ -57,7 +55,6 @@ public class ExportService : IExportService
 
                         ComposePackageSecurity(column, metadata);
 
-                        // Versions
                         foreach (var version in metadata.Versions)
                         {
                             column.Item().PaddingTop(15).Column(versionColumn =>
@@ -148,13 +145,11 @@ public class ExportService : IExportService
                     {
                         column.Spacing(5);
 
-                        // Diff Info
                         column.Item().Text($"From: {diff.FromVersion}  →  To: {diff.ToVersion}").FontSize(12);
                         column.Item().Text($"Total Versions: {diff.TotalVersions}");
 
                         column.Item().PaddingTop(10).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-                        // Summary
                         column.Item().PaddingTop(10).Text("Summary").SemiBold().FontSize(14);
                         column.Item().PaddingTop(5).Table(table =>
                         {
@@ -192,7 +187,6 @@ public class ExportService : IExportService
 
                         ComposeUpgradeSecurity(column, diff);
 
-                        // Versions
                         column.Item().PaddingTop(10).Text("Changes by Version").SemiBold().FontSize(14);
 
                         foreach (var version in diff.Versions)

@@ -10,7 +10,6 @@ interface NavLink {
   label: string;
   title: string;
   icon: LucideIconData;
-  // The call to action of the bar
   primary?: boolean;
 }
 
@@ -38,7 +37,6 @@ export class HeaderComponent {
     },
   ];
 
-  // In the footer on wide screens; listed under the menu on phones
   readonly moreLinks = [
     { path: '/blog', label: 'Blog' },
     { path: '/contributors', label: 'Contributors' },

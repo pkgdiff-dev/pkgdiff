@@ -6,9 +6,6 @@ using System.Collections.Concurrent;
 
 namespace PkgDiff.Infrastructure.Services;
 
-/// <summary>
-/// Rate limiter service using sliding window algorithm
-/// </summary>
 public class RateLimiterService : IRateLimiterService
 {
     private const string GitHubApiKey = "github-api";
@@ -16,50 +13,44 @@ public class RateLimiterService : IRateLimiterService
     private readonly ILogger<RateLimiterService> _logger;
     private readonly ConcurrentDictionary<string, RateLimitBucket> _buckets = new();
     private readonly Dictionary<string, RateLimitConfig> _configs;
-    private readonly SemaphoreSlim _githubApiSemaphore; // Max concurrent GitHub API requests
+    private readonly SemaphoreSlim _githubApiSemaphore;
 
     public RateLimiterService(ILogger<RateLimiterService> logger, IConfiguration configuration)
     {
         _logger = logger;
         
-        // Load rate limit configurations from appsettings
         var rateLimitSettings = configuration.GetSection("RateLimitSettings");
         
-        // Configure max concurrent GitHub API requests (default: 50)
         var maxConcurrentGitHubRequests = rateLimitSettings.GetValue<int>("GitHubApiMaxConcurrent", 50);
         _githubApiSemaphore = new SemaphoreSlim(maxConcurrentGitHubRequests, maxConcurrentGitHubRequests);
         
         _configs = new()
         {
-            // NuGet.org web scraping: 50 requests per minute (using 45 to be safe)
+            // nuget.org allows 50 requests per minute; the default stays below it
             ["nuget-scraping"] = new RateLimitConfig 
             { 
                 MaxRequests = rateLimitSettings.GetValue<int>("NuGetScrapingMaxRequests", 45),
                 WindowSeconds = rateLimitSettings.GetValue<int>("NuGetScrapingWindowSeconds", 60)
             },
             
-            // NuGet.org V3 API: Not rate limited, but let's be respectful
             ["nuget-api"] = new RateLimitConfig 
             { 
                 MaxRequests = rateLimitSettings.GetValue<int>("NuGetApiMaxRequests", 1000),
                 WindowSeconds = rateLimitSettings.GetValue<int>("NuGetApiWindowSeconds", 60)
             },
             
-            // NPM registry: Also generous
             ["npm-api"] = new RateLimitConfig 
             { 
                 MaxRequests = rateLimitSettings.GetValue<int>("NpmApiMaxRequests", 500),
                 WindowSeconds = rateLimitSettings.GetValue<int>("NpmApiWindowSeconds", 60)
             },
             
-            // GitHub scraping: Be conservative (30 req/min)
             ["github-scraping"] = new RateLimitConfig 
             { 
                 MaxRequests = rateLimitSettings.GetValue<int>("GitHubScrapingMaxRequests", 30),
                 WindowSeconds = rateLimitSettings.GetValue<int>("GitHubScrapingWindowSeconds", 60)
             },
             
-            // GitHub API: Higher limit with authentication, managed by concurrent semaphore
             [GitHubApiKey] = new RateLimitConfig 
             { 
                 MaxRequests = rateLimitSettings.GetValue<int>("GitHubApiMaxRequests", 5000),
@@ -73,7 +64,6 @@ public class RateLimiterService : IRateLimiterService
         var bucket = _buckets.GetOrAdd(key, k => new RateLimitBucket());
         var config = _configs.GetValueOrDefault(key, new RateLimitConfig { MaxRequests = 100, WindowSeconds = 60 });
 
-        // For github-api, use concurrent request limiting with semaphore
         if (key == GitHubApiKey)
         {
             await _githubApiSemaphore.WaitAsync();
@@ -103,7 +93,7 @@ public class RateLimiterService : IRateLimiterService
                     "[RateLimiter] Rate limit reached for '{Key}'. Waiting {WaitSeconds:F2}s. ({Max} requests in {Window}s window)",
                     key, waitTime.TotalSeconds, config.MaxRequests, config.WindowSeconds);
 
-                // The gate stays held during the wait, so callers of this key leave one by one instead of all at once
+                // The gate stays held during the wait so callers of this key leave one by one
                 await Task.Delay(waitTime, WorkCancellation.Token);
             }
 
@@ -114,7 +104,6 @@ public class RateLimiterService : IRateLimiterService
             bucket.Gate.Release();
         }
 
-        // Execute the action outside the gate
         return await action();
     }
 

@@ -48,7 +48,7 @@ export class ContributorsComponent {
         });
         this.loadData();
 
-        // The list refreshes itself in the browser; a server render must not wait on a timer
+        // A server render must not wait on a timer
         afterNextRender(() => this.startAutoRefresh());
         this.destroyRef.onDestroy(() => {
             this.clearTimers();
@@ -71,12 +71,10 @@ export class ContributorsComponent {
         this.clearTimers();
         this.countdown.set(this.REFRESH_SECS);
 
-        // Countdown ticker every second
         this.countdownInterval = setInterval(() => {
             this.countdown.update(v => v - 1);
         }, 1000);
 
-        // Refresh + reset countdown every 60s
         this.refreshInterval = setInterval(() => {
             this.countdown.set(this.REFRESH_SECS);
             this.loadData();

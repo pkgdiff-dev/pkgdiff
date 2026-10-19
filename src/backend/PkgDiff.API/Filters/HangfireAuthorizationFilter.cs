@@ -3,7 +3,7 @@ using PkgDiff.API.Services;
 
 namespace PkgDiff.API.Filters;
 
-// Re-checks against the database on every dashboard request that the cookie or bearer user is still an active Admin.
+// Re-checks the database on every request that the user is still an active Admin
 public class HangfireAuthorizationFilter : IDashboardAsyncAuthorizationFilter
 {
     public Task<bool> AuthorizeAsync(DashboardContext context)

@@ -5,7 +5,6 @@
       <app-logo size="md" />
     </a>
 
-    <!-- Wide screens: the links, the audit as the call to action, the theme -->
     <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
       @for (link of links; track link.path) {
       @if (link.primary) {
@@ -27,7 +26,6 @@
       <ng-container [ngTemplateOutlet]="themeButton" />
     </nav>
 
-    <!-- Phones: theme and a menu button; the links open below the bar -->
     <div class="flex md:hidden items-center gap-1">
       <ng-container [ngTemplateOutlet]="themeButton" />
       <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-controls="mobile-menu"
@@ -55,7 +53,6 @@
         </a>
       </li>
       }
-      <!-- The rest of the site is in the footer on wide screens; on a phone it is one tap away here -->
       <li class="flex gap-4 pt-3 pb-1 text-sm">
         @for (link of moreLinks; track link.path) {
         <a [routerLink]="link.path" (click)="closeMenu()" routerLinkActive="text-primary"

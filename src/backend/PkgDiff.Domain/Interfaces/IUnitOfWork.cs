@@ -21,7 +21,6 @@ public interface IUnitOfWork : IDisposable
 
     Task<int> SaveChangesAsync();
 
-    // Run a read-only query composed on IRepository<T>.Query()
     Task<List<TResult>> ToListAsync<TResult>(IQueryable<TResult> query);
     Task<int> CountAsync<TResult>(IQueryable<TResult> query);
     Task BeginTransactionAsync();

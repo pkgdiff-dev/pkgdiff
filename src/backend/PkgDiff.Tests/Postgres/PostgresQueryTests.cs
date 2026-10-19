@@ -17,8 +17,6 @@ using PkgDiff.Tests.TestDoubles;
 
 namespace PkgDiff.Tests.Postgres;
 
-// The in-memory fakes run LINQ in the process and accept anything. These tests run the same code
-// against PostgreSQL, where a query has to translate to SQL and a constraint is really enforced.
 public class PostgresQueryTests
 {
     private static readonly DateTime Now = DateTime.UtcNow;
@@ -206,7 +204,6 @@ public class PostgresQueryTests
         await unitOfWork.CachedReleaseNotes.AddAsync(new CachedReleaseNote { CachedPackageId = packageId, Version = "1.3.0", ReleaseNotes = "dup", CachedAt = Now, ExpiresAt = Now });
         await Assert.ThrowsAsync<DuplicateKeyException>(() => unitOfWork.SaveChangesAsync());
 
-        // The refused row is forgotten: the same unit of work can save again
         Assert.Equal(0, await unitOfWork.SaveChangesAsync());
 
         var cache = new PackageCacheService(

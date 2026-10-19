@@ -2,7 +2,7 @@ import { PackageTrust } from './security.models';
 
 export interface AnalyzeRequest {
   packageId: string;
-  registry: string; // Selected registry (nuget, npm, etc.)
+  registry: string;
   currentVersion: string;
   targetVersion: string;
   includePrerelease: boolean;
@@ -66,7 +66,6 @@ export interface VersionInfo {
   isPrerelease: boolean;
 }
 
-// Where notes pkgdiff compiled itself come from (a GitHub milestone): the maintainers did not write them
 export interface CompiledNotesSource {
   label: string;
   url: string | null;

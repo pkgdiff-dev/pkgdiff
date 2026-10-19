@@ -31,8 +31,7 @@ public static class RoleAssignmentRules
         return (true, 200, null);
     }
 
-    // Permission policies pass on the claim alone, so a non-Admin must never obtain (through a role they assign,
-    // or an account they take over) a permission they do not already hold
+    // Policies check the claim alone, so a non-Admin must never obtain a permission they lack
     public static (bool Allowed, int StatusCode, string? Error) EvaluatePermissionSubset(
         IEnumerable<string> permissions,
         bool callerIsAdmin,

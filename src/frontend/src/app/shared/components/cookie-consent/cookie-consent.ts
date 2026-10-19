@@ -23,7 +23,6 @@ export class CookieConsentComponent {
     afterNextRender(() => {
       if (this.storage.get(CONSENT_KEY)) return;
 
-      // Show banner after a short delay for better UX
       const timer = setTimeout(() => this.visible.set(true), 1000);
       destroyRef.onDestroy(() => clearTimeout(timer));
     });

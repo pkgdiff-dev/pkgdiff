@@ -3,7 +3,6 @@ using NuGet.Versioning;
 
 namespace PkgDiff.Application.Versioning;
 
-// A version of one package, parsed and ordered by the scheme of its registry
 public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<PackageVersion>
 {
     // Either a Pep440Version or a NuGetVersion; versions of one package always share the kind

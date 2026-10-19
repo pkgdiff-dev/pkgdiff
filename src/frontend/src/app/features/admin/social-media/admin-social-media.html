@@ -2,7 +2,6 @@
     <app-grid-pattern />
 
     <div class="relative z-10 space-y-8">
-        <!-- Header -->
         <div
             class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-5">
             <div>
@@ -13,7 +12,6 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and view automated or manual posts to
                     Twitter and LinkedIn.</p>
             </div>
-            <!-- Connect LinkedIn Button -->
             <button type="button" (click)="connectLinkedIn()" [disabled]="connectingLinkedIn()"
                 class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#0077B5] hover:bg-[#0066a0] text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm">
                 @if (connectingLinkedIn()) {
@@ -28,7 +26,6 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            <!-- Left Column: Manual Share Form -->
             <div
                 class="lg:col-span-1 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#111] p-5 shadow-sm h-fit">
                 <h2 class="text-sm font-bold text-[#111418] dark:text-white mb-4 flex items-center gap-2">
@@ -37,7 +34,6 @@
                 </h2>
 
                 <div class="space-y-4">
-                    <!-- Platform Selection -->
                     <div class="space-y-2">
                         <span id="share-platform-label" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Target
                             Platform</span>
@@ -67,7 +63,6 @@
                         </div>
                     </div>
 
-                    <!-- Content Textarea -->
                     <div class="space-y-2">
                         <label for="share-content" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Message
                             Content</label>
@@ -83,7 +78,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <app-button
                         [disabled]="sharing() || shareContent().length === 0 || (sharePlatform() === 'Twitter' && shareContent().length > 280)"
                         [loading]="sharing()" (onClick)="sharePost()" class="w-full justify-center">
@@ -95,7 +89,6 @@
                 </div>
             </div>
 
-            <!-- Right Column: Post History Table -->
             <div
                 class="lg:col-span-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#111] overflow-hidden shadow-sm">
                 <div

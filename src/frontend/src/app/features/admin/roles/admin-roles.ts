@@ -59,7 +59,6 @@ export class AdminRolesComponent {
   showModal = signal(false);
   roleName = signal('');
 
-  // The role whose permissions are open in the dialog
   selectedRole = signal<RoleInfo | null>(null);
   permissionLoading = signal(false);
   rolePermissions = signal<RolePermissionsDto | null>(null);
@@ -156,8 +155,7 @@ export class AdminRolesComponent {
   }
 
   private loadPermissions(role: RoleInfo): void {
-    // The dialog may have been closed, or opened for another role, before the answer arrives;
-    // showing it then would let one role's permissions be saved onto another
+    // A late answer for another role would let its permissions be saved onto this one
     const stillOpen = () => this.selectedRole() === role;
 
     this.permissionLoading.set(true);

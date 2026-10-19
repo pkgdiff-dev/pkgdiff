@@ -29,7 +29,6 @@ export class ShareModalComponent {
 
     private toastService = inject(ToastService);
 
-    // The phone's own share sheet reaches the apps the visitor actually uses
     readonly canShareNatively =
         isPlatformBrowser(inject(PLATFORM_ID)) && typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 

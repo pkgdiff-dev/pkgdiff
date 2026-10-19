@@ -24,13 +24,12 @@ export class App {
   constructor() {
     inject(AnalyticsService).init();
 
-    // One hub connection and one feed for every page, in the browser only
     afterNextRender(() => {
       this.loadLiveUpdates();
       this.signalr.startConnection().catch(() => undefined);
     });
 
-    // Updates pushed while the connection was down are not replayed, so the feed is read again
+    // Updates pushed while disconnected are not replayed, so the feed is read again
     effect(() => {
       if (this.signalr.reconnected() > 0) {
         untracked(() => this.loadLiveUpdates());

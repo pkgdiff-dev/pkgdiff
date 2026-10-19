@@ -42,10 +42,10 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     IRepository<PackageSecurityInfo> IUnitOfWork.PackageSecurityInfos => PackageSecurityInfos;
     IRepository<DependencyAudit> IUnitOfWork.DependencyAudits => DependencyAudits;
 
-    // Simulates a database failure on the Nth SaveChangesAsync call (1-based)
+    // 1-based SaveChangesAsync call number
     public int? FailOnSaveChangesCall { get; set; }
 
-    // Simulates a unique-key conflict on the Nth SaveChangesAsync call (1-based)
+    // 1-based SaveChangesAsync call number
     public int? DuplicateOnSaveChangesCall { get; set; }
 
     public Task<List<TResult>> ToListAsync<TResult>(IQueryable<TResult> query) => Task.FromResult(query.ToList());

@@ -1,9 +1,4 @@
-# Monthly update PRs into develop: one batch a month, merged as one PR so develop deploys once.
-# The cooldown holds a release back for 7 days so a broken or hijacked version is caught upstream
-# first; security updates ignore both the schedule and the cooldown.
-#
-# Every ignore rule below is a deliberate hold; its reason is the
-# comment next to it.
+# The 7-day cooldown lets a broken or hijacked release be caught upstream first.
 version: 2
 updates:
   - package-ecosystem: "nuget"
@@ -21,7 +16,7 @@ updates:
         patterns: ["*"]
         exclude-patterns: ["QuestPDF"]
         update-types: [minor, patch]
-      # Always alone: a QuestPDF bump must pass .github/scripts/questpdf-cpu-check.sh before it is merged
+      # Alone: a QuestPDF bump must pass .github/scripts/questpdf-cpu-check.sh before merging
       questpdf:
         patterns: ["QuestPDF"]
     ignore:
@@ -79,8 +74,7 @@ updates:
       - dependency-name: "@types/node"
         versions: [">=23"]
 
-  # One entry for all three Dockerfiles: the SDK and runtime references are shared between
-  # Backend and the QuestPDF harness and must move in one PR (see "SDK image" in the register)
+  # One entry so the SDK/runtime references shared across Dockerfiles move in one PR
   - package-ecosystem: "docker"
     directories:
       - "/src/backend"
@@ -95,8 +89,7 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
-      # Dependabot names a Docker dependency by its image path without the registry:
-      # dotnet/sdk and dotnet/aspnet, not mcr.microsoft.com/dotnet/...
+      # Dependabot names Docker images without the registry (dotnet/sdk, not mcr.microsoft.com/...)
       dotnet-images:
         patterns: ["dotnet/*"]
       other-images:

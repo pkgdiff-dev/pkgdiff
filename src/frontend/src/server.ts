@@ -5,22 +5,16 @@ import { join } from 'node:path';
 const port = Number(process.env['PORT'] ?? 4000);
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
-// The application asks its API through relative addresses ("/api/..."), which a server render
-// resolves against the origin of the request it is rendering. That origin has to be one that
-// answers "/api" from inside the network, not the public one the visitor used: in production it
-// is the nginx container in front of this server.
+// Relative API calls resolve against this origin, so it must answer /api from inside the network
 const internalOrigin = new URL(process.env['SSR_INTERNAL_ORIGIN'] ?? `http://localhost:${port}`);
 
-// Request headers a render may read. Everything else a visitor sends stays out of the render.
+// Only these visitor headers reach the render
 const FORWARDED_HEADERS = ['accept', 'accept-language', 'user-agent', 'x-forwarded-for'];
 
 const app = express();
 app.disable('x-powered-by');
 
-// The request handed to Angular is built below from the internal origin and the headers listed above,
-// so the only host it ever sees is that origin and the only proxy header is the visitor's address,
-// which nginx sets. Angular answers a request with a proxy header it was not told to trust with the
-// unrendered page.
+// Angular serves the unrendered page for an untrusted host or proxy header; only these are passed
 const angularApp = new AngularNodeAppEngine({
   allowedHosts: [internalOrigin.hostname],
   trustProxyHeaders: ['x-forwarded-for'],
@@ -34,7 +28,6 @@ app.get('/healthz', (_req, res) => {
 app.use(express.static(browserDistFolder, { maxAge: '1y', index: false, redirect: false }));
 
 app.use((req, res, next) => {
-  // Only pages are rendered, and a page is asked for with GET or HEAD
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.status(405).set('Allow', 'GET, HEAD').end();
     return;
@@ -69,5 +62,4 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
   });
 }
 
-// Used by the Angular CLI dev server and during the build
 export const reqHandler = createNodeRequestHandler(app);

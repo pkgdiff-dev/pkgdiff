@@ -37,7 +37,7 @@ public static class OutboundHttpServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0");
         });
 
-        // Fixed trusted registry hosts get larger caps: real packuments (npm typescript ~16 MB) exceed 2 MiB.
+        // Trusted registry hosts get larger caps: real packuments exceed 2 MiB
         services.AddHttpClient(HttpClientNames.NpmRegistry, client =>
         {
             client.BaseAddress = new Uri("https://registry.npmjs.org/");
@@ -52,7 +52,6 @@ public static class OutboundHttpServiceCollectionExtensions
             client.MaxResponseContentBufferSize = RegistryMaxResponseBytes;
         });
 
-        // pub.dev HTML pages measured at <= 0.3 MB (analyzer/versions), so 8 MiB leaves ample headroom
         services.AddHttpClient<IPubDevService, PubDevService>(HttpClientNames.PubDev, client =>
         {
             client.BaseAddress = new Uri("https://pub.dev/");
@@ -62,7 +61,7 @@ public static class OutboundHttpServiceCollectionExtensions
 
         services.AddScoped<IHtmlDocumentLoader, HtmlDocumentLoader>();
 
-        // Security data providers, called from background jobs only
+        // Security providers: called from background jobs only
         AddSecurityApi(services, HttpClientNames.Osv, "https://api.osv.dev/");
         AddSecurityApi(services, HttpClientNames.DepsDev, "https://api.deps.dev/");
         AddSecurityApi(services, HttpClientNames.Scorecard, "https://api.securityscorecards.dev/");
@@ -74,7 +73,7 @@ public static class OutboundHttpServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(5);
         });
 
-        // Single intentional internal target (host.docker.internal), restricted by ufw per docs/ops/network-hardening.md
+        // The one intentional internal target (host.docker.internal), restricted by ufw
         services.AddHttpClient<IOllamaService, OllamaService>((provider, client) =>
             {
                 var baseUrl = provider.GetRequiredService<IConfiguration>()["Ollama:BaseUrl"] ?? "http://localhost:11434";

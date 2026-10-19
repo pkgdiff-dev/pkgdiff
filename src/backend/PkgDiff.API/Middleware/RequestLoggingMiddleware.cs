@@ -9,16 +9,13 @@ public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
 
-    // Endpoint prefixes that belong to internal/system traffic — never logged.
-    // Skipping is path-only: behind the proxy every peer is a 172.* address, so IP or
-    // user-agent based skips would silently drop real visitor traffic.
+    // Path-only: behind the proxy every peer is 172.*, so IP-based skips would drop visitors
     private static readonly string[] _skipEndpoints =
     [
         "/health", "/metrics", "/swagger", "/hangfire",
         "/analysisHub", "/favicon", "/_framework",
     ];
 
-    // File extensions that are static assets — never logged
     private static readonly string[] _skipExtensions =
     [
         ".js", ".css", ".ico", ".png", ".jpg", ".jpeg",

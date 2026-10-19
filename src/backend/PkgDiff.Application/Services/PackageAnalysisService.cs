@@ -13,7 +13,6 @@ namespace PkgDiff.Application.Services;
 
 public class PackageAnalysisService : IPackageAnalysisService
 {
-    // A version whose notes were not found is looked up again after this long, not on every scrape of its package
     private static readonly TimeSpan EmptyNotesRetryAfter = TimeSpan.FromDays(1);
 
     private const int MaxScrapedVersions = 300;
@@ -81,7 +80,6 @@ public class PackageAnalysisService : IPackageAnalysisService
             await SendProgress(connectionId, $"Initializing analysis for {request.PackageId}...");
 
             await ValidatePackageExistsAsync(request, registry);
-            // No target version means "the latest one": the background refresh asks this way
             var latestRequested = string.IsNullOrEmpty(request.TargetVersion);
             await AutoSelectVersionsIfNeeded(request, registry);
             var (fromVersion, toVersion) = ParseVersions(request, registry);
@@ -101,7 +99,7 @@ public class PackageAnalysisService : IPackageAnalysisService
             var summary = _analyzerService.GenerateSummary(versionInfoList);
 
             await SaveSearchHistoryAsync(request, versionInfoList, startTime, ipAddress);
-            // A version a visitor picked must not become news; it may only supply the date of the version already stored
+            // A visitor-picked version must not become news; it may only date the stored latest
             var isStoredLatest = registry.TryParseVersion(cachedPackage.LatestVersion, out var storedLatest) && storedLatest.Equals(toVersion);
             if (latestRequested || isStoredLatest)
             {
@@ -142,8 +140,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                 string? githubRepoUrl = cachedPackage.GitHubRepositoryUrl;
                 var registryClient = _registryFactory.GetClient(registry);
 
-                // The newest versions only: a package with thousands of them would hold a worker and the GitHub
-                // budget for hours. Older versions are still fetched when someone compares a range that has them.
+                // Newest versions only, so a package with thousands of them cannot hold a worker for hours
                 var versions = (JsonSerializer.Deserialize<List<string>>(cachedPackage.AllVersionsJson) ?? [])
                     .Select(v => (Text: v, Parsed: registryClient.TryParseVersion(v, out var parsed) ? parsed : null))
                     .OrderByDescending(v => v.Parsed is not null)
@@ -174,8 +171,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                     }
                     catch (GitHubRateLimitedException ex)
                     {
-                        // The remaining versions are not without notes: the scrape goes on once the limit resets,
-                        // skipping the versions already done
+                        // The scrape resumes once the limit resets, skipping the versions already done
                         var delay = ex.ResetAt - DateTime.UtcNow + RateLimitResetMargin;
                         if (delay < RateLimitResetMargin)
                             delay = RateLimitResetMargin;
@@ -217,7 +213,6 @@ public class PackageAnalysisService : IPackageAnalysisService
         return await _unitOfWork.ToListAsync(_unitOfWork.CachedPackages.Query()
             .Where(p => p.LatestVersion != "")
             .OrderByDescending(p => p.CachedAt)
-            // Anonymous and served whole: bounded, newest first
             .Take(MaxListedPackages)
             .Select(p => new PackageMetadata
             {
@@ -252,7 +247,6 @@ public class PackageAnalysisService : IPackageAnalysisService
         var registryId = await _cacheService.ResolveRegistryIdAsync(registry);
         var term = query.Trim().ToLowerInvariant();
 
-        // Shortest names first: the closest match to what was typed
         return await _unitOfWork.ToListAsync(_unitOfWork.CachedPackages.Query()
             .Where(p => p.RegistryId == registryId && p.PackageId.ToLower().Contains(term))
             .OrderBy(p => p.PackageId.Length)
@@ -267,8 +261,6 @@ public class PackageAnalysisService : IPackageAnalysisService
                 IconUrl = p.IconUrl
             }));
     }
-
-    // ==================== PRIVATE HELPER METHODS ====================
 
     private async Task SendProgress(string? connectionId, string message)
     {
@@ -320,7 +312,6 @@ public class PackageAnalysisService : IPackageAnalysisService
 
         var versionsToProcess = versionsList.Take(maxInitialVersions).ToList();
 
-        // The cached notes of the whole range in one query, instead of one query per version
         var versionStrings = versionsToProcess.Select(v => v.ToString()).ToList();
         var cachedNotes = (await _unitOfWork.CachedReleaseNotes
                 .FindAsync(rn => rn.CachedPackageId == cachedPackage.Id && versionStrings.Contains(rn.Version)))
@@ -376,7 +367,6 @@ public class PackageAnalysisService : IPackageAnalysisService
             var versionInfo = CreateVersionInfo(version, releaseNotes, releaseNotesSource, publishedDate, cachedNote, isFromCache);
             versionInfoList.Add(versionInfo);
 
-            // Early stopping logic
             if (versionInfo.IsEmpty)
             {
                 consecutiveEmpty++;
@@ -423,8 +413,7 @@ public class PackageAnalysisService : IPackageAnalysisService
     {
         var cachedNote = await _cacheService.GetCachedReleaseNoteAsync(cachedPackage.Id, versionString);
 
-        // Skip if already has actual release notes and not expired, or was looked up in vain only recently.
-        // A row seeded with the version list has no source yet: it was never looked up, however new it is.
+        // A row seeded from the version list has no source yet: it was never looked up
         var now = DateTime.UtcNow;
         if (cachedNote != null && cachedNote.ExpiresAt > now
             && (!cachedNote.IsEmpty
@@ -436,7 +425,6 @@ public class PackageAnalysisService : IPackageAnalysisService
         var releaseNotes = StoredMarkdown.Normalize(result.ReleaseNotes);
         PkgDiffTelemetry.RecordScrape(activity, registry.Id, result.Source, !string.IsNullOrWhiteSpace(releaseNotes));
 
-        // Update githubRepoUrl if newly discovered
         if (result.DiscoveredGitHubUrl != null)
         {
             cachedPackage.GitHubRepositoryUrl = result.DiscoveredGitHubUrl;
@@ -478,7 +466,6 @@ public class PackageAnalysisService : IPackageAnalysisService
 
         await _cacheService.SaveReleaseNoteAsync(cachedNote);
 
-        // Extract GitHub @mentions and track contributors
         if (result.Source == "GitHub" && !string.IsNullOrWhiteSpace(releaseNotes))
         {
             try
@@ -543,8 +530,6 @@ public class PackageAnalysisService : IPackageAnalysisService
         DateTime startTime,
         string ipAddress)
     {
-        // Do not log internal background jobs (e.g. Hangfire scheduled tasks) into search history 
-        // to prevent inflating metrics and obscuring real user data.
         if (ipAddress == "System")
         {
             return;
@@ -581,7 +566,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                 PublishedDate = null,
                 IsEmpty = true,
                 CachedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7) // Cache failure for 7 days
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
             };
             await _cacheService.SaveReleaseNoteAsync(cachedNote);
         }

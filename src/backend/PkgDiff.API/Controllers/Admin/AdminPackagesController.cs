@@ -19,8 +19,6 @@ public class AdminPackagesController : ControllerBase
         _logger = logger;
     }
 
-    // ───── Packages ─────
-
     [HttpGet("packages")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Packages.View)]
     public async Task<ActionResult<PaginatedResult<AdminPackageInfo>>> GetPackages(
@@ -60,8 +58,6 @@ public class AdminPackagesController : ControllerBase
             return StatusCode(500, new { error = "An error occurred" });
         }
     }
-
-    // ───── Registries ─────
 
     [HttpGet("registries")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Registries.View)]

@@ -95,7 +95,7 @@ public class AdminSecurityController : ControllerBase
         }
     }
 
-    // Both are required: the seeded Viewer role holds ViewLogs, and the only consumer (IP Blocking page) is gated on ManageIps.
+    // ViewLogs alone is too broad (the seeded Viewer role has it), so ManageIps is required too
     [HttpGet("security/ip-statistics")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Security.ViewLogs)]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.Security.ManageIps)]

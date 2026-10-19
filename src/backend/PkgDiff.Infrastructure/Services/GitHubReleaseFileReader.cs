@@ -6,9 +6,7 @@ using PkgDiff.Shared.Validation;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Release notes kept as one file per version in a folder of the repository, e.g. Django's
-// docs/releases/5.2.1.txt. The folder listings are read once per repository through the API, so a
-// version costs one raw download, and a repository without such a folder nothing after the first look.
+// Release notes kept as one file per version in a repository folder (listed once per repo)
 public class GitHubReleaseFileReader
 {
     private static readonly string[] Folders =
@@ -80,7 +78,7 @@ public class GitHubReleaseFileReader
         }
     }
 
-    // "5.2.1" is 5.2.1.txt; "5.2" and "5.2.0" are each other's file too
+    // A trailing ".0" is optional: x.y and x.y.0 name the same file
     private static string? FileFor(Dictionary<string, string> files, string version)
     {
         if (files.TryGetValue(version, out var path))
@@ -172,8 +170,7 @@ public class GitHubReleaseFileReader
         }
     }
 
-    // The page title of the file repeats the version: an RST title between two rules
-    // ("====\nDjango 5.2.1 release notes\n====") or a first Markdown heading
+    // The file's title repeats the version: an RST title between rules or a first Markdown heading
     private static string WithoutTitle(string text)
     {
         var lines = text.Replace("\r\n", "\n").Split('\n').ToList();

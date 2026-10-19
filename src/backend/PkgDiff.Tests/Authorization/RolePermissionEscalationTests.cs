@@ -15,7 +15,6 @@ using static PkgDiff.Tests.Authorization.AuthorizationTestHost;
 
 namespace PkgDiff.Tests.Authorization;
 
-// WR-01: Roles.Edit must not let a non-Admin grant their own role permissions they do not hold.
 public class RolePermissionEscalationTests
 {
     private const string ManagerRole = "RoleManager";

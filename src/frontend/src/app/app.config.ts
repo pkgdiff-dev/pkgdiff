@@ -12,7 +12,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    // What the server rendered is taken over, not rendered again; API answers travel with the page
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([forwardedForInterceptor, authInterceptor, errorInterceptor])),
   ]

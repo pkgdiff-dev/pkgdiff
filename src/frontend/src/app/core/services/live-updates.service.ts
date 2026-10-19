@@ -3,7 +3,6 @@ import { LiveUpdate } from '../models/package.models';
 import { mergeLiveUpdate } from '../utils/live-updates.utils';
 import { SignalrService } from './signalr.service';
 
-// App-wide state of the Live Updates feed: the first page from the API, kept current by the hub
 @Injectable({ providedIn: 'root' })
 export class LiveUpdatesService {
   private signalr = inject(SignalrService);

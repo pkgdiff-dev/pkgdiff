@@ -18,7 +18,6 @@ public static class DatabaseSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseSeeder");
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-        // Seed Roles
         if (!await roleManager.RoleExistsAsync("Admin"))
         {
             EnsureSucceeded(await roleManager.CreateAsync(new IdentityRole("Admin")), "create role Admin");
@@ -35,7 +34,6 @@ public static class DatabaseSeeder
 
         await SeedAdminUserAsync(userManager, adminPassword, logger);
 
-        // Seed Viewer User (optional)
         var viewerUser = await userManager.FindByNameAsync("pkgdiff_viewer");
         if (viewerUser == null && viewerPassword != null)
         {
@@ -64,11 +62,6 @@ public static class DatabaseSeeder
             logger.LogInformation("Viewer user not seeded: AdminSettings:ViewerPassword (env VIEWER_PASSWORD) is not set.");
         }
 
-        // ──────────────────────────────
-        // Seed Role Permissions
-        // ──────────────────────────────
-
-        // 1. Admin Role (Grant ALL permissions)
         var adminRole = await roleManager.FindByNameAsync("Admin");
         if (adminRole != null)
         {
@@ -88,7 +81,6 @@ public static class DatabaseSeeder
             if (newClaimsCount > 0) logger.LogInformation("Added {Count} new permissions to role {Role}", newClaimsCount, "Admin");
         }
 
-        // 2. Viewer Role (Grant VIEW permissions)
         var viewerRole = await roleManager.FindByNameAsync("Viewer");
         if (viewerRole != null)
         {
@@ -121,9 +113,7 @@ public static class DatabaseSeeder
             if (newClaimsCount > 0) logger.LogInformation("Added {Count} new permissions to role {Role}", newClaimsCount, "Viewer");
         }
 
-        // Seed System Settings: insert missing known keys with their flags, repair flags of existing
-        // known keys and encrypt plaintext secrets. Idempotent: a second run changes nothing and never re-encrypts.
-        // The protector is resolved first: in Production a missing SETTINGS_ENCRYPTION_KEY stops startup here.
+        // Idempotent, never re-encrypts; the protector resolves first so a missing key stops startup
         var protector = scope.ServiceProvider.GetRequiredService<ISecretProtector>();
         var existingSettings = await context.SystemSettings.ToListAsync();
         var createdSettings = SystemSettingsMaintenance.CreateMissing(existingSettings.Select(s => s.Key));
@@ -139,7 +129,6 @@ public static class DatabaseSeeder
             logger.LogInformation("System settings: {Added} added, {Changed} updated", createdSettings.Count, changedSettings);
         }
 
-        // Seed Registries
         if (!await context.Registries.AnyAsync())
         {
             var registries = new[]
@@ -165,7 +154,6 @@ public static class DatabaseSeeder
             }
         }
 
-        // Seed Version Exclude Patterns
         var expectedPatterns = new[]
         {
             new { Id = 1, Pattern = "dev", Description = "Development builds (e.g., 1.0.0-dev-123)" },
@@ -232,8 +220,7 @@ public static class DatabaseSeeder
             logger.LogInformation("Version exclude patterns seeded: {Added} added, {Updated} updated", addedCount, updatedCount);
         }
     }
-    // Bootstrap only: once any user holds Admin, a demoted or deleted pkgdiff_admin is an administrator's
-    // decision and is never re-promoted or recreated here.
+    // Bootstrap only: once any Admin exists, pkgdiff_admin is never re-promoted or recreated
     public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, string? adminPassword, ILogger logger)
     {
         if ((await userManager.GetUsersInRoleAsync("Admin")).Count > 0)
@@ -267,7 +254,6 @@ public static class DatabaseSeeder
             logger.LogInformation("Admin user {UserName} created", "pkgdiff_admin");
         }
 
-        // Reached only when no administrator exists at all (fresh install or an interrupted first seed)
         EnsureSucceeded(await userManager.AddToRoleAsync(adminUser, "Admin"), "assign role Admin to pkgdiff_admin");
         logger.LogInformation("Role {Role} assigned to {UserName}", "Admin", "pkgdiff_admin");
     }

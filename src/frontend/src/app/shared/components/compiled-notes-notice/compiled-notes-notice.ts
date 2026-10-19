@@ -4,7 +4,6 @@ import { LucideAngularModule, AlertTriangle, ExternalLink } from 'lucide-angular
 
 import { CompiledNotesSource } from '../../../core/models/package.models';
 
-// Shown above notes pkgdiff compiled itself, so nobody takes them for the maintainers' own
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-compiled-notes-notice',

@@ -36,7 +36,7 @@ public class LiveUpdateService : ILiveUpdateService
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        // A package cached before LatestVersionDate existed is ordered by its cache time until a refresh fills the date in
+        // Packages without a LatestVersionDate are ordered by cache time until a refresh fills it in
         var (items, total) = await _unitOfWork.CachedPackages.GetPageDescendingAsync(
             p => p.LatestVersion != "",
             p => p.LatestVersionDate ?? p.CachedAt,

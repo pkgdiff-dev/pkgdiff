@@ -44,7 +44,6 @@ public class CachedPackageConfiguration : IEntityTypeConfiguration<CachedPackage
             .IsRequired()
             .HasColumnType("text");
             
-        // Unique index on PackageId and RegistryId
         builder.HasIndex(x => new { x.PackageId, x.RegistryId })
             .IsUnique();
             
@@ -54,7 +53,6 @@ public class CachedPackageConfiguration : IEntityTypeConfiguration<CachedPackage
         // Index for the Live Updates feed order
         builder.HasIndex(x => x.LatestVersionDate);
         
-        // Navigation
         builder.HasMany(x => x.ReleaseNotes)
             .WithOne(x => x.CachedPackage)
             .HasForeignKey(x => x.CachedPackageId)

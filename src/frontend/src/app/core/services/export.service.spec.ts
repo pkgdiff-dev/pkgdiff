@@ -203,10 +203,8 @@ describe('ExportService', () => {
       { category: 'Bug Fixes', text: versions[0].entries[1].text },
     ]);
     expect(parsed.versions[1].release_notes).toBe(versions[1].releaseNotes);
-    // TOML has no null: a version without a publish date or source omits those keys
     expect(parsed.versions[1]).not.toHaveProperty('published_date');
     expect(parsed.versions[1]).not.toHaveProperty('release_notes_source');
-    // Counts are TOML integers, not floats (2, never 2.0)
     expect(text).toContain('diff.total_versions = 2\n');
     expect(text).toContain('summary.breaking_changes = 1\n');
     expect(text).toContain('summary.new_features = 0\n');

@@ -43,11 +43,9 @@ public class HealthCheckService : IHealthCheckService
     {
         var checkedAt = DateTime.UtcNow;
 
-        // The settings come from the same DbContext as the database check, which allows one
-        // operation at a time: they are read before the checks run in parallel
+        // Read before the parallel checks: the shared DbContext allows one operation at a time
         var providerSettings = await ReadProviderSettingsAsync();
 
-        // Run all checks in parallel
         var dbTask = CheckDatabaseHealthAsync();
         var nugetTask = CheckNuGetHealthAsync();
         var githubTask = CheckGitHubHealthAsync();
@@ -62,7 +60,6 @@ public class HealthCheckService : IHealthCheckService
         var githubHealth = await githubTask;
         var hangfireHealth = await hangfireTask;
 
-        // Determine overall status
         var overallStatus = DetermineOverallStatus(dbHealth, nugetHealth, githubHealth, hangfireHealth);
 
         return new HealthDetails(
@@ -149,15 +146,11 @@ public class HealthCheckService : IHealthCheckService
             {
                 var monitoringApi = JobStorage.Current.GetMonitoringApi();
                 
-                // Get server count
                 var servers = monitoringApi.Servers();
                 var activeServers = servers.Count;
                 
-                // Get job stats
                 var stats = monitoringApi.GetStatistics();
                 
-                // Determine health: considered healthy if at least 1 server is active
-                // degraded if failed jobs > 50 (configurable threshold)
                 var isHealthy = activeServers > 0;
                 string? errorMessage = null;
 
@@ -167,7 +160,6 @@ public class HealthCheckService : IHealthCheckService
                 }
                 else if (stats.Failed > 50)
                 {
-                    // Don't mark as unhealthy, just note it (status calculation will handle degraded)
                     errorMessage = $"High number of failed jobs: {stats.Failed}";
                 }
 
@@ -193,7 +185,6 @@ public class HealthCheckService : IHealthCheckService
         var sw = Stopwatch.StartNew();
         try
         {
-            // Simple connectivity check
             await _dbContext.Database.ExecuteSqlRawAsync("SELECT 1");
             sw.Stop();
 
@@ -240,7 +231,6 @@ public class HealthCheckService : IHealthCheckService
         var sw = Stopwatch.StartNew();
         try
         {
-            // Load GitHub settings
             var githubSettings = _configuration.GetSection("GitHubSettings");
             var personalAccessToken = githubSettings.GetValue<string?>("PersonalAccessToken");
             var enableAuthentication = githubSettings.GetValue<bool>("EnableAuthentication", true);
@@ -249,7 +239,6 @@ public class HealthCheckService : IHealthCheckService
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/rate_limit");
             request.Headers.Add("User-Agent", userAgent);
             
-            // Add authentication if token is provided and enabled
             var isAuthenticated = false;
             if (enableAuthentication && !string.IsNullOrWhiteSpace(personalAccessToken))
             {
@@ -299,7 +288,6 @@ public class HealthCheckService : IHealthCheckService
         }
     }
 
-    // Example: {"resources":{"core":{"limit":5000,"remaining":4990,"reset":1790000000,"used":10}}}
     private static (int? Remaining, DateTime? ResetAt) ParseGitHubRateLimit(string jsonContent)
     {
         try
@@ -319,7 +307,6 @@ public class HealthCheckService : IHealthCheckService
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
-            // The response does not have the expected shape
             return (null, null);
         }
     }
@@ -330,19 +317,15 @@ public class HealthCheckService : IHealthCheckService
         ExternalServiceHealth github,
         HangfireHealth hangfire)
     {
-        // Database is critical
         if (!db.IsHealthy)
             return "Unhealthy";
         
-        // Hangfire server is critical for background jobs
         if (!hangfire.IsHealthy)
             return "Unhealthy";
 
-        // Check for degraded conditions
         if (hangfire.FailedJobs > 50)
             return "Degraded";
 
-        // External services are less critical
         var externalServicesDown = (!nuget.IsAvailable ? 1 : 0) + (!github.IsAvailable ? 1 : 0);
 
         return externalServicesDown switch

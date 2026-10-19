@@ -1,5 +1,4 @@
 <app-modal [title]="'Share ' + packageId()" size="sm" [sheetOnMobile]="true" (closed)="closed.emit()">
-  <!-- Link -->
   <p class="block text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">Link</p>
   <div class="flex items-stretch gap-2">
     <div
@@ -14,7 +13,6 @@
     </button>
   </div>
 
-  <!-- Networks -->
   <p class="block text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mt-6 mb-2">Share on</p>
   <div class="grid grid-cols-3 gap-2">
     <button type="button" (click)="shareToTwitter()"

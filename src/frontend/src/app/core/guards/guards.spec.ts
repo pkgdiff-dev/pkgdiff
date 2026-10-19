@@ -46,7 +46,6 @@ describe('route guards', () => {
     auth.hasPermission.mockReturnValue(false);
     expect(urlOf(run(() => permissionGuard(users, state)))).toBe('/admin/dashboard');
 
-    // A route that names no permission is open to every signed-in user
     expect(run(() => permissionGuard(routeWith({}), state))).toBe(true);
   });
 

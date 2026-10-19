@@ -37,7 +37,7 @@ public sealed class HangfireDashboardAccess
 
     public string CreateTicket(string userId, DateTimeOffset expiresAt)
     {
-        // The random nonce identifies the ticket for the single-use marker independently of its textual encoding.
+        // The nonce keys the single-use marker independently of the ticket's encoding
         var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
         return _ticketProtector.Protect(nonce + NonceSeparator + userId, expiresAt);
     }
@@ -64,8 +64,7 @@ public sealed class HangfireDashboardAccess
         var nonce = payload[..separator];
         var userId = payload[(separator + 1)..];
 
-        // IDistributedCache has no atomic check-and-set: two redemptions racing in the same instant are
-        // bounded by the 60 s ticket lifetime and the per-request Admin re-check.
+        // No atomic check-and-set: a same-instant race is bounded by the 60 s ticket lifetime
         var markerKey = "hangfire-ticket-used:" + nonce;
         if (await _cache.GetAsync(markerKey) is not null)
             return null;
@@ -95,8 +94,7 @@ public sealed class HangfireDashboardAccess
 
     public async Task<bool> IsAuthorizedAsync(HttpContext context, IAdminRoleChecker checker)
     {
-        // A JWT role claim lives for up to 24 h and cannot be revoked, so the bearer path gets the same
-        // "still an active Admin" database check as the cookie path
+        // JWT role claims cannot be revoked, so the bearer path also gets the database Admin check
         if (context.User.IsInRole("Admin"))
         {
             var bearerUserId = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");

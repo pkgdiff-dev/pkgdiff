@@ -9,7 +9,6 @@ export function advisoriesOf(trust: PackageTrust | null | undefined, version: st
   return ids.map(id => byId.get(id) ?? unknownAdvisory(id));
 }
 
-// Whether OSV was asked about this version at all
 export function isChecked(trust: PackageTrust | null | undefined, version: string): boolean {
   return !!trust && trust.status === 'ready' && version in trust.versionAdvisories;
 }

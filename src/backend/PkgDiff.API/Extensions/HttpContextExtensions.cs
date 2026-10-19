@@ -2,8 +2,7 @@ namespace PkgDiff.API.Extensions;
 
 public static class HttpContextExtensions
 {
-    // RemoteIpAddress is already rewritten by UseForwardedHeaders for trusted proxies only,
-    // so request headers are never consulted here.
+    // Already rewritten by UseForwardedHeaders for trusted proxies; headers are never read here
     public static string GetClientIpAddress(this HttpContext context)
     {
         var ip = context.Connection.RemoteIpAddress;

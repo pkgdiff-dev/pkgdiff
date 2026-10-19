@@ -2,8 +2,7 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Application.Security;
 
-// The security side of an upgrade: what the FROM version suffers from that the TO version no longer
-// does, and what TO brings that FROM did not have
+// What an upgrade fixes (in FROM, gone in TO) and what it introduces (in TO, not in FROM)
 public static class TrustDiff
 {
     public static IReadOnlyList<SecurityAdvisory> AdvisoriesOf(PackageTrust trust, string version)

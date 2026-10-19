@@ -32,9 +32,7 @@ interface PackageTarget {
   version: string | undefined;
 }
 
-// A scoped npm name typed or shared with its slash (/package/npm/@tanstack/react-query) arrives split:
-// "@tanstack" as the id and "react-query" as the version, or with a version in the scope and name of the
-// longer route. "@tanstack" alone is no package name, so a lone scope always takes the next segment.
+// A scoped npm name can arrive split across route params; a lone scope takes the next segment
 function targetOf(params: ParamMap): PackageTarget {
   const registry = params.get('registry') ?? 'nuget';
   const version = params.get('version') ?? undefined;
@@ -96,12 +94,10 @@ export class PackageComponent {
   version = signal<string | undefined>(undefined);
   state = signal<PageState>('loading');
   activeTab = signal<TabType>('releases');
-  // Versions picked from the Versions tab for the Diff tab to start with
   compareRange = signal<{ from: string; to: string } | null>(null);
   shareOpen = signal(false);
   exportOpen = signal(false);
 
-  // Separate metadata and analysis data
   metadata = signal<PackageMetadata | null>(null);
   analysisData = signal<AnalysisResult | null>(null);
   analysisLoading = signal(false);
@@ -110,10 +106,8 @@ export class PackageComponent {
 
   trust = computed(() => this.metadata()?.trust ?? null);
 
-  // The release notes can always be exported; a comparison only once it was made
   canExport = computed(() => this.activeTab() === 'releases' || (this.activeTab() === 'diff' && !!this.analysisData()));
 
-  // Versions of this package that a malicious-package record names
   maliciousVersions = computed(() => maliciousVersions(this.trust(), this.metadata()?.versions.map(v => v.version) ?? []));
 
   private reload$ = new Subject<void>();
@@ -121,15 +115,12 @@ export class PackageComponent {
   // Events older than this page belong to an earlier visit
   private seenSequence = this.signalrService.lastSequence;
 
-  // Combine session-specific progress and filtered background progress
   progressMessage = computed(() => {
     const sessionProgress = this.signalrService.progressMessage();
     const background = this.signalrService.backgroundProgress();
 
-    // If we have session-specific progress (from active analysis), prioritize it
     if (sessionProgress) return sessionProgress;
 
-    // If we have background progress, only show it if it matches the current package
     if (background && background.packageId === this.packageId()) {
       return background.message;
     }
@@ -137,12 +128,10 @@ export class PackageComponent {
     return '';
   });
 
-  // Parse progress message to extract percentage
   progressInfo = computed(() => {
     const message = this.progressMessage();
     if (!message) return null;
 
-    // Match pattern like "Processing Humanizer v2.8.26 (5/22)..." or "Updating XYZ (15/89)..."
     const match = message.match(/\((\d+)\/(\d+)\)/);
     if (match) {
       const current = parseInt(match[1], 10);
@@ -169,7 +158,6 @@ export class PackageComponent {
     }
   });
 
-  // Every version, whichever one the URL points at
   allVersions = computed(() => {
     const meta = this.metadata();
     if (!meta) return [];
@@ -205,13 +193,12 @@ export class PackageComponent {
       this.signalrService.resetProgress();
     });
 
-    // The connection is app-wide; this only makes sure it is up before an analysis needs it
+    // The connection is app-wide; this only ensures it is up before an analysis needs it
     this.signalrService.startConnection().catch(() => undefined);
   }
 
   setTab(tab: TabType): void {
     this.activeTab.set(tab);
-    // Update URL fragment for deep linking (page refresh preserves tab)
     this.router.navigate([], {
       fragment: tab,
       replaceUrl: true,
@@ -224,12 +211,10 @@ export class PackageComponent {
     this.reload$.next();
   }
 
-  // Called from DiffTab to trigger actual analysis
   onStartAnalysis(request: AnalyzeRequest): void {
     this.analyze$.next(request);
   }
 
-  // Called from VersionsTab: show the upgrade from that version to the latest one
   compareWithLatest(version: string): void {
     const latest = this.metadata()?.latestVersion;
     if (!latest || latest === version) return;
@@ -255,7 +240,6 @@ export class PackageComponent {
       // Another version of the same package is the same data
       distinctUntilChanged((a, b) => a.packageId === b.packageId && a.registry === b.registry),
       tap(() => this.resetForNewPackage()),
-      // switchMap drops the answer of a package the visitor has already left, and of a load a newer one replaced
       switchMap(target => this.reload$.pipe(
         startWith(undefined),
         switchMap(() => this.packageService.getPackageMetadata(target.registry, target.packageId).pipe(
@@ -267,7 +251,6 @@ export class PackageComponent {
     ).subscribe(loaded => this.showMetadata(loaded));
   }
 
-  // A link to another tab of the same page (#versions) changes only the fragment
   private followFragment(): void {
     this.route.fragment.pipe(takeUntilDestroyed()).subscribe(fragment => {
       if (TABS.includes(fragment as TabType)) {
@@ -321,8 +304,7 @@ export class PackageComponent {
 
     const metadata = loaded.value;
     this.metadata.set(metadata);
-    // The registry knows the package but it has no stable version: pulled for malware (npm leaves
-    // "0.0.1-security") or only prereleases so far. The service itself is fine.
+    // Known package without a stable version (pulled or prerelease-only), not a service failure
     if (!metadata.versions || metadata.versions.length === 0) {
       this.state.set('no-versions');
       return;
@@ -338,7 +320,6 @@ export class PackageComponent {
         this.analysisLoading.set(true);
         this.analysisError.set(null);
       }),
-      // A newer selection replaces the analysis still under way
       switchMap(request => this.packageService.analyze({
         ...request,
         connectionId: this.signalrService.connectionId() || undefined,
@@ -369,7 +350,6 @@ export class PackageComponent {
       });
     });
 
-    // A background job finished: the stored release notes changed
     effect(() => {
       const event = this.signalrService.packageUpdated();
       untracked(() => {
@@ -380,7 +360,6 @@ export class PackageComponent {
       });
     });
 
-    // New security data was stored: read the package again, without a message
     effect(() => {
       const event = this.signalrService.securityUpdated();
       untracked(() => {
@@ -389,7 +368,7 @@ export class PackageComponent {
       });
     });
 
-    // Whatever was pushed while the connection was down is lost, the end of an update included
+    // Pushes sent while the connection was down are lost, an update's end included
     let reconnects = this.signalrService.reconnected();
     effect(() => {
       const count = this.signalrService.reconnected();

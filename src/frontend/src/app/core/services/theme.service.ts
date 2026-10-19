@@ -14,8 +14,7 @@ export class ThemeService {
   readonly theme = signal<Theme>(this.getInitialTheme());
 
   constructor() {
-    // The server does not know the visitor's theme and leaves the class to the inline script in
-    // index.html, which sets it before the first paint
+    // On the server the inline script in index.html sets the theme class before first paint
     if (this.isBrowser) {
       this.applyTheme(this.theme());
     }

@@ -1,7 +1,6 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
-// Public pages are rendered on the server for every request: their content comes from the API.
-// The admin area needs a session that only the browser has, so it is sent as the client-side shell.
+// The admin area needs a browser-only session, so it is sent as the client-side shell
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Server },
   { path: 'packages', renderMode: RenderMode.Server },
@@ -19,6 +18,5 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'audit/:id', renderMode: RenderMode.Client },
   { path: 'admin/login', renderMode: RenderMode.Client },
   { path: 'admin/**', renderMode: RenderMode.Client },
-  // Whatever is left is no page of the application
   { path: '**', renderMode: RenderMode.Server, status: 404 },
 ];

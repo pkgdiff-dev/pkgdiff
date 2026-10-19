@@ -6,16 +6,13 @@ public sealed class InboundRateLimitOptions
 
     public RateLimitTier General { get; set; } = new() { PerMinute = 60, PerFiveMinutes = 200 };
 
-    // Counted on its own, on top of the general tier: an export is far more expensive than an API call
+    // On top of the general tier: an export costs far more than an API call
     public RateLimitTier PdfExport { get; set; } = new() { PerMinute = 5, PerFiveMinutes = 15 };
 
-    // The admin panel and the Hangfire dashboard poll, so signed-in work needs more room than a visitor
     public RateLimitTier Admin { get; set; } = new() { PerMinute = 240, PerFiveMinutes = 1200 };
 
-    // Sign-in attempts per address: tight, so guessing passwords is slow
     public RateLimitTier Login { get; set; } = new() { PerMinute = 5, PerFiveMinutes = 15 };
 
-    // Each audit checks up to the package limit against OSV: a few per address are plenty
     public RateLimitTier AuditStart { get; set; } = new() { PerMinute = 3, PerFiveMinutes = 6 };
 
     public bool IsValid() =>

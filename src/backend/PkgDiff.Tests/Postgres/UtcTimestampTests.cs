@@ -64,7 +64,6 @@ public class UtcTimestampTests
         Assert.Equal((utc, DateTimeKind.Utc), (blocked.CreatedAt, blocked.CreatedAt.Kind));
         Assert.Equal((utc, DateTimeKind.Utc), (blocked.ExpiresAt!.Value, blocked.ExpiresAt.Value.Kind));
 
-        // A filter value without a kind means UTC as well, and the server's own clock compares correctly
         Assert.Equal(1, await reading.BlockedIps.CountAsync(b => b.ExpiresAt == moment, TestContext.Current.CancellationToken));
         Assert.Equal(1, await reading.BlockedIps.CountAsync(b => b.ExpiresAt < DateTime.UtcNow, TestContext.Current.CancellationToken));
         Assert.Equal(1, await reading.Registries.CountAsync(r => r.CreatedAt.Date == utc.Date, TestContext.Current.CancellationToken));
@@ -106,7 +105,6 @@ public class UtcTimestampTests
         Assert.Equal(new DateTime(2026, 3, 1, 22, 30, 0, DateTimeKind.Utc), registry.CreatedAt);
         Assert.Equal(DateTimeKind.Utc, registry.CreatedAt.Kind);
 
-        // Back to the columns without a zone: the stored time is still the UTC one
         await reading.GetService<IMigrator>().MigrateAsync(LastMigrationWithoutZones, TestContext.Current.CancellationToken);
         Assert.Equal("2026-03-01 22:30:00", await ReadSettingAsync(
             reading, """SELECT to_char("CreatedAt", 'YYYY-MM-DD HH24:MI:SS') FROM "Registries" """));

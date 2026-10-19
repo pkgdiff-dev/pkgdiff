@@ -22,8 +22,7 @@ public class WorkTrackerServiceTests
             return release.Task;
         };
 
-        // A call has joined the run by the time it returns its task, so all fifty race for the same entry
-        // here and none of them can arrive after the run has ended
+        // A call has joined the run once it returns its task, so none can arrive after the run ends
         var callers = new Task<string>[50];
         Parallel.For(0, callers.Length, i => callers[i] = _tracker.RunCoalescedAsync("key", work));
         Assert.True(_tracker.IsRunning("key"));
@@ -74,7 +73,6 @@ public class WorkTrackerServiceTests
         var secondRun = _tracker.RunCoalescedAsync("key", () => second.Task);
         Assert.True(_tracker.IsRunning("key"));
 
-        // Another caller of the finished first run completes now; the second run must stay registered
         Assert.Equal(3, await _tracker.RunCoalescedAsync("other", () => Task.FromResult(3)));
         Assert.True(_tracker.IsRunning("key"));
 

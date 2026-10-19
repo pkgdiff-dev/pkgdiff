@@ -34,7 +34,7 @@ public class PubDevService : IPubDevService
             if (changelogNodes == null || !changelogNodes.Any())
                 return string.Empty;
 
-            var versionId = version.Replace(".", ""); // IDs in pub.dev seem to lack dots for some reason (e.g. #110 for 1.1.0)
+            var versionId = version.Replace(".", ""); // pub.dev changelog anchors drop the dots
 
             foreach (var node in changelogNodes)
             {
@@ -46,13 +46,11 @@ public class PubDevService : IPubDevService
 
                     var rawHtml = contentNode.InnerHtml;
 
-                    // Convert structural tags to markdown-like plain text before stripping
                     rawHtml = Regex.Replace(rawHtml, "<br[^>]*>", "\n", RegexOptions.IgnoreCase);
                     rawHtml = Regex.Replace(rawHtml, "</p>", "\n\n", RegexOptions.IgnoreCase);
                     rawHtml = Regex.Replace(rawHtml, "<li[^>]*>", "\n- ", RegexOptions.IgnoreCase);
                     rawHtml = Regex.Replace(rawHtml, "<h[1-6][^>]*>", "\n# ", RegexOptions.IgnoreCase);
 
-                    // Formatting tags
                     rawHtml = Regex.Replace(rawHtml, "<strong[^>]*>(.*?)</strong>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                     rawHtml = Regex.Replace(rawHtml, "<b[^>]*>(.*?)</b>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                     rawHtml = Regex.Replace(rawHtml, "<em[^>]*>(.*?)</em>", "*$1*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -60,14 +58,12 @@ public class PubDevService : IPubDevService
                     rawHtml = Regex.Replace(rawHtml, "<code[^>]*>(.*?)</code>", "`$1`", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                     rawHtml = Regex.Replace(rawHtml, "<pre[^>]*>(.*?)</pre>", "\n```\n$1\n```\n", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-                    // Links
                     rawHtml = Regex.Replace(rawHtml, "<a[^>]+href=\"([^\"]+)\"[^>]*>(.*?)</a>", "[$2]($1)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
                     var tempDoc = new HtmlDocument();
                     tempDoc.LoadHtml(rawHtml);
                     var plainText = tempDoc.DocumentNode.InnerText;
 
-                    // Clean up excessive newlines
                     plainText = Regex.Replace(plainText, @"\n{3,}", "\n\n");
 
                     return plainText.Trim();
@@ -92,7 +88,6 @@ public class PubDevService : IPubDevService
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // Need to look for a link pointing to github.com specifically with text 'Repository (GitHub)'
             var links = doc.DocumentNode.SelectNodes("//a[@href]");
             if (links != null)
             {
@@ -114,7 +109,6 @@ public class PubDevService : IPubDevService
         }
     }
 
-    // Additional methods based on the pub.dev integration needs
     public async Task<(string? Publisher, string? Description, string? RepositoryUrl)> GetPackageExtraInfoAsync(string packageId)
     {
         string? publisher = null;
@@ -128,7 +122,6 @@ public class PubDevService : IPubDevService
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // Extract Publisher from the <meta name="pub-page-data">
             var metaNode = doc.DocumentNode.SelectSingleNode("//meta[@name='pub-page-data']");
             if (metaNode != null)
             {
@@ -136,7 +129,6 @@ public class PubDevService : IPubDevService
                 if (!string.IsNullOrEmpty(base64Data))
                 {
                     var jsonStr = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64Data));
-                    // Basic regex to avoid creating full JSON models if we just need one field.
                     var match = Regex.Match(jsonStr, "\"publisherId\"\\s*:\\s*\"([^\"]+)\"");
                     if (match.Success)
                     {
@@ -145,14 +137,12 @@ public class PubDevService : IPubDevService
                 }
             }
 
-            // Extract Description
             var descNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:description']");
             if (descNode != null)
             {
                 description = descNode.GetAttributeValue("content", "");
             }
 
-            // Extract Repository URL (GitHub)
             var links = doc.DocumentNode.SelectNodes("//a[@href]");
             if (links != null)
             {

@@ -84,7 +84,6 @@ public class SocialMediaService : ISocialMediaService
             client = _httpClientFactory.CreateClient("Twitter");
             contentPayload = new StringContent(JsonSerializer.Serialize(new { text = content }), Encoding.UTF8, "application/json");
 
-            // Generate OAuth 1.0a Authorization header
             string authHeader = GenerateTwitterOAuthHeader(requestUrl, "POST", apiKey, apiKeySecret, accessToken, accessTokenSecret);
             client.DefaultRequestHeaders.Add("Authorization", authHeader);
         }
@@ -128,7 +127,7 @@ public class SocialMediaService : ISocialMediaService
         try
         {
             var accessToken = await _settingsReader.GetAsync(SettingKeys.LinkedInAccessToken);
-            var authorURN = await _settingsReader.GetAsync(SettingKeys.LinkedInAuthorUrn); // e.g. urn:li:organization:1234567 or urn:li:person:abcdef
+            var authorURN = await _settingsReader.GetAsync(SettingKeys.LinkedInAuthorUrn);
 
             if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(authorURN))
             {
@@ -138,7 +137,7 @@ public class SocialMediaService : ISocialMediaService
             client = _httpClientFactory.CreateClient("LinkedIn");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             client.DefaultRequestHeaders.Add("X-Restli-Protocol-Version", "2.0.0");
-            client.DefaultRequestHeaders.Add("LinkedIn-Version", "202602"); // Latest active version (Feb 2026)
+            client.DefaultRequestHeaders.Add("LinkedIn-Version", "202602");
 
             var payload = new
             {
@@ -170,19 +169,18 @@ public class SocialMediaService : ISocialMediaService
         using var response = sent.Response!;
         if (response.IsSuccessStatusCode)
         {
-            // LinkedIn returns 201 Created and Post ID in the x-restli-id header
             if (response.Headers.TryGetValues("x-restli-id", out var values))
             {
                 var postId = values.FirstOrDefault();
                 return SocialPostResult.Succeeded($"https://www.linkedin.com/feed/update/{postId}");
             }
-            return SocialPostResult.Succeeded("https://www.linkedin.com/company/pkgdiff"); // Fallback URL
+            return SocialPostResult.Succeeded("https://www.linkedin.com/company/pkgdiff");
         }
 
         return await FailureFromResponseAsync(response, "LinkedIn");
     }
 
-    // Once the request has started, a timeout or broken connection says nothing about whether the platform published it
+    // Once sent, a timeout or broken connection does not tell whether the post was published
     private async Task<(HttpResponseMessage? Response, SocialPostResult? Result)> SendAsync(
         HttpClient client,
         string requestUrl,
@@ -263,8 +261,7 @@ public class SocialMediaService : ISocialMediaService
             JsonSerializer.Serialize(new OAuthStateEntry(userId, redirectUri)),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = OAuthStateLifetime });
 
-        // Only request standard scopes that are available to all LinkedIn apps
-        // w_member_social: post on behalf of member, openid/profile/email: basic profile
+        // Only standard scopes, available to every LinkedIn app
         var scopes = "openid profile email w_member_social";
         var authUrl = $"https://www.linkedin.com/oauth/v2/authorization" +
                       $"?response_type=code" +
@@ -312,7 +309,6 @@ public class SocialMediaService : ISocialMediaService
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
                 return (false, "LinkedIn ClientId or ClientSecret is not configured in System Settings.");
 
-            // Step 1: Exchange authorization code for access token
             var tokenClient = _httpClientFactory.CreateClient();
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -341,13 +337,11 @@ public class SocialMediaService : ISocialMediaService
             if (string.IsNullOrEmpty(accessToken))
                 return (false, "Access token was empty in LinkedIn's response.");
 
-            // Step 2: Find the managed company page (pkgdiff)
             var orgClient = _httpClientFactory.CreateClient();
             orgClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             orgClient.DefaultRequestHeaders.Add("X-Restli-Protocol-Version", "2.0.0");
-            orgClient.DefaultRequestHeaders.Add("LinkedIn-Version", "202602"); // Latest active version (Feb 2026)
+            orgClient.DefaultRequestHeaders.Add("LinkedIn-Version", "202602");
 
-            // Get organizations where the user is an admin
             var orgsResponse = await orgClient.GetAsync("https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&count=50");
             var orgsContent = await orgsResponse.Content.ReadAsStringAsync();
 
@@ -357,7 +351,6 @@ public class SocialMediaService : ISocialMediaService
                 using var orgsDoc = JsonDocument.Parse(orgsContent);
                 var elements = orgsDoc.RootElement.GetProperty("elements");
 
-                // Try to find pkgdiff org, otherwise fall back to first admin org
                 foreach (var element in elements.EnumerateArray())
                 {
                     if (element.TryGetProperty("organization", out var orgProp))
@@ -365,7 +358,6 @@ public class SocialMediaService : ISocialMediaService
                         var orgUrn = orgProp.GetString();
                         if (!string.IsNullOrEmpty(orgUrn))
                         {
-                            // Fetch org details to find pkgdiff
                             var orgDetailResp = await orgClient.GetAsync($"https://api.linkedin.com/v2/organizations/{orgUrn.Split(':').Last()}");
                             if (orgDetailResp.IsSuccessStatusCode)
                             {
@@ -379,14 +371,12 @@ public class SocialMediaService : ISocialMediaService
                                 }
                             }
 
-                            // Fallback: Use first org if pkgdiff not found yet
                             authorUrn ??= orgUrn;
                         }
                     }
                 }
             }
 
-            // Step 3: Save AccessToken and AuthorURN to SystemSettings
             await SaveOrUpdateSettingAsync(SettingKeys.LinkedInAccessToken, accessToken, "LinkedIn OAuth Access Token (auto-generated)");
 
             if (!string.IsNullOrEmpty(authorUrn))

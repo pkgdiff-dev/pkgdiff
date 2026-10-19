@@ -103,7 +103,6 @@ describe('PackageComponent', () => {
         { provide: HttpStatusService, useValue: httpStatus },
       ],
     });
-    // The page's logic is under test; its template and child components are not
     TestBed.overrideComponent(PackageComponent, { set: { template: '', imports: [] } });
     fixture = TestBed.createComponent(PackageComponent);
     page = fixture.componentInstance;

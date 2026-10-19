@@ -17,7 +17,7 @@ public class ScraperService : IScraperService
     private readonly IRateLimiterService _rateLimiter;
     private readonly ILogger<ScraperService> _logger;
 
-    // Request deduplication: prevent multiple concurrent requests for the same resource
+    // In-flight requests, shared so concurrent callers trigger a single fetch
     private readonly ConcurrentDictionary<string, Task<string>> _releaseNotesCache = new();
     private readonly ConcurrentDictionary<string, Task<string?>> _githubUrlCache = new();
 
@@ -35,7 +35,6 @@ public class ScraperService : IScraperService
         _htmlDocumentLoader = htmlDocumentLoader;
         _httpClientFactory = httpClientFactory;
 
-        // Polly retry policy: 3 attempts with exponential backoff, for transient failures only
         _retryPolicy = Policy
             .Handle<Exception>(TransientHttp.IsTransient)
             .WaitAndRetryAsync(3, retryAttempt =>
@@ -46,14 +45,12 @@ public class ScraperService : IScraperService
     {
         var cacheKey = $"{packageId}:{version}";
         
-        // Request deduplication: if there's already a pending request for this package+version, reuse it
         return await _releaseNotesCache.GetOrAdd(cacheKey, async key =>
         {
             try
             {
                 return await _retryPolicy.ExecuteAsync(async () =>
                 {
-                    // Use rate limiter to respect NuGet.org's 50 req/min limit
                     return await _rateLimiter.ExecuteAsync("nuget-scraping", async () =>
                     {
                         var url = $"https://www.nuget.org/packages/{PackageUrlEncoder.EscapeSegment(packageId)}/{PackageUrlEncoder.EscapeSegment(version)}";
@@ -65,8 +62,7 @@ public class ScraperService : IScraperService
                             return string.Empty;
                         }
 
-                        // Try multiple selectors as fallback
-                        // NOTE: Use #releasenotes-tab (content div), NOT #releasenotes-body-tab (tab button)
+                        // #releasenotes-tab is the content div; #releasenotes-body-tab is the tab button
                         var selectors = new[]
                         {
                             "#releasenotes-tab p",
@@ -92,7 +88,6 @@ public class ScraperService : IScraperService
             }
             finally
             {
-                // Remove from cache after completion to allow fresh requests later
                 _releaseNotesCache.TryRemove(cacheKey, out _);
             }
         });
@@ -100,17 +95,14 @@ public class ScraperService : IScraperService
 
     public async Task<string?> GetGitHubRepositoryUrlAsync(string packageId)
     {
-        // Request deduplication: if there's already a pending request for this package, reuse it
         return await _githubUrlCache.GetOrAdd(packageId, async key =>
         {
             try
             {
                 return await _retryPolicy.ExecuteAsync(async () =>
                 {
-                    // Use rate limiter to respect NuGet.org's 50 req/min limit
                     return await _rateLimiter.ExecuteAsync("nuget-scraping", async () =>
                     {
-                        // Try HTML scraping first (faster and simpler)
                         var githubUrl = await ScrapeGitHubUrlFromHtmlAsync(packageId);
                         if (!string.IsNullOrWhiteSpace(githubUrl))
                         {
@@ -124,7 +116,6 @@ public class ScraperService : IScraperService
             }
             finally
             {
-                // Remove from cache after completion to allow fresh requests later
                 _githubUrlCache.TryRemove(packageId, out _);
             }
         });
@@ -134,7 +125,6 @@ public class ScraperService : IScraperService
     {
         try
         {
-            // Use NuGet V3 API to get package metadata
             var url = $"https://api.nuget.org/v3/registration5-gz-semver2/{PackageUrlEncoder.EscapeSegment(packageId.ToLowerInvariant())}/index.json";
 
             var httpClient = _httpClientFactory.CreateClient();
@@ -146,19 +136,16 @@ public class ScraperService : IScraperService
             var json = await response.Content.ReadAsStringAsync();
             using var doc = System.Text.Json.JsonDocument.Parse(json);
             
-            // Get the last page (contains latest versions)
             var items = doc.RootElement.GetProperty("items");
             if (items.GetArrayLength() == 0)
                 return null;
 
             var lastPage = items[items.GetArrayLength() - 1];
             
-            // Get items from the page
             var pageItems = lastPage.GetProperty("items");
             if (pageItems.GetArrayLength() == 0)
                 return null;
 
-            // Get the last item (latest version)
             var latestItem = pageItems[pageItems.GetArrayLength() - 1];
             var catalogEntry = latestItem.GetProperty("catalogEntry");
             var version = catalogEntry.GetProperty("version").GetString();
@@ -172,9 +159,6 @@ public class ScraperService : IScraperService
         }
     }
 
-    /// <summary>
-    /// Extracts GitHub repository URL from .nuspec XML content.
-    /// </summary>
     private string? ExtractGitHubUrlFromNuspec(string nuspecContent)
     {
         try
@@ -184,7 +168,6 @@ public class ScraperService : IScraperService
 
             if (ns != null)
             {
-                // First, try <repository> tag (most specific)
                 var repositoryElement = xmlDoc.Descendants(ns + "repository").FirstOrDefault();
                 var url = repositoryElement?.Attribute("url")?.Value;
 
@@ -194,7 +177,6 @@ public class ScraperService : IScraperService
                     return url;
                 }
 
-                // Fallback: Try <projectUrl> tag (some packages put GitHub URL here)
                 var projectUrlElement = xmlDoc.Descendants(ns + "projectUrl").FirstOrDefault();
                 var projectUrl = projectUrlElement?.Value;
 
@@ -221,7 +203,6 @@ public class ScraperService : IScraperService
 
         url = url.TrimEnd('/');
 
-        // Remove common GitHub paths to get base repository URL
         var segments = new[] { "/issues", "/wiki", "/pulls", "/actions", "/tree", "/blob", "/commit" };
         foreach (var segment in segments)
         {
@@ -241,20 +222,13 @@ public class ScraperService : IScraperService
         if (string.IsNullOrWhiteSpace(text))
             return string.Empty;
 
-        // Remove excessive whitespace
         text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
         
-        // Trim
         text = text.Trim();
 
         return text;
     }
 
-    // ==================== HELPER METHODS ====================
-
-    /// <summary>
-    /// Scrapes GitHub repository URL from NuGet package HTML page.
-    /// </summary>
     private async Task<string?> ScrapeGitHubUrlFromHtmlAsync(string packageId)
     {
         try
@@ -266,7 +240,6 @@ public class ScraperService : IScraperService
                 return null;
             }
 
-            // Try the specific selector from the actual HTML
             var githubLink = document.QuerySelector("a[data-track='outbound-repository-url'][href*='github.com']");
 
             if (githubLink != null)
@@ -279,7 +252,6 @@ public class ScraperService : IScraperService
                 }
             }
 
-            // Fallback 1: Try any link with "Source repository" text
             var links = document.QuerySelectorAll("a[href*='github.com']");
             foreach (var link in links)
             {
@@ -295,7 +267,6 @@ public class ScraperService : IScraperService
                 }
             }
 
-            // Fallback 2: Try "Project website" link (some packages put GitHub URL here)
             foreach (var link in links)
             {
                 var text = link.TextContent?.Trim();
@@ -309,8 +280,6 @@ public class ScraperService : IScraperService
                     }
                 }
             }
-
-            // Developer note: if HTML needs to be inspected during dev, handle it securely here.
 
             return null;
         }

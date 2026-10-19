@@ -15,8 +15,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })).pipe(
     catchError((error: unknown) => {
-      // Only a request that carried the token can say the token is no longer accepted;
-      // a failed login attempt carries none and stays on the login page
+      // Only a request that carried the token can show it is no longer accepted
       if (error instanceof HttpErrorResponse && error.status === 401) {
         auth.handleUnauthorized();
       }

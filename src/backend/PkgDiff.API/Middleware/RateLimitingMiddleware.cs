@@ -27,8 +27,7 @@ public class RateLimitingMiddleware
         var ip = context.GetClientIpAddress();
         var path = context.Request.Path;
 
-        // Only a signed-in caller gets the larger admin budget: the limiter runs before authentication,
-        // so an anonymous request to an admin address is counted like any other
+        // Runs before authentication: only callers with credentials get the admin budget
         if (IsAdminPath(path) && HasCredentials(context))
         {
             if (await IsOverLimitAsync("rl:admin", ip, _options.Admin))
@@ -42,7 +41,7 @@ public class RateLimitingMiddleware
             await ReturnRateLimitError(context, "Too many requests. Please slow down.");
             return;
         }
-        // Exports have their own counters: the general ones also count the API calls of the page the export is started from
+        // Separate counters: the page starting an export already spends the general budget
         else if (IsPdfExport(path) && await IsOverLimitAsync("rl:pdf", ip, _options.PdfExport))
         {
             await ReturnRateLimitError(context, "Too many requests for PDF exports. Please slow down.");
@@ -66,13 +65,12 @@ public class RateLimitingMiddleware
         path.StartsWithSegments("/api/admin", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/hangfire", StringComparison.OrdinalIgnoreCase);
 
-    // Both PDF exports: /api/Package/{registry}/{id}/export/pdf and /api/Package/export/diff/pdf
     private static bool IsPdfExport(PathString path) =>
         path.Value is { } value
         && value.Contains("/export/", StringComparison.OrdinalIgnoreCase)
         && value.EndsWith("/pdf", StringComparison.OrdinalIgnoreCase);
 
-    // Exactly this address: /api/audit/parse reads a file and starts nothing
+    // Exact path match, so /api/audit/parse does not count as an audit start
     private static bool IsPost(HttpContext context, string path) =>
         HttpMethods.IsPost(context.Request.Method)
         && string.Equals(context.Request.Path.Value?.TrimEnd('/'), path, StringComparison.OrdinalIgnoreCase);

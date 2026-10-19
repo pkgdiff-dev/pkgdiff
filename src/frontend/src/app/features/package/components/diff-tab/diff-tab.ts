@@ -26,12 +26,11 @@ export class DiffTabComponent implements OnInit {
   registry = input.required<string>();
   gitHubUrl = input<string | null>(null);
   analysisData = input<AnalysisResult | null>(null);
-  // Security data of the package; the analysis carries its own copy, this one updates live
+  // Updates live, unlike the copy carried by the analysis
   trust = input<PackageTrust | null | undefined>(null);
   loading = input(false);
-  // What the last comparison failed with; null when it did not fail
   error = input<string | null>(null);
-  // A comparison started elsewhere (the Versions tab); without one the two newest versions are picked
+  // Without these the two newest versions are picked
   initialFrom = input<string | undefined>(undefined);
   initialTo = input<string | undefined>(undefined);
 

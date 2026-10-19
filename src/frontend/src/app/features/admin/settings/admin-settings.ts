@@ -33,7 +33,7 @@ interface CategoryGroup {
 
 const COPIED_MARK_MS = 2000;
 
-// A secret is write-only: its field starts empty and whatever is typed replaces the stored value
+// Secrets are write-only: the field starts empty and any typed value replaces the stored one
 const editableValue = (setting: SystemSettingDto): string => setting.isSecret ? '' : setting.value;
 
 @Component({
@@ -62,7 +62,6 @@ export class AdminSettingsComponent {
 
   editedValues = signal<Record<number, string>>({});
   collapsedCategories = signal<Record<string, boolean>>({});
-  // Settings whose value was just copied show a check mark for a moment
   copiedIds = signal<Record<number, boolean>>({});
 
   categoryGroups = computed<CategoryGroup[]>(() => {
@@ -149,7 +148,6 @@ export class AdminSettingsComponent {
 
   isChanged(setting: SystemSettingDto): boolean {
     const edited = this.editedValues()[setting.id] ?? '';
-    // Secrets are write-only, so any typed value is a replacement
     return setting.isSecret ? edited.length > 0 : edited !== setting.value;
   }
 

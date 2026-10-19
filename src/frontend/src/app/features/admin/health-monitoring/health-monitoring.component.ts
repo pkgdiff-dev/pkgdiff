@@ -48,7 +48,7 @@ interface HangfireHealth {
 
 const REFRESH_INTERVAL_MS = 30000;
 
-// The backend's safety buffer: at or below it, background scrapes pause until the limit resets
+// Mirrors the backend buffer: at or below it, background scrapes pause until the reset
 const GITHUB_RATE_LIMIT_BUFFER = 10;
 
 @Component({

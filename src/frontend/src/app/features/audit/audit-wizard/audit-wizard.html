@@ -10,7 +10,6 @@
     </p>
   </header>
 
-  <!-- Steps -->
   <ol class="flex items-center gap-2 md:gap-4 mb-8 text-xs md:text-sm" aria-label="Audit steps">
     @for (label of steps; track label; let i = $index) {
     <li class="flex items-center gap-2" [attr.aria-current]="step() === i + 1 ? 'step' : null">
@@ -29,7 +28,6 @@
     }
   </ol>
 
-  <!-- Step 1: ecosystem -->
   @if (step() === 1) {
   <section aria-labelledby="step1-title">
     <h2 id="step1-title" class="text-lg font-semibold mb-4">Which ecosystem is your project?</h2>
@@ -52,7 +50,6 @@
   </section>
   }
 
-  <!-- Step 2: the file -->
   @if (step() === 2 && ecosystem(); as eco) {
   <section aria-labelledby="step2-title">
     <h2 id="step2-title" class="text-lg font-semibold mb-1">Paste your {{ eco.label }} dependency file</h2>
@@ -99,7 +96,6 @@
   </section>
   }
 
-  <!-- Step 3: review -->
   @if (step() === 3 && parsed(); as result) {
   <section aria-labelledby="step3-title">
     <h2 id="step3-title" class="text-lg font-semibold mb-1">{{ rows().length }} packages found</h2>

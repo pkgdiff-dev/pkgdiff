@@ -48,8 +48,7 @@ public static class SystemSettingsMaintenance
                 }
             }
 
-            // An already-prefixed value is never touched, whichever key produced it: a value that
-            // cannot be decrypted (rotated or lost key) must survive until an admin re-enters it.
+            // Prefixed values are never touched: an undecryptable one must survive until an admin re-enters it
             if (row.IsSecret && !string.IsNullOrEmpty(row.Value) && !protector.IsProtected(row.Value))
             {
                 row.Value = protector.Protect(row.Value);

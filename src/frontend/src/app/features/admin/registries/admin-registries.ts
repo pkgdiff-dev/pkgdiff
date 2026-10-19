@@ -148,7 +148,7 @@ export class AdminRegistriesComponent {
     const moved = [...this.registries()];
     moveItemInArray(moved, event.previousIndex, event.currentIndex);
 
-    // Shown in the new order right away; the server's list comes back if it refuses
+    // Optimistic: the server's list is restored if it refuses
     const list = moved.map((reg, index) => ({ ...reg, displayOrder: index }));
     this.registries.set(list);
 

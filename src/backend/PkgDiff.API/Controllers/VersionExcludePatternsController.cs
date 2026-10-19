@@ -19,9 +19,6 @@ public class VersionExcludePatternsController : ControllerBase
         _versionFilterService = versionFilterService;
     }
 
-    /// <summary>
-    /// Get all version exclude patterns
-    /// </summary>
     [HttpGet]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.View)]
     public async Task<ActionResult<IEnumerable<VersionExcludePattern>>> GetAll()
@@ -30,9 +27,6 @@ public class VersionExcludePatternsController : ControllerBase
         return Ok(patterns.OrderBy(p => p.Id));
     }
 
-    /// <summary>
-    /// Get a specific pattern by ID
-    /// </summary>
     [HttpGet("{id}")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.View)]
     public async Task<ActionResult<VersionExcludePattern>> GetById(int id)
@@ -44,9 +38,6 @@ public class VersionExcludePatternsController : ControllerBase
         return Ok(pattern);
     }
 
-    /// <summary>
-    /// Create a new exclude pattern
-    /// </summary>
     [HttpPost]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.Create)]
     public async Task<ActionResult<VersionExcludePattern>> Create([FromBody] CreatePatternRequest request)
@@ -64,15 +55,11 @@ public class VersionExcludePatternsController : ControllerBase
         await _unitOfWork.VersionExcludePatterns.AddAsync(pattern);
         await _unitOfWork.SaveChangesAsync();
 
-        // Refresh cache
         await _versionFilterService.RefreshPatternsAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = pattern.Id }, pattern);
     }
 
-    /// <summary>
-    /// Update an existing pattern
-    /// </summary>
     [HttpPut("{id}")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.Edit)]
     public async Task<ActionResult<VersionExcludePattern>> Update(int id, [FromBody] UpdatePatternRequest request)
@@ -93,15 +80,11 @@ public class VersionExcludePatternsController : ControllerBase
         await _unitOfWork.VersionExcludePatterns.UpdateAsync(pattern);
         await _unitOfWork.SaveChangesAsync();
 
-        // Refresh cache
         await _versionFilterService.RefreshPatternsAsync();
 
         return Ok(pattern);
     }
 
-    /// <summary>
-    /// Delete a pattern
-    /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.Delete)]
     public async Task<ActionResult> Delete(int id)
@@ -113,15 +96,11 @@ public class VersionExcludePatternsController : ControllerBase
         await _unitOfWork.VersionExcludePatterns.DeleteAsync(pattern);
         await _unitOfWork.SaveChangesAsync();
 
-        // Refresh cache
         await _versionFilterService.RefreshPatternsAsync();
 
         return NoContent();
     }
 
-    /// <summary>
-    /// Toggle pattern active status
-    /// </summary>
     [HttpPatch("{id}/toggle")]
     [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.Edit)]
     public async Task<ActionResult<VersionExcludePattern>> ToggleActive(int id)
@@ -134,24 +113,18 @@ public class VersionExcludePatternsController : ControllerBase
         await _unitOfWork.VersionExcludePatterns.UpdateAsync(pattern);
         await _unitOfWork.SaveChangesAsync();
 
-        // Refresh cache
         await _versionFilterService.RefreshPatternsAsync();
 
         return Ok(pattern);
     }
 
-    /// <summary>
-    /// Preview: Test pattern against sample versions
-    /// Returns 3 example versions that would be excluded
-    /// </summary>
     [HttpPost("preview")]
-    [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.View)] // View might be enough, but it's a tool for editing
+    [Authorize(Policy = PkgDiff.Shared.Constants.Permissions.VersionExcludePatterns.View)]
     public ActionResult<PreviewResponse> Preview([FromBody] PreviewRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Pattern))
             return BadRequest(new { message = "Pattern is required" });
 
-        // Sample versions for testing
         var sampleVersions = new[]
         {
             "1.0.0",
@@ -192,7 +165,6 @@ public class VersionExcludePatternsController : ControllerBase
     }
 }
 
-// DTOs
 public record CreatePatternRequest(string Pattern, string? Description, bool IsActive = true);
 public record UpdatePatternRequest(string? Pattern, string? Description, bool? IsActive);
 public record PreviewRequest(string Pattern);

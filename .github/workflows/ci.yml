@@ -1,6 +1,4 @@
-# Runs on every pull request into develop or master, and as the gate of the publish workflow.
-# No toolchain is installed on the runner: the tests run inside the SDK and Node images pinned in
-# src/backend/Dockerfile and src/frontend/Dockerfile, so CI uses exactly what the published images use.
+# PR gate and publish gate; runs inside the SDK and Node images the Dockerfiles pin.
 name: CI
 
 on:
@@ -25,8 +23,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # The database tests run against the PostgreSQL image docker-compose.yml pins; without a server
-      # they would be skipped. The password belongs to this throwaway container only.
+      # Without a database server the database tests would be skipped
       - name: Run the tests in the pinned SDK image, against the pinned PostgreSQL
         run: |
           sdk="$(sed -n 's/^FROM \(mcr\.microsoft\.com\/dotnet\/sdk:[^ ]*\) AS build.*/\1/p' src/backend/Dockerfile)"

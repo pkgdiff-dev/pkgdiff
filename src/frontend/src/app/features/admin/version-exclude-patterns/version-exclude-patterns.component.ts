@@ -78,8 +78,7 @@ export class VersionExcludePatternsComponent {
             switchMap(pattern => {
                 if (!pattern) return of(NO_PREVIEW);
 
-                // Asked once typing pauses; a newer pattern abandons the request for the one before it,
-                // so an older answer can never replace a newer one
+                // Debounced; switchMap keeps an older answer from replacing a newer one
                 return timer(PREVIEW_DELAY_MS).pipe(
                     tap(() => this.previewLoading.set(true)),
                     switchMap(() => this.api.post<PreviewResponse>(`${PATTERNS_PATH}/preview`, { pattern })),

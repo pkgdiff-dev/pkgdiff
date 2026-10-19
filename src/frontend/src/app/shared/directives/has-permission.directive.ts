@@ -1,7 +1,6 @@
 import { Directive, TemplateRef, ViewContainerRef, effect, inject, input, untracked } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 
-// Renders its content only for a user who holds the permission: *appHasPermission="'Permissions.Users.Edit'"
 @Directive({
   selector: '[appHasPermission]',
   standalone: true,
@@ -17,7 +16,7 @@ export class HasPermissionDirective {
 
   constructor() {
     effect(() => {
-      // Follows both the permission asked for and the user who is signed in
+      // Tracks the signed-in user as well as the permission
       this.auth.currentUser();
       const allowed = this.auth.hasPermission(this.appHasPermission());
       untracked(() => this.render(allowed));
