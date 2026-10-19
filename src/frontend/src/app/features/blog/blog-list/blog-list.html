@@ -84,14 +84,32 @@
 
     @if (totalPages() > 1) {
     <nav class="mt-16 flex flex-wrap justify-center gap-2" aria-label="Blog pages">
-      @for (page of pages(); track page) {
-      <a [routerLink]="['/blog']" [queryParams]="page > 1 ? { page: page } : {}"
-        [attr.aria-current]="currentPage() === page ? 'page' : null"
-        [class]="currentPage() === page
+      @if (currentPage() > 1) {
+      <a [routerLink]="['/blog']" [queryParams]="currentPage() > 2 ? { page: currentPage() - 1 } : {}"
+        rel="prev" aria-label="Previous page"
+        class="bg-white dark:bg-transparent text-slate-700 dark:text-slate-300 border-gray-200 dark:border-[#1f1f1f] hover:bg-slate-50 dark:hover:bg-slate-900 border px-2 md:px-3 py-2 rounded transition-colors flex items-center">
+        <lucide-icon [img]="PrevIcon" class="w-4 h-4"></lucide-icon>
+      </a>
+      }
+      @for (link of pages(); track link.kind === 'page' ? link.page : link.key) {
+      @if (link.kind === 'page') {
+      <a [routerLink]="['/blog']" [queryParams]="link.page > 1 ? { page: link.page } : {}"
+        [attr.aria-current]="currentPage() === link.page ? 'page' : null"
+        [class]="currentPage() === link.page
           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white'
           : 'bg-white dark:bg-transparent text-slate-700 dark:text-slate-300 border-gray-200 dark:border-[#1f1f1f] hover:bg-slate-50 dark:hover:bg-slate-900'"
         class="font-mono text-xs font-bold border px-3 md:px-4 py-2 rounded transition-colors uppercase tracking-widest">
-        {{ page }}
+        {{ link.page }}
+      </a>
+      } @else {
+      <span class="font-mono text-xs font-bold px-1 py-2 text-slate-400 dark:text-slate-600" aria-hidden="true">…</span>
+      }
+      }
+      @if (currentPage() < totalPages()) {
+      <a [routerLink]="['/blog']" [queryParams]="{ page: currentPage() + 1 }"
+        rel="next" aria-label="Next page"
+        class="bg-white dark:bg-transparent text-slate-700 dark:text-slate-300 border-gray-200 dark:border-[#1f1f1f] hover:bg-slate-50 dark:hover:bg-slate-900 border px-2 md:px-3 py-2 rounded transition-colors flex items-center">
+        <lucide-icon [img]="NextIcon" class="w-4 h-4"></lucide-icon>
       </a>
       }
     </nav>
