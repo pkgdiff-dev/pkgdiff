@@ -12,7 +12,7 @@ export class CookiesComponent implements OnInit {
   private seo = inject(SeoService);
   appName = APP_CONFIG.name;
   contactEmail = APP_CONFIG.contact.email;
-  lastUpdated = 'February 9, 2026';
+  lastUpdated = 'October 19, 2026';
 
   ngOnInit() {
     this.seo.updateMeta({

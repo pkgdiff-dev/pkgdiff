@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, afterNextRender, effect, inject, un
 import { RouterOutlet } from '@angular/router';
 import { ToastComponent } from './shared/components/toast/toast';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
-import { AnalyticsService } from './core/services/analytics.service';
 import { RouteLoaderComponent } from './shared/components/route-loader/route-loader';
 import { PackageService } from './core/services/package.service';
 import { SignalrService } from './core/services/signalr.service';
@@ -22,8 +21,6 @@ export class App {
   private liveUpdates = inject(LiveUpdatesService);
 
   constructor() {
-    inject(AnalyticsService).init();
-
     afterNextRender(() => {
       this.loadLiveUpdates();
       this.signalr.startConnection().catch(() => undefined);

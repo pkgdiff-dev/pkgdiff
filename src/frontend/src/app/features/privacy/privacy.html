@@ -11,111 +11,216 @@
       <section>
         <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">1. Overview</h2>
         <p>
-          {{ appName }} is committed to protecting your privacy. This policy explains what information we
-          collect, how we use it, and your rights regarding that information. We designed the Service to
-          minimize data collection — we only collect what is necessary to operate and improve {{ appName }}.
+          This policy explains what personal data {{ appName }} ("the Service", "we") processes when you
+          visit {{ siteUrl }}, why, for how long, and which rights you have. {{ appName }} needs no account
+          to use, sets no tracking cookies and shows no ads. We keep only what is needed to run the Service
+          and protect it from abuse.
         </p>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">2. Information We Collect</h2>
-
-        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.1 Search Data</h3>
-        <p class="mb-3">
-          When you search for a package, we store the package name, selected versions, and a timestamp
-          of the search. This data is used to display recent searches and improve the Service.
-        </p>
-
-        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.2 Technical Data</h3>
-        <p class="mb-3">
-          We may collect your IP address, browser type, and general usage patterns through server logs.
-          This information is used for security monitoring, rate limiting, and diagnosing technical issues.
-        </p>
-
-        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">2.3 Account Data</h3>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">2. Who Is Responsible</h2>
         <p>
-          If you create an account, we store your email address and an encrypted password. We never store
-          passwords in plain text.
-        </p>
-      </section>
-
-      <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. What We Don't Collect</h2>
-        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
-          <li>We do not use third-party tracking or advertising cookies</li>
-          <li>We do not sell, rent, or share your personal data with third parties</li>
-          <li>We do not collect financial or payment information</li>
-          <li>We do not track your browsing activity outside of {{ appName }}</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">4. How We Use Your Data</h2>
-        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
-          <li>To provide and maintain the Service</li>
-          <li>To display recent and popular package searches</li>
-          <li>To protect against abuse and enforce rate limits</li>
-          <li>To diagnose and fix technical issues</li>
-          <li>To improve the Service based on usage patterns</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">5. Data Storage &amp; Retention</h2>
-        <p>
-          Data is stored on secured servers. Cached package data is automatically purged after 30 days
-          and refreshed from upstream sources. Search history is retained for operational purposes and may
-          be periodically cleaned. You can request deletion of your data by contacting us.
-        </p>
-      </section>
-
-      <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">6. Third-Party Services</h2>
-        <p>
-          {{ appName }} retrieves data from NuGet.org, npmjs.com, and GitHub to display package information.
-          When you search for a package, we make requests to these services on your behalf. These services
-          have their own privacy policies that govern how they handle data.
-        </p>
-      </section>
-
-      <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">7. Your Rights</h2>
-        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
-          <li>Request access to the personal data we hold about you</li>
-          <li>Request correction or deletion of your data</li>
-          <li>Object to processing of your data</li>
-          <li>Request a copy of your data in a portable format</li>
-        </ul>
-        <p class="mt-3">
-          To exercise any of these rights, contact us at
+          The data controller is {{ controllerName }}, the individual developer who operates {{ appName }}
+          (based in {{ controllerCountry }}). You can reach the controller about anything in this policy at
           <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
         </p>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">8. Changes to This Policy</h2>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">3. Information We Process</h2>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.1 Request Logs</h3>
+        <p class="mb-3">
+          For every request to our API we record your IP address, your browser's user agent string, the
+          requested path, the HTTP method, the response status and the time. We use these logs to detect
+          abuse, enforce rate limits and diagnose errors.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.2 Search Data</h3>
+        <p class="mb-3">
+          When you compare package versions, we store the package name, the selected versions,
+          whether prereleases were included, the time, how long the analysis took and your IP address.
+          Package names and versions feed the public "recent" and "popular" lists; your IP address is never
+          shown publicly and is used only to spot automated abuse.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.3 Rate Limiting and Blocking</h3>
+        <p class="mb-3">
+          Short-lived counters keyed by IP address enforce rate limits and expire on their own. An IP address
+          that attacks or overloads the Service can be blocked, temporarily or permanently, together with the
+          reason for the block.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.4 Analytics</h3>
+        <p class="mb-3">
+          We measure traffic with Cloudflare Web Analytics. It sets no cookies, uses no browser storage and
+          does not fingerprint or follow individual visitors. It reports aggregated data such as the page
+          visited, the referring site, browser and device type, country and page load performance.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.5 Administrator Accounts</h3>
+        <p class="mb-3">
+          There is no public sign-up. The only accounts are those of the Service's administrators, for whom
+          we store a username, an email address and a hashed password, never the password itself.
+        </p>
+
+        <h3 class="font-medium text-[#111418] dark:text-gray-200 mb-2 mt-4">3.6 Email</h3>
         <p>
-          We may update this Privacy Policy from time to time. Changes will be posted on this page with
-          an updated revision date. Continued use of the Service after changes constitutes acceptance
-          of the revised policy.
+          If you write to us, we use your email address and message only to answer you.
         </p>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">9. Related Policies</h2>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">4. Why We Process It (Legal Basis)</h2>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>Request logs, search data, rate limiting, blocking and analytics: our legitimate interest in
+            running a secure, reliable and free Service and understanding how it is used (Art. 6(1)(f) GDPR;
+            Art. 5(2)(f) of Turkish Law No. 6698 on the Protection of Personal Data, "KVKK").</li>
+          <li>Administrator accounts and email correspondence: our legitimate interest in operating the Service
+            and answering the people who contact us (the same provisions).</li>
+        </ul>
+        <p class="mt-3">
+          We do not sell your data, use it for advertising, build profiles of you, or make automated
+          decisions about you that have legal or similarly significant effects.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">5. How Long We Keep It</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border border-gray-200 dark:border-gray-800 rounded-lg">
+            <thead class="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th class="py-3 px-4 font-semibold text-[#111418] dark:text-white">Data</th>
+                <th class="py-3 px-4 font-semibold text-[#111418] dark:text-white">Retention</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+              <tr>
+                <td class="py-3 px-4">Request logs</td>
+                <td class="py-3 px-4">Deleted automatically after 30 days</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Search data</td>
+                <td class="py-3 px-4">Deleted automatically after 90 days</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Rate-limit counters</td>
+                <td class="py-3 px-4">Expire on their own within minutes</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Temporary IP blocks</td>
+                <td class="py-3 px-4">Removed once the block expires</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Permanent IP blocks</td>
+                <td class="py-3 px-4">Kept until an administrator lifts the block or you ask us to review it</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Database backups</td>
+                <td class="py-3 px-4">Overwritten after 14 days</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Server and container logs</td>
+                <td class="py-3 px-4">Rotated automatically and overwritten after a short period</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Administrator accounts</td>
+                <td class="py-3 px-4">Until the account is removed</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4">Email correspondence</td>
+                <td class="py-3 px-4">As long as needed to handle your request</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">6. Service Providers and International Transfers</h2>
+        <p class="mb-3">We share personal data only with the providers needed to run the Service:</p>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li><strong>Cloudflare, Inc.</strong> — every request to {{ appName }} passes through Cloudflare for DNS,
+            TLS, caching, DDoS protection and Web Analytics, so Cloudflare processes your IP address and
+            request details on our behalf.</li>
+          <li><strong>Our server hosting provider</strong> — the virtual server that runs the application,
+            its database and its backups.</li>
+          <li><strong>Google Fonts</strong> — the site's fonts are loaded from Google's servers, which receive
+            your IP address and browser details when your browser downloads them.</li>
+          <li><strong>GitHub and other content hosts</strong> — contributor avatars and images embedded in
+            release notes are loaded by your browser directly from where they are hosted, mostly GitHub.</li>
+        </ul>
+        <p class="mt-3">
+          Cloudflare, Google and GitHub may process data outside your country, including in the United
+          States. Cloudflare processes it under its Data Processing Addendum, which includes the European
+          Commission's Standard Contractual Clauses.
+        </p>
+        <p class="mt-3">
+          To build release notes, our server fetches public data from NuGet.org, npmjs.com, PyPI, pub.dev and
+          GitHub, and security data from sources such as OSV and deps.dev. These requests come from our server
+          and contain package names and versions only — never your IP address or any other data about you.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">7. Your Rights</h2>
         <p class="mb-3">
-          For complete transparency, please also review:
+          Under the GDPR, the KVKK (Article 11) and similar laws, you can:
         </p>
         <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
+          <li>Ask whether we process data about you and get a copy of it</li>
+          <li>Ask us to correct or delete it</li>
+          <li>Object to processing based on our legitimate interests</li>
+          <li>Ask us to restrict processing, or to hand your data over in a portable format</li>
+          <li>Learn who we have shared it with</li>
+          <li>Lodge a complaint with a supervisory authority — in Türkiye the Personal Data Protection
+            Authority (KVKK), in the EU the data protection authority of your country</li>
+        </ul>
+        <p class="mt-3">
+          To use any of these rights, email
+          <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
+          Most of our records are keyed only by IP address, so please include the IP address(es) and the
+          approximate dates concerned. We answer within 30 days.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">8. Security</h2>
+        <p>
+          Traffic is encrypted with TLS, the database is reachable only from inside the server, administrative
+          areas sit behind additional access controls, and backups are readable only by the server's owner.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">9. Children</h2>
+        <p>
+          {{ appName }} is a developer tool and is not directed at children under 16.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">10. Changes to This Policy</h2>
+        <p>
+          We may update this policy when the Service changes. The new version is posted on this page with
+          an updated date.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">11. Related Policies</h2>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-600 dark:text-gray-400">
           <li><a href="/terms" title="Terms of Service" class="text-primary hover:underline">Terms of Service</a> — Terms governing your use of {{ appName }}</li>
-          <li><a href="/cookies" title="Cookie Policy" class="text-primary hover:underline">Cookie Policy</a> — Details on browser storage</li>
+          <li><a href="/cookies" title="Cookie Policy" class="text-primary hover:underline">Cookie Policy</a> — What we store in your browser</li>
         </ul>
       </section>
 
       <section>
-        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">10. Contact</h2>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">12. Contact</h2>
         <p>
-          If you have questions about this Privacy Policy, please contact us at
+          Questions about this policy or your data:
           <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a>.
         </p>
       </section>
