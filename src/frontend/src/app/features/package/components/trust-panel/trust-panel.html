@@ -90,8 +90,8 @@
       </p>
       } @else {
       <p class="text-sm text-gray-500">
-        @if (isPub()) {
-        Scorecard is available only for pub.dev packages with a GitHub repository.
+        @if (scorecardOnly()) {
+        Scorecard is available only for packages with a GitHub repository.
         } @else {
         Not available.
         }

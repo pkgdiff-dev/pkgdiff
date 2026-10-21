@@ -31,6 +31,7 @@ public partial class ManifestParser : IManifestParser
             RegistryNames.NuGet => ParseNuGet(content),
             RegistryNames.PyPI => ParsePyPI(content, fileName),
             RegistryNames.PubDev => ParsePub(content),
+            RegistryNames.Packagist => ParseComposer(content),
             _ => throw new ArgumentException("Unknown registry.")
         };
         result.Registry = canonical;
@@ -586,6 +587,86 @@ public partial class ManifestParser : IManifestParser
             Version = match.Success ? Complete(match.Value) : null
         };
     }
+
+    private static ManifestParseResult ParseComposer(string content)
+    {
+        var root = ParseJson(content, "a composer.json or composer.lock");
+
+        if (root.TryGetProperty("packages", out var packages) && packages.ValueKind == JsonValueKind.Array)
+        {
+            var lockResult = new ManifestParseResult { Format = "composer.lock" };
+            ReadComposerLock(packages, null, lockResult);
+            if (root.TryGetProperty("packages-dev", out var devPackages) && devPackages.ValueKind == JsonValueKind.Array)
+                ReadComposerLock(devPackages, Dev, lockResult);
+            return lockResult;
+        }
+
+        if (!root.TryGetProperty("require", out _) && !root.TryGetProperty("require-dev", out _))
+            throw new ArgumentException("This JSON has neither require nor packages: paste a composer.json or a composer.lock.");
+
+        var result = new ManifestParseResult { Format = "composer.json" };
+        foreach (var (section, scope) in new[] { ("require", (string?)null), ("require-dev", Dev) })
+        {
+            if (!root.TryGetProperty(section, out var dependencies) || dependencies.ValueKind != JsonValueKind.Object)
+                continue;
+            foreach (var dependency in dependencies.EnumerateObject())
+            {
+                // php, ext-*, lib-* and composer-plugin-api name the platform, not a package
+                if (!dependency.Name.Contains('/'))
+                    continue;
+                var requirement = dependency.Value.ValueKind == JsonValueKind.String ? dependency.Value.GetString() : null;
+                result.Dependencies.Add(FromComposerConstraint(dependency.Name.ToLowerInvariant(), requirement, scope, result.Warnings));
+            }
+        }
+        return result;
+    }
+
+    private static void ReadComposerLock(JsonElement packages, string? scope, ManifestParseResult result)
+    {
+        foreach (var package in packages.EnumerateArray())
+        {
+            var name = Text(package, "name");
+            var version = Text(package, "version");
+            if (name is null || !name.Contains('/'))
+                continue;
+            if (version is null || version.StartsWith("dev-", StringComparison.OrdinalIgnoreCase))
+            {
+                result.Warnings.Add($"{name}: \"{version}\" is a branch, not a release; its latest version is checked.");
+                result.Dependencies.Add(new AuditDependency { Name = name.ToLowerInvariant(), Requirement = version, Scope = scope });
+                continue;
+            }
+            result.Dependencies.Add(Exact(name.ToLowerInvariant(), StripComposerV(version), scope));
+        }
+    }
+
+    private static AuditDependency FromComposerConstraint(string name, string? requirement, string? scope, List<string> warnings)
+    {
+        var value = requirement?.Trim() ?? string.Empty;
+        if (value.Length == 0 || value == "*")
+            return new AuditDependency { Name = name, Requirement = requirement, Scope = scope };
+
+        if (value.Contains("dev-", StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add($"{name}: \"{value}\" is a branch, not a release; its latest version is checked.");
+            return new AuditDependency { Name = name, Requirement = requirement, Scope = scope };
+        }
+
+        // "^1.0 || ^2.0" allows several ranges; the first one is checked, without its @stability flag
+        var first = (value.Split('|', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? value).Trim().Split('@')[0];
+        var exact = SemVerExact().IsMatch(first);
+        var match = SemVerStart().Match(first);
+        return new AuditDependency
+        {
+            Name = name,
+            Requirement = requirement,
+            Scope = scope,
+            IsExact = exact,
+            Version = match.Success ? Complete(match.Value) : null
+        };
+    }
+
+    private static string StripComposerV(string version) =>
+        version.Length > 1 && (version[0] == 'v' || version[0] == 'V') && char.IsDigit(version[1]) ? version[1..] : version;
 
     private static JsonElement ParseJson(string content, string expected)
     {

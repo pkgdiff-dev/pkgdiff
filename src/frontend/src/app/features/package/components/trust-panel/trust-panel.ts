@@ -34,5 +34,5 @@ export class TrustPanelComponent {
     if (score >= 4) return 'text-yellow-600 dark:text-yellow-400';
     return 'text-red-600 dark:text-red-400';
   });
-  isPub = computed(() => this.registry().toLowerCase().startsWith('pub'));
+  scorecardOnly = computed(() => /^(pub|packagist|composer)/.test(this.registry().toLowerCase()));
 }

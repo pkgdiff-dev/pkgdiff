@@ -32,7 +32,11 @@ interface PackageTarget {
   version: string | undefined;
 }
 
-// A scoped npm name can arrive split across route params; a lone scope takes the next segment
+function isPackagist(registry: string): boolean {
+  return ['packagist', 'composer'].includes(registry.toLowerCase());
+}
+
+// A scoped npm or a Packagist vendor/name can arrive split across route params; a lone scope takes the next segment
 function targetOf(params: ParamMap): PackageTarget {
   const registry = params.get('registry') ?? 'nuget';
   const version = params.get('version') ?? undefined;
@@ -42,7 +46,8 @@ function targetOf(params: ParamMap): PackageTarget {
   }
 
   const packageId = params.get('packageId') ?? '';
-  if (packageId.startsWith('@') && !packageId.includes('/') && version) {
+  const namespaced = packageId.startsWith('@') || isPackagist(registry);
+  if (namespaced && !packageId.includes('/') && version) {
     return { registry, packageId: `${packageId}/${version}`, version: undefined };
   }
   return { registry, packageId, version };
@@ -153,6 +158,9 @@ export class PackageComponent {
       case 'pub':
       case 'pub.dev':
         return 'border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20';
+      case 'packagist':
+      case 'composer':
+        return 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20';
       default:
         return 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400';
     }

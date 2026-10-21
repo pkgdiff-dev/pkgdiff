@@ -15,6 +15,6 @@ export class NotFoundComponent {
     inject(HttpStatusService).notFound();
     inject(SeoService).setNotFound(
       '404 - Page Not Found | pkgdiff',
-      'The requested page could not be found. Return to pkgdiff to compare package versions across NuGet, npm, PyPI and Pub registries.');
+      'The requested page could not be found. Return to pkgdiff to compare package versions across NuGet, npm, PyPI, Pub and Packagist registries.');
   }
 }

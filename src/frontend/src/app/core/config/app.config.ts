@@ -3,7 +3,7 @@ import { environment } from '../../../environments/environment';
 export const APP_CONFIG = {
   name: 'pkgdiff',
   shortName: 'pkgdiff',
-  description: 'Compare and analyze package versions across NuGet, npm, PyPI and Pub registries. Track breaking changes, view detailed release notes, and understand version differences with our free online diff tool.',
+  description: 'Compare and analyze package versions across NuGet, npm, PyPI, Pub and Packagist registries. Track breaking changes, view detailed release notes, and understand version differences with our free online diff tool.',
   version: '1.0.0',
 
   contact: {

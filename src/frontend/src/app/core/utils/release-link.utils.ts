@@ -25,6 +25,9 @@ export function getReleaseLink(
     case 'pub':
     case 'pub.dev':
       return `https://pub.dev/packages/${packageId}/versions/${version}`;
+    case 'packagist':
+    case 'composer':
+      return `https://packagist.org/packages/${packageId}`;
     case 'nuget':
       return `https://www.nuget.org/packages/${packageId}/${version}`;
     default:
@@ -39,6 +42,8 @@ const registryLabels: Record<string, string> = {
   maven: 'Maven',
   pub: 'pub.dev',
   'pub.dev': 'pub.dev',
+  packagist: 'Packagist',
+  composer: 'Packagist',
 };
 
 export function getSourceLabel(source: string | null, registry: string = 'nuget'): string {

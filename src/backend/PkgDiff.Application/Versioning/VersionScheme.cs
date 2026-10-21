@@ -9,5 +9,8 @@ public enum VersionScheme
     SemVer,
 
     // PEP 440: PyPI
-    Pep440
+    Pep440,
+
+    // Composer's rules: Packagist
+    Composer
 }
