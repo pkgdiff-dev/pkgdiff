@@ -26,6 +26,12 @@ export function installSnippets(registry: string, packageId: string, version: st
         { label: 'dart pub', code: `dart pub add ${packageId}:${version}` },
         { label: 'pubspec.yaml', code: `${packageId}: ${version}` },
       ];
+    case 'packagist':
+    case 'composer':
+      return [
+        { label: 'Composer', code: `composer require ${packageId}:${version}` },
+        { label: 'composer.json', code: `"${packageId}": "${version}"` },
+      ];
     default:
       return [];
   }

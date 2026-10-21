@@ -154,6 +154,22 @@ public static class DatabaseSeeder
             }
         }
 
+        var packagistSpellings = PkgDiff.Shared.Constants.RegistryNames.SpellingsOf(PkgDiff.Shared.Constants.RegistryNames.Packagist);
+        if (!await context.Registries.AnyAsync(r => packagistSpellings.Contains(r.Value.ToLower())))
+        {
+            var displayOrder = (await context.Registries.MaxAsync(r => (int?)r.DisplayOrder) ?? 0) + 1;
+            context.Registries.Add(new Registry
+            {
+                Value = PkgDiff.Shared.Constants.RegistryNames.Packagist,
+                Label = "Packagist",
+                Icon = "/icons/packagist.svg",
+                Disabled = false,
+                DisplayOrder = displayOrder
+            });
+            await context.SaveChangesAsync();
+            logger.LogInformation("Registry {Registry} added", PkgDiff.Shared.Constants.RegistryNames.Packagist);
+        }
+
         var expectedPatterns = new[]
         {
             new { Id = 1, Pattern = "dev", Description = "Development builds (e.g., 1.0.0-dev-123)" },

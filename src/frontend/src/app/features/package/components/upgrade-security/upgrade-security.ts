@@ -47,7 +47,12 @@ export class UpgradeSecurityComponent {
 
   // null while the Socket.dev provider is switched off
   behavior = computed(() => this.trust()?.behavior ?? null);
-  isPub = computed(() => this.registry().toLowerCase().startsWith('pub'));
+  behaviorUnsupportedIn = computed(() => {
+    const registry = this.registry().toLowerCase();
+    if (registry.startsWith('pub')) return 'pub.dev';
+    if (registry === 'packagist' || registry === 'composer') return 'Packagist';
+    return null;
+  });
   behaviorFrom = computed(() => this.behavior()?.[this.from()] ?? null);
   behaviorTo = computed(() => this.behavior()?.[this.to()] ?? null);
   newAlerts = computed(() => {

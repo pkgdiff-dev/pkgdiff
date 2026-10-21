@@ -52,6 +52,15 @@ public static class OutboundHttpServiceCollectionExtensions
             client.MaxResponseContentBufferSize = RegistryMaxResponseBytes;
         });
 
+        // Packagist asks API clients to name themselves with a way to reach them
+        services.AddHttpClient(HttpClientNames.PackagistRepository, client =>
+        {
+            client.BaseAddress = new Uri("https://repo.packagist.org/");
+            client.Timeout = FixedHostTimeout;
+            client.MaxResponseContentBufferSize = RegistryMaxResponseBytes;
+            client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0 (+https://pkgdiff.dev)");
+        });
+
         services.AddHttpClient<IPubDevService, PubDevService>(HttpClientNames.PubDev, client =>
         {
             client.BaseAddress = new Uri("https://pub.dev/");

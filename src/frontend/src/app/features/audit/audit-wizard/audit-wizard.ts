@@ -53,6 +53,14 @@ const ECOSYSTEMS: Ecosystem[] = [
     files: ['pubspec.yaml', 'pubspec.lock'],
     placeholder: 'dependencies:\n  http: ^0.13.0\n  provider: ^6.0.0',
   },
+  {
+    registry: 'packagist',
+    label: 'PHP',
+    registryLabel: 'Packagist',
+    icon: '/icons/packagist.svg',
+    files: ['composer.json', 'composer.lock'],
+    placeholder: '{\n  "require": {\n    "laravel/framework": "^10.0",\n    "guzzlehttp/guzzle": "7.4.0"\n  }\n}',
+  },
 ];
 
 @Component({
@@ -90,8 +98,8 @@ export class AuditWizardComponent {
 
   constructor() {
     inject(SeoService).updateMeta({
-      title: 'Dependency Security Audit — Check NuGet, npm, PyPI & pub.dev Packages | pkgdiff',
-      description: 'Paste a package.json, .csproj, requirements.txt, pubspec.yaml or lock file and get a report of the known vulnerabilities of every dependency, with the versions that fix them.',
+      title: 'Dependency Security Audit — Check NuGet, npm, PyPI, pub.dev & Packagist Packages | pkgdiff',
+      description: 'Paste a package.json, .csproj, requirements.txt, pubspec.yaml, composer.json or lock file and get a report of the known vulnerabilities of every dependency, with the versions that fix them.',
       url: '/audit',
     });
   }

@@ -24,12 +24,16 @@ public static class PackageIdRules
     private static readonly Regex PubId = new(
         @"^[a-z0-9_]+\z", RegexOptions.CultureInvariant, MatchTimeout);
 
+    private static readonly Regex PackagistId = new(
+        @"^[a-z0-9]+(?:[_.-][a-z0-9]+)*/[a-z0-9]+(?:(?:[_.]|--?)[a-z0-9]+)*\z", RegexOptions.CultureInvariant, MatchTimeout);
+
     private static readonly IReadOnlyDictionary<string, Regex> Grammars = new Dictionary<string, Regex>
     {
         [RegistryNames.NuGet] = NuGetId,
         [RegistryNames.Npm] = NpmId,
         [RegistryNames.PyPI] = PyPIId,
-        [RegistryNames.PubDev] = PubId
+        [RegistryNames.PubDev] = PubId,
+        [RegistryNames.Packagist] = PackagistId
     };
 
     private static readonly Regex Version = new(

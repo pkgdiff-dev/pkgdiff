@@ -93,8 +93,8 @@ export class PackagesListComponent {
 
     constructor() {
         this.seo.updateMeta({
-            title: 'Browse Packages — Compare Versions Across NuGet, npm, PyPI & Pub | pkgdiff',
-            description: 'Browse and compare packages from NuGet, npm, PyPI and Pub registries. Search through thousands of packages, view detailed version history, track breaking changes, and analyze comprehensive release notes.',
+            title: 'Browse Packages — Compare Versions Across NuGet, npm, PyPI, Pub & Packagist | pkgdiff',
+            description: 'Browse and compare packages from NuGet, npm, PyPI, Pub and Packagist registries. Search through thousands of packages, view detailed version history, track breaking changes, and analyze comprehensive release notes.',
             url: '/packages',
         });
 
@@ -173,6 +173,9 @@ export class PackagesListComponent {
             case 'pub':
             case 'pub.dev':
                 return 'border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20';
+            case 'packagist':
+            case 'composer':
+                return 'border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20';
             default:
                 return 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400';
         }

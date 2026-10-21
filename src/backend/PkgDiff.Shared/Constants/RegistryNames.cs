@@ -6,13 +6,15 @@ public static class RegistryNames
     public const string Npm = "npm";
     public const string PyPI = "pypi";
     public const string PubDev = "pub.dev";
+    public const string Packagist = "packagist";
 
-    public static readonly IReadOnlyList<string> All = new[] { NuGet, Npm, PyPI, PubDev };
+    public static readonly IReadOnlyList<string> All = new[] { NuGet, Npm, PyPI, PubDev, Packagist };
 
     private static readonly IReadOnlyDictionary<string, string> Aliases =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["pub"] = PubDev
+            ["pub"] = PubDev,
+            ["composer"] = Packagist
         };
 
     public static string? Canonical(string? registry)
