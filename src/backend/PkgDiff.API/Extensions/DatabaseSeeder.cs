@@ -136,7 +136,7 @@ public static class DatabaseSeeder
                 new Registry { Value = "nuget", Label = "NuGet", Icon = "/icons/nuget.svg", Disabled = false, DisplayOrder = 1 },
                 new Registry { Value = "npm", Label = "npm", Icon = "/icons/npm.svg", Disabled = false, DisplayOrder = 2 },
                 new Registry { Value = "pypi", Label = "PyPI", Icon = "/icons/pypi.svg", Disabled = false, DisplayOrder = 3 },
-                new Registry { Value = "maven", Label = "Maven", Icon = "/icons/maven.svg", Disabled = true, DisplayOrder = 4 }
+                new Registry { Value = "maven", Label = "Maven", Icon = "/icons/maven.svg", Disabled = false, DisplayOrder = 4 }
             };
 
             await context.Registries.AddRangeAsync(registries);
@@ -154,21 +154,9 @@ public static class DatabaseSeeder
             }
         }
 
-        var packagistSpellings = PkgDiff.Shared.Constants.RegistryNames.SpellingsOf(PkgDiff.Shared.Constants.RegistryNames.Packagist);
-        if (!await context.Registries.AnyAsync(r => packagistSpellings.Contains(r.Value.ToLower())))
-        {
-            var displayOrder = (await context.Registries.MaxAsync(r => (int?)r.DisplayOrder) ?? 0) + 1;
-            context.Registries.Add(new Registry
-            {
-                Value = PkgDiff.Shared.Constants.RegistryNames.Packagist,
-                Label = "Packagist",
-                Icon = "/icons/packagist.svg",
-                Disabled = false,
-                DisplayOrder = displayOrder
-            });
-            await context.SaveChangesAsync();
-            logger.LogInformation("Registry {Registry} added", PkgDiff.Shared.Constants.RegistryNames.Packagist);
-        }
+        await EnsureRegistryAsync(context, logger, PkgDiff.Shared.Constants.RegistryNames.Packagist, "Packagist", "/icons/packagist.svg", enable: false);
+        // The Maven row was seeded disabled while Maven had no client
+        await EnsureRegistryAsync(context, logger, PkgDiff.Shared.Constants.RegistryNames.Maven, "Maven", "/icons/maven.svg", enable: true);
 
         var expectedPatterns = new[]
         {
@@ -234,6 +222,32 @@ public static class DatabaseSeeder
         {
             await context.SaveChangesAsync();
             logger.LogInformation("Version exclude patterns seeded: {Added} added, {Updated} updated", addedCount, updatedCount);
+        }
+    }
+
+    private static async Task EnsureRegistryAsync(ApplicationDbContext context, ILogger logger, string value, string label, string icon, bool enable)
+    {
+        var spellings = PkgDiff.Shared.Constants.RegistryNames.SpellingsOf(value);
+        var existing = await context.Registries.FirstOrDefaultAsync(r => spellings.Contains(r.Value.ToLower()));
+        if (existing is null)
+        {
+            var displayOrder = (await context.Registries.MaxAsync(r => (int?)r.DisplayOrder) ?? 0) + 1;
+            context.Registries.Add(new Registry
+            {
+                Value = value,
+                Label = label,
+                Icon = icon,
+                Disabled = false,
+                DisplayOrder = displayOrder
+            });
+            await context.SaveChangesAsync();
+            logger.LogInformation("Registry {Registry} added", value);
+        }
+        else if (enable && existing.Disabled)
+        {
+            existing.Disabled = false;
+            await context.SaveChangesAsync();
+            logger.LogInformation("Registry {Registry} enabled", value);
         }
     }
     // Bootstrap only: once any Admin exists, pkgdiff_admin is never re-promoted or recreated

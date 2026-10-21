@@ -26,6 +26,13 @@ export function installSnippets(registry: string, packageId: string, version: st
         { label: 'dart pub', code: `dart pub add ${packageId}:${version}` },
         { label: 'pubspec.yaml', code: `${packageId}: ${version}` },
       ];
+    case 'maven': {
+      const [groupId, artifactId] = packageId.split(':');
+      return [
+        { label: 'Maven', code: `<dependency>\n  <groupId>${groupId}</groupId>\n  <artifactId>${artifactId}</artifactId>\n  <version>${version}</version>\n</dependency>` },
+        { label: 'Gradle', code: `implementation("${packageId}:${version}")` },
+      ];
+    }
     case 'packagist':
     case 'composer':
       return [

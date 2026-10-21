@@ -48,7 +48,7 @@ public abstract class ListedVersionsRegistryClient : IRegistryClient
 
         var excludePatterns = await _versionFilterService.GetActiveExcludePatternsAsync();
         return versions
-            .Where(v => !_versionFilterService.ShouldExcludeVersion(v.Value, excludePatterns))
+            .Where(v => !_versionFilterService.ShouldExcludeVersion(FilteredSpelling(v.Value), excludePatterns))
             .ToList();
     }
 
@@ -60,12 +60,15 @@ public abstract class ListedVersionsRegistryClient : IRegistryClient
         var metadata = await FetchMetadataAsync(packageId);
         var excludePatterns = await _versionFilterService.GetActiveExcludePatternsAsync();
         metadata.Versions = metadata.Versions
-            .Where(v => !_versionFilterService.ShouldExcludeVersion(v.Version, excludePatterns))
+            .Where(v => !_versionFilterService.ShouldExcludeVersion(FilteredSpelling(v.Version), excludePatterns))
             .ToList();
         return metadata;
     }
 
     protected abstract Task<PackageMetadata> FetchMetadataAsync(string packageId);
+
+    // The text the exclude patterns are matched against
+    protected virtual string FilteredSpelling(string version) => version;
 
     public abstract Task<string?> GetOwnReleaseNotesAsync(string packageId, string version);
 

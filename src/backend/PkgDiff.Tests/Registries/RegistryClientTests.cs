@@ -23,6 +23,7 @@ public class RegistryClientTests
     [InlineData("pub", "pub.dev", "PubDev", VersionScheme.SemVer, true, true)]
     [InlineData("pub.dev", "pub.dev", "PubDev", VersionScheme.SemVer, true, true)]
     [InlineData("composer", "packagist", "Packagist", VersionScheme.Composer, true, false)]
+    [InlineData("Maven", "maven", "Maven Central", VersionScheme.Maven, true, false)]
     public void Every_spelling_of_a_registry_reaches_its_one_client(
         string spelling, string id, string label, VersionScheme scheme, bool includesStart, bool publishesNotes)
     {
@@ -36,7 +37,7 @@ public class RegistryClientTests
     }
 
     [Theory]
-    [InlineData("maven")]
+    [InlineData("cargo")]
     [InlineData("")]
     [InlineData("nuget ")]
     public void A_registry_without_a_client_is_a_caller_fault_not_a_nuget_lookup(string registry)
@@ -66,13 +67,18 @@ public class RegistryClientTests
         {
             Assert.Equal(name, factory.GetClient(name).Id);
             Assert.Equal(name, RegistryNames.Canonical(name.ToUpperInvariant()));
-            var sample = name == RegistryNames.Packagist ? "abc/def" : "abc";
+            var sample = name switch
+            {
+                RegistryNames.Packagist => "abc/def",
+                RegistryNames.Maven => "abc:def",
+                _ => "abc"
+            };
             Assert.True(PkgDiff.Shared.Validation.PackageIdRules.IsValidPackageId(name, sample));
         });
         Assert.Equal(new[] { "pub.dev", "pub" }, RegistryNames.SpellingsOf("PUB"));
         Assert.Equal(new[] { "npm" }, RegistryNames.SpellingsOf("npm"));
-        Assert.Equal(new[] { "maven" }, RegistryNames.SpellingsOf("Maven"));
-        Assert.Null(RegistryNames.Canonical("maven"));
+        Assert.Equal(new[] { "cargo" }, RegistryNames.SpellingsOf("Cargo"));
+        Assert.Null(RegistryNames.Canonical("cargo"));
     }
 
     [Fact]

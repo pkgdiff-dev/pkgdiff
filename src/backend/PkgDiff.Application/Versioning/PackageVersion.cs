@@ -5,7 +5,7 @@ namespace PkgDiff.Application.Versioning;
 
 public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<PackageVersion>
 {
-    // A Pep440Version, ComposerVersion or NuGetVersion; versions of one package always share the kind
+    // A Pep440Version, ComposerVersion, MavenVersion or NuGetVersion; versions of one package always share the kind
     private readonly IComparable _key;
 
     private PackageVersion(string value, bool isPrerelease, IComparable key)
@@ -15,7 +15,7 @@ public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<Pac
         _key = key;
     }
 
-    // The spelling the registry is asked with: its own for npm, pub.dev, PyPI and Packagist, NuGetVersion.ToString() for NuGet
+    // The spelling the registry is asked with: its own for npm, pub.dev, PyPI, Packagist and Maven, NuGetVersion.ToString() for NuGet
     public string Value { get; }
 
     public bool IsPrerelease { get; }
@@ -34,6 +34,15 @@ public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<Pac
                 return false;
 
             version = new PackageVersion(value, pep440.IsPrerelease, pep440);
+            return true;
+        }
+
+        if (scheme == VersionScheme.Maven)
+        {
+            if (!MavenVersion.TryParse(value, out var maven))
+                return false;
+
+            version = new PackageVersion(value, maven.IsPrerelease, maven);
             return true;
         }
 

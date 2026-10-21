@@ -27,8 +27,13 @@ public static class PackageIdRules
     private static readonly Regex PackagistId = new(
         @"^[a-z0-9]+(?:[_.-][a-z0-9]+)*/[a-z0-9]+(?:(?:[_.]|--?)[a-z0-9]+)*\z", RegexOptions.CultureInvariant, MatchTimeout);
 
+    // groupId:artifactId; the group's dots become folders, so none of its parts may be empty
+    private static readonly Regex MavenId = new(
+        @"^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*:[A-Za-z0-9_][A-Za-z0-9_.-]*\z", RegexOptions.CultureInvariant, MatchTimeout);
+
     private static readonly IReadOnlyDictionary<string, Regex> Grammars = new Dictionary<string, Regex>
     {
+        [RegistryNames.Maven] = MavenId,
         [RegistryNames.NuGet] = NuGetId,
         [RegistryNames.Npm] = NpmId,
         [RegistryNames.PyPI] = PyPIId,

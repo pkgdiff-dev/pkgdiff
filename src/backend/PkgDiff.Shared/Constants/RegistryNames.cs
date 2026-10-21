@@ -7,8 +7,9 @@ public static class RegistryNames
     public const string PyPI = "pypi";
     public const string PubDev = "pub.dev";
     public const string Packagist = "packagist";
+    public const string Maven = "maven";
 
-    public static readonly IReadOnlyList<string> All = new[] { NuGet, Npm, PyPI, PubDev, Packagist };
+    public static readonly IReadOnlyList<string> All = new[] { NuGet, Npm, PyPI, PubDev, Packagist, Maven };
 
     private static readonly IReadOnlyDictionary<string, string> Aliases =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

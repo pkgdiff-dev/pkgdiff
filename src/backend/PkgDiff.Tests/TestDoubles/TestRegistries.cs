@@ -19,7 +19,8 @@ public static class TestRegistries
         GitHubFirstScrapingStrategy? githubFirst = null,
         NuGetFirstScrapingStrategy? nugetFirst = null,
         PubDevScrapingStrategy? pubDevStrategy = null,
-        IPackagistService? packagist = null)
+        IPackagistService? packagist = null,
+        IMavenService? maven = null)
     {
         versionFilter ??= new VersionFilterService(
             new FakeUnitOfWork(), new MemoryCache(new MemoryCacheOptions()), NullLogger<VersionFilterService>.Instance);
@@ -30,7 +31,8 @@ public static class TestRegistries
             new NpmRegistryClient(npm!, githubFirst!, versionFilter, NullLogger<NpmRegistryClient>.Instance),
             new PyPIRegistryClient(pypi!, githubFirst!, versionFilter, NullLogger<PyPIRegistryClient>.Instance),
             new PubDevRegistryClient(pubDev!, pubDevStrategy!, versionFilter, NullLogger<PubDevRegistryClient>.Instance),
-            new PackagistRegistryClient(packagist!, githubFirst!, versionFilter, NullLogger<PackagistRegistryClient>.Instance)
+            new PackagistRegistryClient(packagist!, githubFirst!, versionFilter, NullLogger<PackagistRegistryClient>.Instance),
+            new MavenRegistryClient(maven!, githubFirst!, versionFilter, NullLogger<MavenRegistryClient>.Instance)
         ]);
     }
 }

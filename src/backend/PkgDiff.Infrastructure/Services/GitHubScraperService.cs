@@ -276,6 +276,11 @@ public partial class GitHubScraperService : IGitHubScraperService
                 {
                     _logger.LogDebug("[GitHubScraper] Match found with 'v' prefix for version v{Version}", cleanVersion);
                 }
+                else if (ReleaseSuffix().Replace(cleanVersion, string.Empty) is var core && core != cleanVersion
+                         && (allReleases.TryGetValue(core, out notes) || allReleases.TryGetValue($"v{core}", out notes)))
+                {
+                    _logger.LogDebug("[GitHubScraper] Match found for {Version} without its release suffix", cleanVersion);
+                }
                 else
                 {
                     var fuzzyMatch = allReleases.FirstOrDefault(kvp =>
@@ -403,9 +408,9 @@ public partial class GitHubScraperService : IGitHubScraperService
             yield break;
 
         var names = new List<string> { packageId };
-        var slash = packageId.LastIndexOf('/');
-        if (slash >= 0 && slash < packageId.Length - 1)
-            names.Add(packageId[(slash + 1)..]);
+        var separator = packageId.LastIndexOfAny(new[] { '/', ':' });
+        if (separator >= 0 && separator < packageId.Length - 1)
+            names.Add(packageId[(separator + 1)..]);
 
         foreach (var name in names)
         {
@@ -424,4 +429,8 @@ public partial class GitHubScraperService : IGitHubScraperService
 
     [System.Text.RegularExpressions.GeneratedRegex(@"^[vV]?\d")]
     private static partial System.Text.RegularExpressions.Regex PlainVersionTag();
+
+    // 6.4.0.Final is tagged 6.4.0
+    [System.Text.RegularExpressions.GeneratedRegex(@"[.-](?:final|release|ga)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+    private static partial System.Text.RegularExpressions.Regex ReleaseSuffix();
 }

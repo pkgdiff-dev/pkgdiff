@@ -10,7 +10,7 @@ using PkgDiff.Shared.DTOs;
 
 namespace PkgDiff.Infrastructure.Services;
 
-// Socket.dev behaviour analysis for npm, PyPI and NuGet; off unless enabled with a token and org.
+// Socket.dev behaviour analysis for npm, PyPI, NuGet and Maven; off unless enabled with a token and org.
 // The free tier allows about five batch calls an hour, so calls are batched and capped.
 public partial class SocketBehaviorClient : IBehaviorClient
 {
@@ -145,10 +145,11 @@ public partial class SocketBehaviorClient : IBehaviorClient
         RegistryNames.Npm => "npm",
         RegistryNames.PyPI => "pypi",
         RegistryNames.NuGet => "nuget",
+        RegistryNames.Maven => "maven",
         _ => null
     };
 
-    // pkg:npm/%40scope/name@1.0.0, pkg:pypi/normalized-name@1.0, pkg:nuget/Id@1.0.0
+    // pkg:npm/%40scope/name@1.0.0, pkg:pypi/normalized-name@1.0, pkg:nuget/Id@1.0.0, pkg:maven/group/artifact@1.0
     private static string Purl(string type, string registry, string packageId, string version)
     {
         var name = RegistryNames.Canonical(registry) switch
@@ -156,6 +157,8 @@ public partial class SocketBehaviorClient : IBehaviorClient
             RegistryNames.Npm when packageId.StartsWith('@') && packageId.Contains('/') =>
                 "%40" + Uri.EscapeDataString(packageId[1..packageId.IndexOf('/')]) + "/" + Uri.EscapeDataString(packageId[(packageId.IndexOf('/') + 1)..]),
             RegistryNames.PyPI => Uri.EscapeDataString(PyPINormalization().Replace(packageId.ToLowerInvariant(), "-")),
+            RegistryNames.Maven when packageId.Contains(':') =>
+                Uri.EscapeDataString(packageId[..packageId.IndexOf(':')]) + "/" + Uri.EscapeDataString(packageId[(packageId.IndexOf(':') + 1)..]),
             _ => Uri.EscapeDataString(packageId)
         };
         return new StringBuilder("pkg:").Append(type).Append('/').Append(name).Append('@').Append(Uri.EscapeDataString(version)).ToString();

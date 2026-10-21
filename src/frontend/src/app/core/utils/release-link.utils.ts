@@ -21,7 +21,7 @@ export function getReleaseLink(
     case 'pypi':
       return `https://pypi.org/project/${packageId}/${version}/`;
     case 'maven':
-      return `https://central.sonatype.com/artifact/${packageId}/${version}`;
+      return `https://central.sonatype.com/artifact/${packageId.replace(':', '/')}/${version}`;
     case 'pub':
     case 'pub.dev':
       return `https://pub.dev/packages/${packageId}/versions/${version}`;

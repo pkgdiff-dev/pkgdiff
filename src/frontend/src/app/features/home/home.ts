@@ -21,6 +21,7 @@ const EXAMPLES: Record<string, string[]> = {
   pub: ['riverpod', 'lints', 'code_builder'],
   'pub.dev': ['riverpod', 'lints', 'code_builder'],
   packagist: ['laravel/framework', 'symfony/console', 'guzzlehttp/guzzle'],
+  maven: ['com.google.guava:guava', 'com.fasterxml.jackson.core:jackson-databind', 'com.squareup.okhttp3:okhttp'],
 };
 
 @Component({
@@ -58,8 +59,8 @@ export class HomeComponent {
 
   constructor() {
     this.seo.updateMeta({
-      title: 'pkgdiff — Compare NuGet, npm, PyPI, Pub & Packagist Packages',
-      description: 'Free tool to compare package versions across NuGet, npm, PyPI, Pub & Packagist. Track breaking changes, view release notes, and analyze version differences between any two versions.',
+      title: 'pkgdiff — Compare NuGet, npm, PyPI, Maven, Pub & Packagist Packages',
+      description: 'Free tool to compare package versions across NuGet, npm, PyPI, Maven, Pub & Packagist. Track breaking changes, view release notes, and analyze version differences between any two versions.',
       url: '/',
     });
 

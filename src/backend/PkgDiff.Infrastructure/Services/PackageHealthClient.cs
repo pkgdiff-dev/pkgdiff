@@ -179,6 +179,7 @@ public partial class PackageHealthClient : IPackageHealthClient
         RegistryNames.Npm => "NPM",
         RegistryNames.PyPI => "PYPI",
         RegistryNames.NuGet => "NUGET",
+        RegistryNames.Maven => "MAVEN",
         _ => null
     };
 
