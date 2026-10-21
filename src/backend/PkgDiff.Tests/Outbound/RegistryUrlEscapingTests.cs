@@ -113,8 +113,13 @@ public class RegistryUrlEscapingTests
 
         await service.GetReleaseNotesAsync("../x", "1.0.0");
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal("https://pub.dev/packages/..%2Fx/changelog", request.AbsoluteUri);
+        Assert.Equal(
+            new[]
+            {
+                "https://pub.dev/packages/..%2Fx/versions/1.0.0/changelog",
+                "https://pub.dev/packages/..%2Fx/changelog"
+            },
+            handler.Requests.Select(r => r.AbsoluteUri));
     }
 
     [Fact]

@@ -197,7 +197,13 @@ public class RegistrySmokeTests
         Assert.Equal(string.Empty, unknownNotes);
 
         Assert.Equal(
-            new[] { PubDevVersionsUrl, PubDevChangelogUrl, PubDevChangelogUrl, PubDevChangelogUrl },
+            new[]
+            {
+                PubDevVersionsUrl,
+                PubDevVersionsUrl + "/1.6.0/changelog", PubDevChangelogUrl,
+                PubDevVersionsUrl + "/1.4.0/changelog", PubDevChangelogUrl,
+                PubDevVersionsUrl + "/0.0.1/changelog", PubDevChangelogUrl
+            },
             handler.Requests);
     }
 
