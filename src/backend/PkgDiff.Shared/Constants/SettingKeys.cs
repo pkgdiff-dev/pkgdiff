@@ -15,6 +15,7 @@ public static class SettingKeys
     public const string MaxConsecutiveEmptyVersions = "MaxConsecutiveEmptyVersions";
     public const string ScrapingTimeout = "ScrapingTimeout";
     public const string HangfireWorkerCount = "Hangfire.WorkerCount";
+    public const string ReleaseNoteParserVersion = "Analyzer.ParserVersion";
 
     public const string AutoPilotEnabled = "AutoPilot:Enabled";
     public const string AutoPilotLlmModel = "AutoPilot:LlmModel";
@@ -51,6 +52,7 @@ public static class SettingKeys
         new SettingDefinition(MaxConsecutiveEmptyVersions, "10", "Stop after N consecutive empty release notes", TypeInt, CategoryGeneral, false),
         new SettingDefinition(ScrapingTimeout, "30", "Scraping timeout in seconds", TypeInt, CategoryGeneral, false),
         new SettingDefinition(HangfireWorkerCount, "10", "Number of Hangfire background workers (informational; the server does not read this yet)", TypeInt, CategoryGeneral, false),
+        new SettingDefinition(ReleaseNoteParserVersion, "1", "Release-note parser the stored categories were built with (set by the system)", TypeInt, CategoryGeneral, false),
 
         new SettingDefinition(AutoPilotEnabled, "true", "Enable/disable AutoPilot blog generation job", TypeBool, CategoryAutoPilot, false),
         new SettingDefinition(AutoPilotLlmModel, "qwen2:0.5b", "Ollama model name used by AutoPilot for blog generation", TypeString, CategoryAutoPilot, false),

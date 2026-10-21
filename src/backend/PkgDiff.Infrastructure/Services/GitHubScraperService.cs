@@ -421,16 +421,20 @@ public partial class GitHubScraperService : IGitHubScraperService
             yield return $"{name}/v{version}";
             yield return $"{name}/{version}";
             yield return $"{name}_v{version}";
+            yield return $"{name}-parent-{version}";
         }
         yield return $"release-{version}";
         yield return $"release/{version}";
         yield return $"rel_{version.Replace('.', '_')}";
+        yield return $"parent-{version}";
+        yield return $"r{version}";
+        yield return $"v_{version}";
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"^[vV]?\d")]
     private static partial System.Text.RegularExpressions.Regex PlainVersionTag();
 
-    // 6.4.0.Final is tagged 6.4.0
-    [System.Text.RegularExpressions.GeneratedRegex(@"[.-](?:final|release|ga)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+    // 6.4.0.Final and 33.0.0-jre are tagged 6.4.0 and v33.0.0
+    [System.Text.RegularExpressions.GeneratedRegex(@"[.-](?:final|release|ga|jre|android)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
     private static partial System.Text.RegularExpressions.Regex ReleaseSuffix();
 }

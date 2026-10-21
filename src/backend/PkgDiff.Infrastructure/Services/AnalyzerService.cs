@@ -9,7 +9,7 @@ public class AnalyzerService : IAnalyzerService
     // Ordered most specific first
     private static readonly (string[] Prefixes, ChangeCategory Category)[] LinePrefixRules =
     [
-        (["breaking change", "breaking"], ChangeCategory.BreakingChange),
+        (["breaking change", "breaking", "bc break"], ChangeCategory.BreakingChange),
         (["new feature", "feature", "added", "feat"], ChangeCategory.NewFeature),
         (["security fix", "security"], ChangeCategory.Security),
         (["bug fix", "bugfix", "fixed", "fix", "bug"], ChangeCategory.BugFix),
@@ -18,9 +18,22 @@ public class AnalyzerService : IAnalyzerService
         (["change", "changed", "update", "updated", "improvement", "enhanced", "enhancement"], ChangeCategory.Other),
     ];
 
+    // A heading names the category of the lines below it, until the next heading
+    private static readonly (string[] Keywords, ChangeCategory Category)[] SectionRules =
+    [
+        (["breaking", "bc break", "bc-break", "incompatible"], ChangeCategory.BreakingChange),
+        (["contributor", "thank", "acknowledg", "full changelog", "upgrade", "install"], ChangeCategory.Other),
+        (["security"], ChangeCategory.Security),
+        (["deprecat", "removed", "removal"], ChangeCategory.Deprecation),
+        (["bug", "fixed", "fixes", "fix"], ChangeCategory.BugFix),
+        (["feature", "added", "new"], ChangeCategory.NewFeature),
+        (["performance", "perf"], ChangeCategory.Performance),
+        (["changed", "changes", "improvement", "enhancement", "other", "misc", "internal", "dependencies"], ChangeCategory.Other),
+    ];
+
     private static readonly (string[] Keywords, ChangeCategory Category)[] KeywordRules =
     [
-        (["breaking", "incompatible"], ChangeCategory.BreakingChange),
+        (["breaking", "incompatible", "bc break"], ChangeCategory.BreakingChange),
         (["security", "vulnerability", "cve"], ChangeCategory.Security),
         (["deprecat", "obsolete"], ChangeCategory.Deprecation),
         (["performance", "optimize", "faster"], ChangeCategory.Performance),
@@ -33,12 +46,37 @@ public class AnalyzerService : IAnalyzerService
 
         var entries = new List<ReleaseNoteEntry>();
         var lines = releaseNotes.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        ChangeCategory? section = null;
 
         foreach (var rawLine in lines)
         {
             var line = rawLine.Trim();
             if (string.IsNullOrWhiteSpace(line))
                 continue;
+
+            var heading = HeadingText(line);
+            if (heading is not null && SectionOf(heading) is { } named)
+            {
+                section = named;
+                continue;
+            }
+
+            // "### 3.0.0" ends the section; a sentence that merely ends in ":" does not
+            if (heading is not null && !IsColonHeading(line))
+            {
+                section = null;
+            }
+            else if (section is { } current)
+            {
+                var (lineCategory, lineText) = DetectAndStripPrefix(StripListMarker(line));
+                if (!string.IsNullOrWhiteSpace(lineText))
+                    entries.Add(new ReleaseNoteEntry
+                    {
+                        Category = lineCategory == ChangeCategory.Other ? current : lineCategory,
+                        Text = lineText.Trim()
+                    });
+                continue;
+            }
 
             var cleaned = StripListMarker(line);
 
@@ -161,6 +199,34 @@ public class AnalyzerService : IAnalyzerService
         }
 
         return (ChangeCategory.Other, line);
+    }
+
+    private const int MaxColonHeadingLength = 60;
+
+    // "## Fixed", "**Breaking changes**" or a short "Noteworthy BC Breaks:" line on its own
+    private static string? HeadingText(string line)
+    {
+        if (line.StartsWith('#'))
+            return line.TrimStart('#').Trim();
+
+        if (line.Length > 4 && line.StartsWith("**") && (line.EndsWith("**") || line.EndsWith("**:")))
+            return line.Trim('*', ':', ' ');
+
+        return IsColonHeading(line) ? line.TrimEnd(':').Trim() : null;
+    }
+
+    private static bool IsColonHeading(string line) =>
+        line.EndsWith(':') && line.Length <= MaxColonHeadingLength && StripListMarker(line) == line;
+
+    private static ChangeCategory? SectionOf(string heading)
+    {
+        var lower = heading.ToLowerInvariant();
+        foreach (var (keywords, category) in SectionRules)
+        {
+            if (keywords.Any(lower.Contains))
+                return category;
+        }
+        return null;
     }
 
     private static string StripListMarker(string line)
