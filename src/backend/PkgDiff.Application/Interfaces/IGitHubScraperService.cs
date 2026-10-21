@@ -11,4 +11,7 @@ public interface IGitHubScraperService
     // The package name tells a monorepo's per-package tags apart
     Task<string?> GetReleaseNotesForVersionAsync(string githubRepoUrl, string version, string? packageId) =>
         GetReleaseNotesForVersionAsync(githubRepoUrl, version);
+
+    // False for a private, missing or malformed repository; null when it could not be checked
+    Task<bool?> IsPublicRepositoryAsync(string githubRepoUrl) => Task.FromResult<bool?>(null);
 }

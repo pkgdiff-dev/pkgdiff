@@ -15,4 +15,7 @@ public interface IPackageCacheService
     Task SaveReleaseNoteAsync(CachedReleaseNote releaseNote);
     Task<PackageMetadata> GetOrFetchMetadataAsync(string registry, string packageId, bool bypassCache = false);
     Task<int> ResolveRegistryIdAsync(string registryValue);
+
+    // Null for a repository that is private, missing or not a repository
+    Task<string?> UsableRepositoryUrlAsync(string? repositoryUrl);
 }

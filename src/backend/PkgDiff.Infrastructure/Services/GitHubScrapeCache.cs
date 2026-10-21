@@ -17,7 +17,24 @@ public sealed class GitHubScrapeCache : IDisposable
     // A repository that had no changelog file may get one, so this knowledge is not kept for good
     private static readonly TimeSpan ChangelogLifetime = TimeSpan.FromHours(12);
 
+    // A repository can be made public or private at any time
+    private static readonly TimeSpan VisibilityLifetime = TimeSpan.FromHours(6);
+
     private readonly MemoryCache _cache = new(new MemoryCacheOptions { SizeLimit = MaxEntries });
+
+    public bool TryGetVisibility(string repoKey, out bool isPublic)
+    {
+        return _cache.TryGetValue("visibility:" + repoKey, out isPublic);
+    }
+
+    public void SetVisibility(string repoKey, bool isPublic)
+    {
+        _cache.Set("visibility:" + repoKey, isPublic, new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = VisibilityLifetime,
+            Size = 1
+        });
+    }
 
     public bool TryGetReleases(string repositoryUrl, [NotNullWhen(true)] out Dictionary<string, string>? releases)
     {

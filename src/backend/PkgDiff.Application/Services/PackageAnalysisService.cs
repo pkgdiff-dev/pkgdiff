@@ -425,9 +425,10 @@ public class PackageAnalysisService : IPackageAnalysisService
         var releaseNotes = StoredMarkdown.Normalize(result.ReleaseNotes);
         PkgDiffTelemetry.RecordScrape(activity, registry.Id, result.Source, !string.IsNullOrWhiteSpace(releaseNotes));
 
-        if (result.DiscoveredGitHubUrl != null)
+        if (result.DiscoveredGitHubUrl != null
+            && await _cacheService.UsableRepositoryUrlAsync(result.DiscoveredGitHubUrl) is { } discoveredUrl)
         {
-            cachedPackage.GitHubRepositoryUrl = result.DiscoveredGitHubUrl;
+            cachedPackage.GitHubRepositoryUrl = discoveredUrl;
             cachedPackage.ReleaseNotesSource = "GitHub";
             await _cacheService.UpdateCachedPackageAsync(cachedPackage);
         }
