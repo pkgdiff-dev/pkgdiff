@@ -22,6 +22,7 @@ public class RegistryClientTests
     [InlineData("PyPI", "pypi", "PyPI", VersionScheme.Pep440, true, false)]
     [InlineData("pub", "pub.dev", "PubDev", VersionScheme.SemVer, true, true)]
     [InlineData("pub.dev", "pub.dev", "PubDev", VersionScheme.SemVer, true, true)]
+    [InlineData("composer", "packagist", "Packagist", VersionScheme.Composer, true, false)]
     public void Every_spelling_of_a_registry_reaches_its_one_client(
         string spelling, string id, string label, VersionScheme scheme, bool includesStart, bool publishesNotes)
     {
@@ -65,7 +66,8 @@ public class RegistryClientTests
         {
             Assert.Equal(name, factory.GetClient(name).Id);
             Assert.Equal(name, RegistryNames.Canonical(name.ToUpperInvariant()));
-            Assert.True(PkgDiff.Shared.Validation.PackageIdRules.IsValidPackageId(name, "abc"));
+            var sample = name == RegistryNames.Packagist ? "abc/def" : "abc";
+            Assert.True(PkgDiff.Shared.Validation.PackageIdRules.IsValidPackageId(name, sample));
         });
         Assert.Equal(new[] { "pub.dev", "pub" }, RegistryNames.SpellingsOf("PUB"));
         Assert.Equal(new[] { "npm" }, RegistryNames.SpellingsOf("npm"));
