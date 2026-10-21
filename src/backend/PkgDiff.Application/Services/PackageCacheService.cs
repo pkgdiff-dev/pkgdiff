@@ -18,6 +18,7 @@ public class PackageCacheService : IPackageCacheService
     private readonly ICachedLookups _lookups;
     private readonly IJobScheduler _jobs;
     private readonly ILogger<PackageCacheService> _logger;
+    private readonly IGitHubScraperService? _gitHub;
 
     public PackageCacheService(
         IUnitOfWork unitOfWork,
@@ -26,7 +27,8 @@ public class PackageCacheService : IPackageCacheService
         ILiveUpdateService liveUpdates,
         ICachedLookups lookups,
         IJobScheduler jobs,
-        ILogger<PackageCacheService> logger)
+        ILogger<PackageCacheService> logger,
+        IGitHubScraperService? gitHub = null)
     {
         _unitOfWork = unitOfWork;
         _registryFactory = registryFactory;
@@ -35,6 +37,7 @@ public class PackageCacheService : IPackageCacheService
         _lookups = lookups;
         _jobs = jobs;
         _logger = logger;
+        _gitHub = gitHub;
     }
 
     public async Task<CachedPackage?> GetCachedPackageAsync(string packageId, string registry)
@@ -180,6 +183,14 @@ public class PackageCacheService : IPackageCacheService
         return _lookups.GetRegistryIdAsync(registryValue);
     }
 
+    public async Task<string?> UsableRepositoryUrlAsync(string? repositoryUrl)
+    {
+        if (string.IsNullOrWhiteSpace(repositoryUrl) || _gitHub == null)
+            return repositoryUrl;
+
+        return await _gitHub.IsPublicRepositoryAsync(repositoryUrl) == false ? null : repositoryUrl;
+    }
+
     private async Task<PackageMetadata> BuildMetadataFromCache(CachedPackage cached, string registryLower, IRegistryClient registry)
     {
         var cachedNotes = await _unitOfWork.CachedReleaseNotes
@@ -253,6 +264,10 @@ public class PackageCacheService : IPackageCacheService
     {
         var registryId = await ResolveRegistryIdAsync(registry);
 
+        // Checked again on every refresh, so a repository that turns public or private is picked up
+        var namedRepository = metadata.GitHubRepositoryUrl;
+        metadata.GitHubRepositoryUrl = await UsableRepositoryUrlAsync(namedRepository);
+
         var repositoryChanged = false;
         if (cached == null)
         {
@@ -282,7 +297,9 @@ public class PackageCacheService : IPackageCacheService
             repositoryChanged = metadata.GitHubRepositoryUrl != null
                 && !string.Equals(metadata.GitHubRepositoryUrl, cached.GitHubRepositoryUrl, StringComparison.OrdinalIgnoreCase);
             // A repository found while scraping release notes is kept when the registry names none
-            cached.GitHubRepositoryUrl = metadata.GitHubRepositoryUrl ?? cached.GitHubRepositoryUrl;
+            cached.GitHubRepositoryUrl = namedRepository != null
+                ? metadata.GitHubRepositoryUrl
+                : await UsableRepositoryUrlAsync(cached.GitHubRepositoryUrl);
             cached.AllVersionsJson = JsonSerializer.Serialize(metadata.Versions.Select(v => v.Version));
             cached.CachedAt = DateTime.UtcNow;
             cached.ExpiresAt = DateTime.UtcNow.AddDays(14);

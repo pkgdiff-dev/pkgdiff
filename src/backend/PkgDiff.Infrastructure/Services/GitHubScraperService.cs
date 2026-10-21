@@ -21,6 +21,7 @@ public partial class GitHubScraperService : IGitHubScraperService
     private readonly HttpClient _httpClient;
     private readonly bool _enableAuthentication;
     private readonly bool _useGitHubApi;
+    private readonly bool _sendsToken;
     private readonly GitHubScrapeCache _cache;
     private readonly GitHubChangelogReader _changelog;
     private readonly GitHubMilestoneReader _milestones;
@@ -53,7 +54,8 @@ public partial class GitHubScraperService : IGitHubScraperService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
         
-        if (_enableAuthentication && !string.IsNullOrWhiteSpace(personalAccessToken))
+        _sendsToken = _enableAuthentication && !string.IsNullOrWhiteSpace(personalAccessToken);
+        if (_sendsToken)
         {
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {personalAccessToken}");
         }
@@ -107,7 +109,10 @@ public partial class GitHubScraperService : IGitHubScraperService
         return await _retryPolicy.ExecuteAsync(async () =>
         {
             var cleanUrl = GitHubUrls.Clean(githubRepoUrl);
-            
+
+            if (!await MayReadAsync(cleanUrl))
+                return new Dictionary<string, string>();
+
             if (_cache.TryGetReleases(cleanUrl, out var cachedReleases))
             {
                 _logger.LogDebug("[GitHubScraper] Using cached releases for {RepoUrl} ({Count} releases)",
@@ -241,6 +246,9 @@ public partial class GitHubScraperService : IGitHubScraperService
         {
             _logger.LogDebug("[GitHubScraper] Looking for release notes: repo={RepoUrl}, version={Version}", githubRepoUrl, version);
 
+            if (!await MayReadAsync(githubRepoUrl))
+                return null;
+
             string? notes = null;
 
             if (!_useGitHubApi || !_enableAuthentication)
@@ -311,6 +319,81 @@ public partial class GitHubScraperService : IGitHubScraperService
 
             return notes;
         });
+    }
+
+    public async Task<bool?> IsPublicRepositoryAsync(string githubRepoUrl)
+    {
+        try
+        {
+            return await RepositoryVisibilityAsync(githubRepoUrl);
+        }
+        catch (GitHubRateLimitedException)
+        {
+            return null;
+        }
+    }
+
+    // The token may see private repositories; their content must never be published
+    private async Task<bool> MayReadAsync(string githubRepoUrl)
+    {
+        var isPublic = await RepositoryVisibilityAsync(githubRepoUrl);
+        if (isPublic == true || (isPublic == null && !_sendsToken))
+            return true;
+
+        _logger.LogInformation("[GitHubScraper] Not reading {RepoUrl}: not a public repository ({Visibility})",
+            githubRepoUrl, isPublic == false ? "private or missing" : "unchecked");
+        return false;
+    }
+
+    private async Task<bool?> RepositoryVisibilityAsync(string githubRepoUrl)
+    {
+        var (owner, repo) = GitHubUrls.Parse(githubRepoUrl, _logger);
+        if (string.IsNullOrEmpty(owner) || string.IsNullOrEmpty(repo))
+            return false;
+
+        // Without a token nothing private can be read
+        if (!_sendsToken)
+            return null;
+
+        var repoKey = $"{owner}/{repo}".ToLowerInvariant();
+        if (_cache.TryGetVisibility(repoKey, out var cached))
+            return cached;
+
+        var apiUrl = $"https://api.github.com/repos/{PackageUrlEncoder.EscapeSegment(owner)}/{PackageUrlEncoder.EscapeSegment(repo)}";
+        try
+        {
+            await _rateLimitHandler.CanMakeRequestAsync();
+            using var response = await _rateLimiter.ExecuteAsync("github-api", async () => await _httpClient.GetAsync(apiUrl));
+            await _rateLimitHandler.UpdateFromHeadersAsync(response);
+            GitHubRateLimitResponse.ThrowIfLimited(response);
+
+            bool? isPublic = null;
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                isPublic = false;
+            }
+            else if (response.IsSuccessStatusCode)
+            {
+                using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                isPublic = document.RootElement.TryGetProperty("private", out var isPrivate)
+                    && isPrivate.ValueKind == JsonValueKind.False;
+            }
+
+            if (isPublic.HasValue)
+                _cache.SetVisibility(repoKey, isPublic.Value);
+            else
+                _logger.LogWarning("[GitHubScraper] API returned {StatusCode} for {Url}", response.StatusCode, apiUrl);
+            return isPublic;
+        }
+        catch (GitHubRateLimitedException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[GitHubScraper] Failed to read {Url}", apiUrl);
+            return null;
+        }
     }
 
     // Tag spellings of monorepos and package-named tags, most specific first

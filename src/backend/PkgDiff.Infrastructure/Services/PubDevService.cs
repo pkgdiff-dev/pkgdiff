@@ -25,58 +25,75 @@ public class PubDevService : IPubDevService
     {
         try
         {
-            var url = $"{_baseUrl}/{PackageUrlEncoder.EscapeSegment(packageId)}/changelog";
-            var html = await _httpClient.GetStringAsync(url);
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            var changelogNodes = doc.DocumentNode.SelectNodes("//div[@class='changelog-entry']");
-            if (changelogNodes == null || !changelogNodes.Any())
-                return string.Empty;
-
-            var versionId = version.Replace(".", ""); // pub.dev changelog anchors drop the dots
-
-            foreach (var node in changelogNodes)
-            {
-                var headerNode = node.SelectSingleNode(".//h2");
-                if (headerNode != null && headerNode.InnerText.Trim().StartsWith(version))
-                {
-                    var contentNode = node.SelectSingleNode(".//div[@class='changelog-content']");
-                    if (contentNode == null) return string.Empty;
-
-                    var rawHtml = contentNode.InnerHtml;
-
-                    rawHtml = Regex.Replace(rawHtml, "<br[^>]*>", "\n", RegexOptions.IgnoreCase);
-                    rawHtml = Regex.Replace(rawHtml, "</p>", "\n\n", RegexOptions.IgnoreCase);
-                    rawHtml = Regex.Replace(rawHtml, "<li[^>]*>", "\n- ", RegexOptions.IgnoreCase);
-                    rawHtml = Regex.Replace(rawHtml, "<h[1-6][^>]*>", "\n# ", RegexOptions.IgnoreCase);
-
-                    rawHtml = Regex.Replace(rawHtml, "<strong[^>]*>(.*?)</strong>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    rawHtml = Regex.Replace(rawHtml, "<b[^>]*>(.*?)</b>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    rawHtml = Regex.Replace(rawHtml, "<em[^>]*>(.*?)</em>", "*$1*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    rawHtml = Regex.Replace(rawHtml, "<i[^>]*>(.*?)</i>", "*$1*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    rawHtml = Regex.Replace(rawHtml, "<code[^>]*>(.*?)</code>", "`$1`", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    rawHtml = Regex.Replace(rawHtml, "<pre[^>]*>(.*?)</pre>", "\n```\n$1\n```\n", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                    rawHtml = Regex.Replace(rawHtml, "<a[^>]+href=\"([^\"]+)\"[^>]*>(.*?)</a>", "[$2]($1)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                    var tempDoc = new HtmlDocument();
-                    tempDoc.LoadHtml(rawHtml);
-                    var plainText = tempDoc.DocumentNode.InnerText;
-
-                    plainText = Regex.Replace(plainText, @"\n{3,}", "\n\n");
-
-                    return plainText.Trim();
-                }
-            }
-
-            return string.Empty;
+            var packageUrl = $"{_baseUrl}/{PackageUrlEncoder.EscapeSegment(packageId)}";
+            // The package's changelog page shows only the latest upload; each version's page keeps the file it shipped with
+            return await ReadChangelogEntryAsync($"{packageUrl}/versions/{PackageUrlEncoder.EscapeSegment(version)}/changelog", version)
+                ?? await ReadChangelogEntryAsync($"{packageUrl}/changelog", version)
+                ?? string.Empty;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching release notes from Pub.dev for package {PackageId} version {Version}", packageId, version);
             return string.Empty;
         }
+    }
+
+    // Null when the page or its entry for the version is missing
+    private async Task<string?> ReadChangelogEntryAsync(string url, string version)
+    {
+        using var response = await _httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await response.Content.ReadAsStringAsync());
+
+        var changelogNodes = doc.DocumentNode.SelectNodes("//div[@class='changelog-entry']");
+        if (changelogNodes == null)
+            return null;
+
+        foreach (var node in changelogNodes)
+        {
+            var headerNode = node.SelectSingleNode(".//h2");
+            if (headerNode == null || !IsHeaderOf(headerNode.InnerText, version))
+                continue;
+
+            var contentNode = node.SelectSingleNode(".//div[@class='changelog-content']");
+            if (contentNode == null) return string.Empty;
+
+            var rawHtml = contentNode.InnerHtml;
+
+            rawHtml = Regex.Replace(rawHtml, "<br[^>]*>", "\n", RegexOptions.IgnoreCase);
+            rawHtml = Regex.Replace(rawHtml, "</p>", "\n\n", RegexOptions.IgnoreCase);
+            rawHtml = Regex.Replace(rawHtml, "<li[^>]*>", "\n- ", RegexOptions.IgnoreCase);
+            rawHtml = Regex.Replace(rawHtml, "<h[1-6][^>]*>", "\n# ", RegexOptions.IgnoreCase);
+
+            rawHtml = Regex.Replace(rawHtml, "<strong[^>]*>(.*?)</strong>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            rawHtml = Regex.Replace(rawHtml, "<b[^>]*>(.*?)</b>", "**$1**", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            rawHtml = Regex.Replace(rawHtml, "<em[^>]*>(.*?)</em>", "*$1*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            rawHtml = Regex.Replace(rawHtml, "<i[^>]*>(.*?)</i>", "*$1*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            rawHtml = Regex.Replace(rawHtml, "<code[^>]*>(.*?)</code>", "`$1`", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            rawHtml = Regex.Replace(rawHtml, "<pre[^>]*>(.*?)</pre>", "\n```\n$1\n```\n", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            rawHtml = Regex.Replace(rawHtml, "<a[^>]+href=\"([^\"]+)\"[^>]*>(.*?)</a>", "[$2]($1)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            var tempDoc = new HtmlDocument();
+            tempDoc.LoadHtml(rawHtml);
+            var plainText = tempDoc.DocumentNode.InnerText;
+
+            plainText = Regex.Replace(plainText, @"\n{3,}", "\n\n");
+
+            return plainText.Trim();
+        }
+
+        return null;
+    }
+
+    private static bool IsHeaderOf(string headerText, string version)
+    {
+        var firstWord = headerText.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+        return firstWord.Trim('[', ']', '(', ')', ':', ',').TrimStart('v', 'V')
+            .Equals(version, StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<string?> GetGitHubRepositoryUrlAsync(string packageId)
