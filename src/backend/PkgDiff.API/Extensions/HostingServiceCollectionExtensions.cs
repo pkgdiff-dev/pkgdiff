@@ -111,6 +111,7 @@ public static class HostingServiceCollectionExtensions
         services.AddScoped<PackageAnalysisJob>();
         services.AddScoped<PackageRefreshJob>();
         services.AddScoped<DatabaseCleanupJob>();
+        services.AddScoped<ReleaseNoteReparseJob>();
 
         services.AddSingleton<HangfireDashboardAccess>();
         services.AddScoped<IAdminRoleChecker, IdentityAdminRoleChecker>();

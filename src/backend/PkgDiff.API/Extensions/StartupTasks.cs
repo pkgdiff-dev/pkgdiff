@@ -84,6 +84,9 @@ public static class StartupTasks
             "autopilot-blog-generator",
             job => job.RunAutoPilotJobAsync(),
             await ReadAutoPilotCronAsync(app));
+
+        // A no-op unless the release-note parser changed since the notes were stored
+        BackgroundJob.Enqueue<ReleaseNoteReparseJob>(job => job.ExecuteAsync());
     }
 
     private static async Task<string> ReadAutoPilotCronAsync(WebApplication app)

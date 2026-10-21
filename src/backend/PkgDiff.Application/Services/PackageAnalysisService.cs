@@ -325,6 +325,7 @@ public class PackageAnalysisService : IPackageAnalysisService
         var versionInfoList = new List<VersionInfo>();
         int consecutiveEmpty = 0;
         int current = 0;
+        int dateLookups = 0;
 
         foreach (var version in versionsToProcess)
         {
@@ -357,7 +358,10 @@ public class PackageAnalysisService : IPackageAnalysisService
             {
                 releaseNotes = string.Empty;
                 releaseNotesSource = registryClient.SourceLabel;
-                publishedDate = await registryClient.GetPublishedDateAsync(packageId, versionString);
+                // Some registries answer a date with the whole package document; the scrape stores the rest
+                publishedDate = dateLookups++ < maxConsecutiveEmpty
+                    ? await registryClient.GetPublishedDateAsync(packageId, versionString)
+                    : null;
                 isFromCache = false;
 
                 _logger.LogDebug("[PackageAnalysis] No cache found for {PackageId} v{Version}, triggering background scrape.", packageId, versionString);
@@ -367,7 +371,9 @@ public class PackageAnalysisService : IPackageAnalysisService
             var versionInfo = CreateVersionInfo(version, releaseNotes, releaseNotesSource, publishedDate, cachedNote, isFromCache);
             versionInfoList.Add(versionInfo);
 
-            if (versionInfo.IsEmpty)
+            // Only a version whose notes were looked up and not found counts; one not scraped yet may still have some
+            var lookedUp = !string.IsNullOrEmpty(cachedNote?.ReleaseNotesSource);
+            if (versionInfo.IsEmpty && lookedUp)
             {
                 consecutiveEmpty++;
                 if (consecutiveEmpty >= maxConsecutiveEmpty)
@@ -376,7 +382,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                     break;
                 }
             }
-            else
+            else if (!versionInfo.IsEmpty)
             {
                 consecutiveEmpty = 0;
             }
