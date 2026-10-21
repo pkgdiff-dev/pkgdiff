@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INpmService, NpmService>();
         services.AddScoped<IPyPIService, PyPIService>();
         services.AddScoped<IPackagistService, PackagistService>();
+        services.AddScoped<IMavenService, MavenService>();
         // IPubDevService is the PubDev typed client registered by AddPkgDiffOutboundHttp
         services.AddScoped<IScraperService, ScraperService>();
         services.AddSingleton<GitHubScrapeCache>();
@@ -46,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRegistryClient, PyPIRegistryClient>();
         services.AddScoped<IRegistryClient, PubDevRegistryClient>();
         services.AddScoped<IRegistryClient, PackagistRegistryClient>();
+        services.AddScoped<IRegistryClient, MavenRegistryClient>();
 
         services.AddScoped<IRegistryServiceFactory, RegistryServiceFactory>();
         services.AddScoped<IPackageCacheService, PackageCacheService>();

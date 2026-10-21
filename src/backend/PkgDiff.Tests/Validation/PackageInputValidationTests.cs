@@ -31,7 +31,7 @@ public class PackageInputValidationTests
     }
 
     [Theory]
-    [InlineData("maven")]
+    [InlineData("cargo")]
     [InlineData("")]
     [InlineData(null)]
     [InlineData("npm ")]
@@ -140,7 +140,7 @@ public class PackageInputValidationTests
     [Fact]
     public void IsValidPackageId_UnknownRegistry_ReturnsFalse()
     {
-        Assert.False(PackageIdRules.IsValidPackageId("maven", "junit"));
+        Assert.False(PackageIdRules.IsValidPackageId("cargo", "serde"));
     }
 
     [Theory]
@@ -191,7 +191,7 @@ public class PackageInputValidationTests
     [Fact]
     public void AnalyzeRequest_UnknownRegistry_IsInvalid()
     {
-        var request = new AnalyzeRequest { Registry = "maven", PackageId = "x" };
+        var request = new AnalyzeRequest { Registry = "cargo", PackageId = "x" };
 
         var results = ValidateModel(request);
 
@@ -303,7 +303,7 @@ public class PackageInputValidationTests
     [Fact]
     public async Task Filter_UnknownRegistry_ReturnsBadRequest()
     {
-        var arguments = new Dictionary<string, object?> { ["registry"] = "maven", ["packageId"] = "junit" };
+        var arguments = new Dictionary<string, object?> { ["registry"] = "cargo", ["packageId"] = "serde" };
 
         var (context, nextCalled) = await RunFilterAsync(new FakeUnitOfWork(), arguments);
 

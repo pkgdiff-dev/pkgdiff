@@ -8,6 +8,8 @@ public static class HttpClientNames
     public const string PyPIRegistry = "PyPIRegistry";
     public const string PubDev = "PubDev";
     public const string PackagistRepository = "PackagistRepository";
+    public const string MavenCentral = "MavenCentral";
+    public const string MavenSearch = "MavenSearch";
     public const string HealthProbe = "HealthProbe";
     public const string Osv = "Osv";
     public const string DepsDev = "DepsDev";

@@ -61,6 +61,23 @@ public static class OutboundHttpServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0 (+https://pkgdiff.dev)");
         });
 
+        services.AddHttpClient(HttpClientNames.MavenCentral, client =>
+        {
+            client.BaseAddress = new Uri("https://repo1.maven.org/maven2/");
+            client.Timeout = FixedHostTimeout;
+            client.MaxResponseContentBufferSize = RegistryMaxResponseBytes;
+            client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0 (+https://pkgdiff.dev)");
+        });
+
+        // Only publish dates come from the search API, so a slow answer must not hold up the package page
+        services.AddHttpClient(HttpClientNames.MavenSearch, client =>
+        {
+            client.BaseAddress = new Uri("https://search.maven.org/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.MaxResponseContentBufferSize = RegistryMaxResponseBytes;
+            client.DefaultRequestHeaders.Add("User-Agent", "PkgDiff/1.0 (+https://pkgdiff.dev)");
+        });
+
         services.AddHttpClient<IPubDevService, PubDevService>(HttpClientNames.PubDev, client =>
         {
             client.BaseAddress = new Uri("https://pub.dev/");

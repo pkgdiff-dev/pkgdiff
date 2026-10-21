@@ -12,5 +12,8 @@ public enum VersionScheme
     Pep440,
 
     // Composer's rules: Packagist
-    Composer
+    Composer,
+
+    // Maven's ComparableVersion: Maven Central
+    Maven
 }

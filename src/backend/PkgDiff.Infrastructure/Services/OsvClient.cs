@@ -225,6 +225,7 @@ public class OsvClient : IOsvClient
         RegistryNames.PyPI => "PyPI",
         RegistryNames.PubDev => "Pub",
         RegistryNames.Packagist => "Packagist",
+        RegistryNames.Maven => "Maven",
         _ => null
     };
 

@@ -121,9 +121,9 @@ test('the home page arrives rendered, with its meta and ready to be hydrated', a
   const { status, html } = await page('/');
 
   assert.equal(status, 200);
-  assert.match(html, /<h1[^>]*>\s*Compare package versions across NuGet, npm, PyPI, Pub &amp; Packagist/);
+  assert.match(html, /<h1[^>]*>\s*Compare package versions across NuGet, npm, PyPI, Maven, Pub &amp; Packagist/);
   assert.match(html, /What you can do with pkgdiff/);
-  assert.match(html, /<title>pkgdiff — Compare NuGet, npm, PyPI, Pub &amp; Packagist Packages<\/title>/);
+  assert.match(html, /<title>pkgdiff — Compare NuGet, npm, PyPI, Maven, Pub &amp; Packagist Packages<\/title>/);
   assert.equal(count(html, /<link rel="canonical"/g), 1);
   assert.match(html, /<link rel="canonical" href="https:\/\/pkgdiff\.dev\/"/);
   assert.match(html, /ng-server-context="ssr"/);
