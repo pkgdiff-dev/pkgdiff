@@ -56,6 +56,8 @@
     "vitest": "^4.1.12"
   },
   "overrides": {
-    "piscina": "5.3.2"
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "piscina": "5.3.2",
+    "vite": "7.3.7"
   }
 }
