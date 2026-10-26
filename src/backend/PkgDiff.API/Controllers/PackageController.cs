@@ -85,10 +85,19 @@ public class PackageController : ControllerBase
 
         var address = HttpContext.GetClientIpAddress();
         var joinsRunning = _workTracker.IsRunning(WorkKeys.Analysis(request));
-        if (!joinsRunning && AnalysesPerAddress.GetValueOrDefault(address) >= MaxConcurrentAnalysesPerAddress)
-            return StatusCode(429, new { error = "You already have comparisons running. Please wait for them to finish." });
+
+        // Reserve the slot atomically: increment first, then release and reject if over the cap
+        var acquired = false;
         if (!joinsRunning)
-            AnalysesPerAddress.AddOrUpdate(address, 1, (_, count) => count + 1);
+        {
+            var newCount = AnalysesPerAddress.AddOrUpdate(address, 1, (_, count) => count + 1);
+            if (newCount > MaxConcurrentAnalysesPerAddress)
+            {
+                ReleaseAnalysisSlot(address);
+                return StatusCode(429, new { error = "You already have comparisons running. Please wait for them to finish." });
+            }
+            acquired = true;
+        }
 
         try
         {
@@ -96,7 +105,7 @@ public class PackageController : ControllerBase
         }
         finally
         {
-            if (!joinsRunning)
+            if (acquired)
                 ReleaseAnalysisSlot(address);
         }
     }
