@@ -34,6 +34,7 @@ public class PackageAnalysisService : IPackageAnalysisService
     private readonly ILiveUpdateService _liveUpdates;
     private readonly ICachedLookups _lookups;
     private readonly IJobScheduler _jobs;
+    private readonly IScrapeBudget _scrapeBudget;
     private readonly ILogger<PackageAnalysisService> _logger;
 
     public PackageAnalysisService(
@@ -49,6 +50,7 @@ public class PackageAnalysisService : IPackageAnalysisService
         ILiveUpdateService liveUpdates,
         ICachedLookups lookups,
         IJobScheduler jobs,
+        IScrapeBudget scrapeBudget,
         ILogger<PackageAnalysisService> logger)
     {
         _registryFactory = registryFactory;
@@ -63,6 +65,7 @@ public class PackageAnalysisService : IPackageAnalysisService
         _liveUpdates = liveUpdates;
         _lookups = lookups;
         _jobs = jobs;
+        _scrapeBudget = scrapeBudget;
         _logger = logger;
     }
 
@@ -93,7 +96,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                 versionsInRange.Select(v => v.ToString()));
 
             var versionInfoList = await ProcessVersionsAsync(
-                request.PackageId, versionsInRange, cachedPackage, registry, request.Registry, connectionId);
+                request.PackageId, versionsInRange, cachedPackage, registry, request.Registry, connectionId, ipAddress);
 
             await SendProgress(connectionId, "Generating final report...");
             var summary = _analyzerService.GenerateSummary(versionInfoList);
@@ -305,7 +308,8 @@ public class PackageAnalysisService : IPackageAnalysisService
         Domain.Entities.CachedPackage cachedPackage,
         IRegistryClient registryClient,
         string registry,
-        string? connectionId)
+        string? connectionId,
+        string ipAddress)
     {
         var maxInitialVersions = await _lookups.GetIntSettingAsync("MaxVersionsToAnalyze", 50);
         var maxConsecutiveEmpty = await _lookups.GetIntSettingAsync("MaxConsecutiveEmptyVersions", 10);
@@ -351,7 +355,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                 if (cachedNote.ExpiresAt <= DateTime.UtcNow)
                 {
                     _logger.LogDebug("[PackageAnalysis] Release note expired for {PackageId} v{Version}, triggering background scrape.", packageId, versionString);
-                    await TriggerBackgroundScrapingAsync(packageId, registry);
+                    await TriggerBackgroundScrapingAsync(packageId, registry, ipAddress);
                 }
             }
             else
@@ -365,7 +369,7 @@ public class PackageAnalysisService : IPackageAnalysisService
                 isFromCache = false;
 
                 _logger.LogDebug("[PackageAnalysis] No cache found for {PackageId} v{Version}, triggering background scrape.", packageId, versionString);
-                await TriggerBackgroundScrapingAsync(packageId, registry);
+                await TriggerBackgroundScrapingAsync(packageId, registry, ipAddress);
             }
 
             var versionInfo = CreateVersionInfo(version, releaseNotes, releaseNotesSource, publishedDate, cachedNote, isFromCache);
@@ -391,23 +395,26 @@ public class PackageAnalysisService : IPackageAnalysisService
         return versionInfoList;
     }
 
-    private async Task TriggerBackgroundScrapingAsync(string packageId, string registry)
+    private async Task TriggerBackgroundScrapingAsync(string packageId, string registry, string ipAddress)
     {
         var cacheKey = $"scrape-attempt-{registry}-{packageId}";
-        if (!_workTracker.IsRunning(WorkKeys.Scrape(registry, packageId)))
-        {
-            if (await _distributedCache.GetAsync(cacheKey) == null)
+        if (_workTracker.IsRunning(WorkKeys.Scrape(registry, packageId)))
+            return;
+        if (await _distributedCache.GetAsync(cacheKey) != null)
+            return;
+
+        // The scheduled "System" refresh is a controlled job and does not spend the per-IP scrape budget
+        if (ipAddress != "System" && !await _scrapeBudget.TryReserveAsync(ipAddress))
+            return;
+
+        await _distributedCache.SetAsync(cacheKey, new byte[] { 1 },
+            new DistributedCacheEntryOptions
             {
-                await _distributedCache.SetAsync(cacheKey, new byte[] { 1 },
-                    new DistributedCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12)
-                    });
-                
-                _jobs.Enqueue<IPackageAnalysisService>(
-                    service => service.ScrapePackageReleaseNotesAsync(packageId, registry));
-            }
-        }
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12)
+            });
+
+        _jobs.Enqueue<IPackageAnalysisService>(
+            service => service.ScrapePackageReleaseNotesAsync(packageId, registry));
     }
 
     private async Task<bool> ScrapeVersionReleaseNotesAsync(

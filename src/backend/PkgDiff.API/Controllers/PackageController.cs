@@ -19,9 +19,6 @@ public class PackageController : ControllerBase
     private const int MaxConcurrentAnalysesPerAddress = 2;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> AnalysesPerAddress = new();
 
-    // Caps first-visit scrapes so a stream of new names cannot fill the queue or the GitHub budget
-    private const int MaxScrapesPerAddressPerHour = 30;
-    private const int MaxScrapesPerHour = 600;
     private const int ClientClosedRequest = 499;
 
     private readonly IPackageAnalysisService _analysisService;
@@ -33,7 +30,7 @@ public class PackageController : ControllerBase
     private readonly IDistributedCache _distributedCache;
     private readonly IDataProtectionProvider _dataProtection;
     private readonly IPackageTrustService _trust;
-    private readonly IRateLimitCounterStore _counters;
+    private readonly IScrapeBudget _scrapeBudget;
     private readonly IPackageCacheService _cache;
     private readonly IMemoryCache _memory;
 
@@ -47,11 +44,11 @@ public class PackageController : ControllerBase
         IDistributedCache distributedCache,
         IDataProtectionProvider dataProtection,
         IPackageTrustService trust,
-        IRateLimitCounterStore counters,
+        IScrapeBudget scrapeBudget,
         IPackageCacheService cache,
         IMemoryCache memory)
     {
-        _counters = counters;
+        _scrapeBudget = scrapeBudget;
         _cache = cache;
         _memory = memory;
         _analysisService = analysisService;
@@ -188,16 +185,7 @@ public class PackageController : ControllerBase
     }
 
     private async Task<bool> MayQueueScrapeAsync()
-    {
-        var address = HttpContext.GetClientIpAddress();
-        var mine = await _counters.IncrementAsync($"scrape-queue:1h:{address}", TimeSpan.FromHours(1));
-        var all = await _counters.IncrementAsync("scrape-queue:1h:all", TimeSpan.FromHours(1));
-        if (mine <= MaxScrapesPerAddressPerHour && all <= MaxScrapesPerHour)
-            return true;
-
-        _logger.LogWarning("Scrape not queued: {Address} queued {Mine} this hour, {All} in total", address, mine, all);
-        return false;
-    }
+        => await _scrapeBudget.TryReserveAsync(HttpContext.GetClientIpAddress());
 
     [HttpGet("{registry}/{packageId}")]
     [ValidatePackageRoute]
