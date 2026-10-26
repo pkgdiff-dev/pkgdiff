@@ -48,7 +48,8 @@ public static class AuthServiceCollectionExtensions
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwt.Value.Issuer,
                     ValidAudience = jwt.Value.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.SecretKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Value.SecretKey)),
+                    ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
                 };
 
                 // A signed token is not enough: the user must exist, be unlocked and match the security stamp
