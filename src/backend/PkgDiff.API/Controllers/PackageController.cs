@@ -160,7 +160,7 @@ public class PackageController : ControllerBase
     public async Task<ActionResult<List<PackageSuggestion>>> GetSuggestions(
         string registry, [FromQuery] string q, [FromQuery] int limit = 5)
     {
-        limit = Math.Min(limit, 50);
+        limit = Math.Clamp(limit, 1, 50);
         try
         {
             if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
