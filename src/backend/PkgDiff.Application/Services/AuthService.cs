@@ -11,6 +11,8 @@ namespace PkgDiff.Application.Services;
 
 public class AuthService
 {
+    private const int TokenLifetimeHours = 8;
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
@@ -67,7 +69,7 @@ public class AuthService
             Email = user.Email ?? string.Empty,
             Role = roles.FirstOrDefault() ?? "User",
             Permissions = permissions.Distinct().ToList(),
-            ExpiresAt = DateTime.UtcNow.AddHours(24)
+            ExpiresAt = DateTime.UtcNow.AddHours(TokenLifetimeHours)
         };
     }
 
@@ -169,7 +171,7 @@ public class AuthService
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(8),
+            expires: DateTime.UtcNow.AddHours(TokenLifetimeHours),
             signingCredentials: credentials
         );
 

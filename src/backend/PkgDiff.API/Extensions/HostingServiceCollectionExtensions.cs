@@ -144,6 +144,8 @@ public static class HostingServiceCollectionExtensions
             services.AddSingleton<IRateLimitCounterStore, MemoryRateLimitCounterStore>();
         }
 
+        services.AddSingleton<IScrapeBudget, ScrapeBudget>();
+
         services.AddOptions<InboundRateLimitOptions>()
             .Bind(configuration.GetSection(InboundRateLimitOptions.SectionName))
             .Validate(options => options.IsValid(), "RateLimiting: every PerMinute and PerFiveMinutes value must be greater than zero.")

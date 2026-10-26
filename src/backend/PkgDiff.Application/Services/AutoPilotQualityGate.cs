@@ -14,6 +14,15 @@ public static class AutoPilotQualityGate
     private static readonly Regex SectionHeading = new(@"^#{2,6} ", RegexOptions.Compiled);
     private static readonly string[] RequiredHeadings = { OverviewHeading, WhatsChangedHeading, UpgradeNotesHeading };
 
+    private static readonly Regex FencedCodeBlock = new(@"```[^\n]*\n(.*?)```", RegexOptions.Compiled | RegexOptions.Singleline);
+
+    private static readonly Regex[] UnsafeShellPatterns =
+    {
+        new(@"\b(?:curl|wget)\b[^\n]*\|\s*(?:sudo\s+)?(?:ba)?sh\b", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+        new(@"\bbash\s+-c\b[^\n]*(?:\|[^\n]*https?://|https?://[^\n]*\|)", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+        new(@"(?:iex|Invoke-Expression)\b[^\n]*(?:https?://|DownloadString|Invoke-WebRequest|\biwr\b|curl|wget)", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+    };
+
     public static bool Passes(string cleanedMarkdown, string packageId, out string reason)
     {
         var text = (cleanedMarkdown ?? string.Empty).Trim();
@@ -55,6 +64,16 @@ public static class AutoPilotQualityGate
         {
             reason = "repetition: too many duplicate lines";
             return false;
+        }
+
+        foreach (Match block in FencedCodeBlock.Matches(text))
+        {
+            var code = block.Groups[1].Value;
+            if (UnsafeShellPatterns.Any(p => p.IsMatch(code)))
+            {
+                reason = "unsafe shell command in code block";
+                return false;
+            }
         }
 
         reason = string.Empty;

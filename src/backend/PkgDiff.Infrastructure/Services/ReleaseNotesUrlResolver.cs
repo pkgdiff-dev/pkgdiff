@@ -258,6 +258,9 @@ public class ReleaseNotesUrlResolver : IReleaseNotesUrlResolver
     {
         return await _retryPolicy.ExecuteAsync(async () =>
         {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || !DocumentationHostAllowList.IsAllowed(uri.Host))
+                return null;
+
             using var document = await _htmlDocumentLoader.LoadAsync(url);
             if (document == null) return null;
 

@@ -114,7 +114,7 @@ public class PostgresQueryTests
         var cache = new PackageCacheService(
             unitOfWork, TestRegistries.Create(), new ReleaseNotesRenderer(), live, lookups, null!, NullLogger<PackageCacheService>.Instance);
         var analysis = new PackageAnalysisService(
-            null!, cache, null!, unitOfWork, null!, null!, null!, null!, null!, live, lookups, null!, NullLogger<PackageAnalysisService>.Instance);
+            null!, cache, null!, unitOfWork, null!, null!, null!, null!, null!, live, lookups, null!, null!, NullLogger<PackageAnalysisService>.Instance);
 
         var cached = await analysis.GetCachedPackagesAsync();
         Assert.Equal(new[] { "pypi/requests", "npm/Left-Pad" }, cached.Select(p => $"{p.Registry}/{p.PackageId}"));
