@@ -185,7 +185,15 @@ public class NugetService : INugetService
         {
             var nuspec = await _httpClientFactory.CreateClient()
                 .GetStringAsync($"https://api.nuget.org/v3-flatcontainer/{id}/{normalized}/{id}.nuspec");
-            var repository = XDocument.Parse(nuspec).Descendants().FirstOrDefault(e => e.Name.LocalName == "repository");
+            // No DTD: a nuspec needs none, and one could expand entities (billion laughs / XXE)
+            using var reader = XmlReader.Create(new StringReader(nuspec), new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersFromEntities = 0
+            });
+            var document = XDocument.Load(reader, LoadOptions.None);
+            var repository = document.Descendants().FirstOrDefault(e => e.Name.LocalName == "repository");
             return GitHubRepositoryUrl(repository?.Attribute("url")?.Value);
         }
         catch (Exception ex) when (ex is HttpRequestException or XmlException

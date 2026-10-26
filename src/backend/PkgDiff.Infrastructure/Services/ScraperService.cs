@@ -6,6 +6,7 @@ using PkgDiff.Shared.Validation;
 using Polly;
 using Polly.Retry;
 using System.IO.Compression;
+using System.Xml;
 using System.Xml.Linq;
 using System.Collections.Concurrent;
 
@@ -163,7 +164,14 @@ public class ScraperService : IScraperService
     {
         try
         {
-            var xmlDoc = XDocument.Parse(nuspecContent);
+            // No DTD: a nuspec needs none, and one could expand entities (billion laughs / XXE)
+            using var reader = XmlReader.Create(new StringReader(nuspecContent), new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersFromEntities = 0
+            });
+            var xmlDoc = XDocument.Load(reader, LoadOptions.None);
             var ns = xmlDoc.Root?.GetDefaultNamespace();
 
             if (ns != null)
