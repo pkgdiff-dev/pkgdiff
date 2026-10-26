@@ -4,7 +4,10 @@
 
 ## Why
 
-<!-- The problem it solves. Link the issue (Fixes #123) or name a package and versions that show it. -->
+Closes #
+
+<!-- Replace the number above with the issue this pull request closes. Every pull request links an
+     issue; if one does not exist yet, open it first. -->
 
 ## Changes
 
@@ -16,6 +19,7 @@
 
 ## Checklist
 
+- [ ] This pull request is linked to an issue (`Closes #NNN` above)
 - [ ] The pull request targets `develop` and is about one thing
 - [ ] Commit messages follow Conventional Commits (`feat(scope): ...`, `fix(scope): ...`)
 - [ ] CI is green (backend tests, frontend build and tests, dependency gate)

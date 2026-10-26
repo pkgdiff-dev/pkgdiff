@@ -5,9 +5,12 @@ and pull requests are all welcome.
 
 ## Before you start
 
-- For a bug, open an issue with the registry, the package, the two versions and what you expected.
-- For a larger change, open an issue first so we can agree on the approach.
-- Security problems go through [SECURITY.md](SECURITY.md), not through an issue.
+Every change starts with an issue. Open one first — a bug, a registry quirk, a feature or a chore —
+using the matching issue template, so the work has a tracked rationale before any code is written.
+
+- For a bug, include the registry, the package, the two versions and what you expected.
+- For a feature or a larger change, describe the approach in the issue so we can agree on it first.
+- Security problems go through [SECURITY.md](SECURITY.md), never a public issue.
 
 ## Setting up
 
@@ -16,7 +19,13 @@ a PostgreSQL and Redis you can reach on `localhost`.
 
 ## Branches and pull requests
 
-- Branch from `develop` and open the pull request into `develop`. `master` only receives releases.
+We work issue-first, with the pull request opened alongside the issue rather than at the end:
+
+- Once an issue exists, branch from `develop` and open the pull request into `develop` early — a
+  draft is fine — so the work is visible while it is still in progress. `master` only receives
+  releases.
+- Link the pull request to its issue with a closing keyword (`Closes #123`) so merging the pull
+  request closes the issue. A pull request without a linked issue will be asked to add one.
 - Keep a pull request about one thing and fill in the pull request template, in English. CI
   (backend tests, frontend build and tests, dependency gate) must be green.
 - Commit messages follow Conventional Commits: `feat(scope): ...`, `fix(scope): ...`, `docs: ...`.
