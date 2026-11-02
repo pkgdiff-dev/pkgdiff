@@ -3,14 +3,19 @@ using PkgDiff.API.Extensions;
 using PkgDiff.API.Options;
 using PkgDiff.API.Services;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PkgDiff.API.Middleware;
 
 public class RateLimitingMiddleware
 {
+    private const string RenderServerHeader = "X-Render-Server-Key";
+
     private readonly RequestDelegate _next;
     private readonly IRateLimitCounterStore _counters;
     private readonly InboundRateLimitOptions _options;
+    private readonly byte[]? _renderServerKeyHash;
 
     public RateLimitingMiddleware(
         RequestDelegate next,
@@ -20,12 +25,24 @@ public class RateLimitingMiddleware
         _next = next;
         _counters = counters;
         _options = options.Value;
+        _renderServerKeyHash = string.IsNullOrEmpty(_options.RenderServerKey)
+            ? null
+            : SHA256.HashData(Encoding.UTF8.GetBytes(_options.RenderServerKey));
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var ip = context.GetClientIpAddress();
         var path = context.Request.Path;
+
+        // Served from a short cache, so a crawler polling it costs next to nothing
+        if (path.StartsWithSegments("/api/sitemap", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
+        var ip = context.GetClientIpAddress();
+        var isRenderServer = IsRenderServer(context);
 
         // Runs before authentication: only callers with credentials get the admin budget
         if (IsAdminPath(path) && HasCredentials(context))
@@ -36,7 +53,9 @@ public class RateLimitingMiddleware
                 return;
             }
         }
-        else if (await IsOverLimitAsync("rl", ip, _options.General))
+        else if (isRenderServer
+            ? await IsOverLimitAsync("rl:render", ip, _options.RenderServer)
+            : await IsOverLimitAsync("rl", ip, _options.General))
         {
             await ReturnRateLimitError(context, "Too many requests. Please slow down.");
             return;
@@ -59,6 +78,16 @@ public class RateLimitingMiddleware
         }
 
         await _next(context);
+    }
+
+    private bool IsRenderServer(HttpContext context)
+    {
+        if (_renderServerKeyHash is null)
+            return false;
+
+        var sent = context.Request.Headers[RenderServerHeader].ToString();
+        return sent.Length > 0
+            && CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(sent)), _renderServerKeyHash);
     }
 
     private static bool IsAdminPath(PathString path) =>

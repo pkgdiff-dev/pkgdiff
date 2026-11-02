@@ -15,8 +15,15 @@ public sealed class InboundRateLimitOptions
 
     public RateLimitTier AuditStart { get; set; } = new() { PerMinute = 3, PerFiveMinutes = 6 };
 
+    // One rendered page makes several API calls, so a crawler would otherwise run out of the visitor budget
+    public RateLimitTier RenderServer { get; set; } = new() { PerMinute = 600, PerFiveMinutes = 2000 };
+
+    // Empty: render server calls count as ordinary visitor calls
+    public string RenderServerKey { get; set; } = string.Empty;
+
     public bool IsValid() =>
-        General.IsValid() && PdfExport.IsValid() && Admin.IsValid() && Login.IsValid() && AuditStart.IsValid();
+        General.IsValid() && PdfExport.IsValid() && Admin.IsValid() && Login.IsValid() && AuditStart.IsValid()
+        && RenderServer.IsValid();
 }
 
 public sealed class RateLimitTier
