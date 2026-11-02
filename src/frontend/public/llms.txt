@@ -17,7 +17,7 @@ pkgdiff helps developers decide whether a dependency upgrade is safe. It combine
 - [npm packages](https://pkgdiff.dev/packages?registry=npm)
 - [PyPI packages](https://pkgdiff.dev/packages?registry=pypi)
 - [Maven packages](https://pkgdiff.dev/packages?registry=maven)
-- [pub.dev packages](https://pkgdiff.dev/packages?registry=pub.dev)
+- [pub.dev packages](https://pkgdiff.dev/packages?registry=pub)
 - [Packagist packages](https://pkgdiff.dev/packages?registry=packagist)
 
 ## Package pages
