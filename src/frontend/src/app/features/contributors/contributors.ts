@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { LucideAngularModule, Github, Users, RefreshCw } from 'lucide-angular';
 import { ApiService } from '../../core/services/api';
 import { SeoService } from '../../core/services/seo.service';
+import { HttpStatusService } from '../../core/services/http-status.service';
 
 interface ContributorDto {
     gitHubUsername: string;
@@ -23,6 +24,7 @@ interface ContributorDto {
 export class ContributorsComponent {
     private api = inject(ApiService);
     private seo = inject(SeoService);
+    private httpStatus = inject(HttpStatusService);
     private destroyRef = inject(DestroyRef);
 
     readonly GithubIcon = Github;
@@ -63,7 +65,11 @@ export class ContributorsComponent {
                 this.contributors.set(data);
                 this.loading.set(false);
             },
-            error: () => this.loading.set(false),
+            error: () => {
+                this.httpStatus.serviceUnavailable();
+                this.seo.setNoIndex();
+                this.loading.set(false);
+            },
         });
     }
 

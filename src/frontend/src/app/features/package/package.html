@@ -195,7 +195,8 @@
 
   @if (activeTab() === 'releases') {
   <app-releases-tab [versions]="mappedVersions()" [packageId]="metadata()!.packageId" [registry]="registry()"
-    [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [selectedVersion]="version()" />
+    [gitHubUrl]="metadata()!.gitHubRepositoryUrl" [selectedVersion]="version()"
+    [totalCount]="version() ? null : (metadata()!.totalVersions ?? null)" />
   }
   @if (activeTab() === 'diff') {
   <app-diff-tab [versions]="mappedVersions()" [packageId]="metadata()!.packageId" [registry]="registry()" [trust]="trust()"

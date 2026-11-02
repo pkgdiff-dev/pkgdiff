@@ -15,6 +15,7 @@ namespace PkgDiff.API.Controllers;
 public class PackageController : ControllerBase
 {
     private const int MaxConcurrentAnalyses = 10;
+    private const int MaxVersionLimit = 100;
 
     private const int MaxConcurrentAnalysesPerAddress = 2;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> AnalysesPerAddress = new();
@@ -198,7 +199,11 @@ public class PackageController : ControllerBase
 
     [HttpGet("{registry}/{packageId}")]
     [ValidatePackageRoute]
-    public async Task<ActionResult<PackageMetadata>> GetPackageMetadata(string registry, string packageId)
+    public async Task<ActionResult<PackageMetadata>> GetPackageMetadata(
+        string registry,
+        string packageId,
+        [FromQuery] int? versionLimit = null,
+        [FromQuery] string? includeVersion = null)
     {
         try
         {
@@ -220,6 +225,16 @@ public class PackageController : ControllerBase
                     _jobs.Enqueue<IPackageAnalysisService>(
                         service => service.ScrapePackageReleaseNotesAsync(packageId, registry));
                 }
+            }
+
+            if (versionLimit.HasValue)
+            {
+                var limit = Math.Clamp(versionLimit.Value, 1, MaxVersionLimit);
+                metadata.Versions = metadata.Versions
+                    .Where((version, index) => index < limit
+                        || version.Version == metadata.LatestVersion
+                        || string.Equals(version.Version, includeVersion, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
 
             return Ok(metadata);
@@ -379,6 +394,7 @@ public class PackageController : ControllerBase
         ProjectUrl = metadata.ProjectUrl,
         GitHubRepositoryUrl = metadata.GitHubRepositoryUrl,
         Versions = metadata.Versions,
+        TotalVersions = metadata.Versions.Count,
         Trust = trust
     };
 }

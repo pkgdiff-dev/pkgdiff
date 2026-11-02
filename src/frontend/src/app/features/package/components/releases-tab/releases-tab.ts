@@ -20,6 +20,7 @@ export class ReleasesTabComponent {
   registry = input<string>('nuget');
   gitHubUrl = input<string | null>(null);
   selectedVersion = input<string | undefined>(undefined);
+  totalCount = input<number | null>(null);
 
   readonly GithubIcon = Github;
   readonly ExternalLinkIcon = ExternalLink;

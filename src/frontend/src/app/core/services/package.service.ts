@@ -15,8 +15,12 @@ export class PackageService {
     return this.api.get<RegistryInfo[]>('Package/registries');
   }
 
-  getPackageMetadata(registry: string, packageId: string): Observable<PackageMetadata> {
-    return this.api.get<PackageMetadata>(`Package/${registry}/${encodeURIComponent(packageId)}`);
+  getPackageMetadata(
+    registry: string,
+    packageId: string,
+    versions?: { versionLimit: number; includeVersion?: string },
+  ): Observable<PackageMetadata> {
+    return this.api.get<PackageMetadata>(`Package/${registry}/${encodeURIComponent(packageId)}`, versions);
   }
 
   analyze(request: AnalyzeRequest): Observable<AnalysisResult> {
