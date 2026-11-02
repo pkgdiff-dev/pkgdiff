@@ -151,7 +151,7 @@ test('a package page carries the package, its structured data once, and the visi
   assert.equal(application.description, 'Pads </script><script>window.pwned = 1</script> strings');
   assert.doesNotMatch(html, /<script>window\.pwned/);
 
-  const metadataCall = apiRequests.find(request => request.path === '/api/Package/npm/left-pad');
+  const metadataCall = apiRequests.find(request => request.path.startsWith('/api/Package/npm/left-pad?versionLimit='));
   assert.ok(metadataCall, `the API was not asked for the package: ${JSON.stringify(apiRequests)}`);
   assert.equal(metadataCall.forwardedFor, '203.0.113.9');
 
@@ -189,7 +189,7 @@ test('the blog list and a post are rendered; an unknown post is a 404', async ()
 
   const article = await page('/blog/left-pad-1-3-0');
   assert.equal(article.status, 200);
-  assert.match(article.html, /<title>What changed in left-pad 1\.3\.0 — pkgdiff Blog<\/title>/);
+  assert.match(article.html, /<title>What changed in left-pad 1\.3\.0 — pkgdiff<\/title>/);
   assert.match(article.html, /<h2>Overview<\/h2>/);
   assert.equal(jsonLd(article.html, 'page')[0]['@type'], 'BlogPosting');
 
