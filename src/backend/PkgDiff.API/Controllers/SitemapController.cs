@@ -2,7 +2,6 @@ using System.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using PkgDiff.Application.Interfaces;
-using PkgDiff.Shared.Constants;
 
 namespace PkgDiff.API.Controllers;
 
@@ -24,6 +23,9 @@ public class SitemapController : ControllerBase
         "/privacy",
         "/cookies",
     };
+
+    // The values used in public URLs, where pub.dev is "pub"
+    private static readonly string[] RegistryHubs = { "nuget", "npm", "pypi", "pub", "packagist", "maven" };
 
     private readonly IAdminPackageService _adminService;
     private readonly IMemoryCache _memory;
@@ -73,7 +75,7 @@ public class SitemapController : ControllerBase
             AppendUrl(xml, path, null);
         }
 
-        foreach (var registry in RegistryNames.All)
+        foreach (var registry in RegistryHubs)
         {
             AppendUrl(xml, $"/packages?registry={registry}", null);
         }

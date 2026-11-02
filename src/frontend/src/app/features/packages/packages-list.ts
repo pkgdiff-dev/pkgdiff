@@ -15,12 +15,12 @@ const REGISTRY_LABELS: Record<string, string> = {
     npm: 'npm',
     pypi: 'PyPI',
     maven: 'Maven',
-    'pub.dev': 'pub.dev',
+    pub: 'pub.dev',
     packagist: 'Packagist',
 };
 
 const REGISTRY_ALIASES: Record<string, string> = {
-    pub: 'pub.dev',
+    'pub.dev': 'pub',
     composer: 'packagist',
 };
 
@@ -259,5 +259,9 @@ export class PackagesListComponent {
                 : 'Browse packages from NuGet, npm, PyPI, Maven, pub.dev and Packagist. See version history, breaking changes and categorized release notes.',
             url: query ? `/packages?${query}` : '/packages',
         });
+
+        if (!this.isLoading() && this.registryPackages().length === 0) {
+            this.seo.setNoIndex();
+        }
     }
 }
