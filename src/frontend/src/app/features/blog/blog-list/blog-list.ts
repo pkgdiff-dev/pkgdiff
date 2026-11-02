@@ -9,28 +9,13 @@ import { SeoService } from '../../../core/services/seo.service';
 import { BlogPostSnippet } from '../../../core/models/blog.models';
 import { PaginatedResult } from '../../../core/models/package.models';
 import { stripMarkdown } from '../../../core/utils/markdown.utils';
+import { pageWindow } from '../../../core/utils/pagination.utils';
+import { HttpStatusService } from '../../../core/services/http-status.service';
 
 type PageState = 'loading' | 'loaded' | 'error';
 type Loaded = { page: PaginatedResult<BlogPostSnippet> } | { failure: unknown };
 
-type PageLink = { kind: 'page'; page: number } | { kind: 'gap'; key: string };
-
 const PAGE_SIZE = 10;
-const SIBLINGS = 1;
-
-function pageWindow(current: number, total: number): PageLink[] {
-  let start = Math.max(2, current - SIBLINGS);
-  let end = Math.min(total - 1, current + SIBLINGS);
-  if (start === 3) start = 2;
-  if (end === total - 2) end = total - 1;
-
-  const links: PageLink[] = [{ kind: 'page', page: 1 }];
-  if (start > 2) links.push({ kind: 'gap', key: 'gap-start' });
-  for (let page = start; page <= end; page++) links.push({ kind: 'page', page });
-  if (end < total - 1) links.push({ kind: 'gap', key: 'gap-end' });
-  if (total > 1) links.push({ kind: 'page', page: total });
-  return links;
-}
 
 @Component({
   selector: 'app-blog-list',
@@ -43,6 +28,7 @@ export class BlogListComponent {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private seo = inject(SeoService);
+  private httpStatus = inject(HttpStatusService);
 
   readonly BookOpenIcon = BookOpen;
   readonly AlertIcon = AlertCircle;
@@ -79,9 +65,12 @@ export class BlogListComponent {
       takeUntilDestroyed(),
     ).subscribe(loaded => {
       if ('failure' in loaded) {
+        this.httpStatus.serviceUnavailable();
+        this.seo.setUnavailable();
         this.state.set('error');
         return;
       }
+      this.setMeta(this.currentPage());
       this.posts.set(loaded.page.data);
       this.totalPages.set(loaded.page.totalPages);
       this.state.set('loaded');
@@ -96,8 +85,8 @@ export class BlogListComponent {
 
   private setMeta(page: number): void {
     this.seo.updateMeta({
-      title: page > 1 ? `Engineering Blog — Page ${page} — pkgdiff` : 'Engineering Blog — pkgdiff',
-      description: 'Read deep dives into package analysis, dependency security, software versioning trends, and developer infrastructure.',
+      title: page > 1 ? `Release Digests — Page ${page} — pkgdiff` : 'Release Digests — pkgdiff',
+      description: 'AI-generated summaries of recent package releases. Check the linked release notes before relying on a digest.',
       url: page > 1 ? `/blog?page=${page}` : '/blog',
       image: '/og-image/blog.png'
     });
