@@ -49,7 +49,7 @@ describe('PackageComponent', () => {
     startConnection: () => Promise<void>;
     resetProgress: ReturnType<typeof vi.fn>;
   };
-  let httpStatus: { notFound: ReturnType<typeof vi.fn> };
+  let httpStatus: { notFound: ReturnType<typeof vi.fn>; serviceUnavailable: ReturnType<typeof vi.fn> };
   let fixture: ComponentFixture<PackageComponent>;
   let page: PackageComponent;
 
@@ -79,7 +79,7 @@ describe('PackageComponent', () => {
       startConnection: () => Promise.resolve(),
       resetProgress: vi.fn(),
     };
-    httpStatus = { notFound: vi.fn() };
+    httpStatus = { notFound: vi.fn(), serviceUnavailable: vi.fn() };
 
     const packages: Partial<PackageService> = {
       getPackageMetadata: (registry: string, packageId: string): Observable<PackageMetadata> => {

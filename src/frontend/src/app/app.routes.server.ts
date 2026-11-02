@@ -7,6 +7,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'package/:registry/:packageId', renderMode: RenderMode.Server },
   { path: 'package/:registry/:packageId/:version', renderMode: RenderMode.Server },
   { path: 'package/:registry/:scope/:name/:version', renderMode: RenderMode.Server },
+  { path: 'about', renderMode: RenderMode.Server },
   { path: 'terms', renderMode: RenderMode.Server },
   { path: 'privacy', renderMode: RenderMode.Server },
   { path: 'cookies', renderMode: RenderMode.Server },

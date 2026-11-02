@@ -69,6 +69,7 @@ public class PackageMetadata
     public string? GitHubRepositoryUrl { get; set; }
     public string? SourceDirectory { get; set; }
     public List<VersionSummary> Versions { get; set; } = new();
+    public int TotalVersions { get; set; }
     public PackageTrust? Trust { get; set; }
 }
 

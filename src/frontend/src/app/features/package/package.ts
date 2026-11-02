@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { Subject, catchError, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, concat, distinctUntilChanged, map, of, startWith, switchMap, tap } from 'rxjs';
 import { LucideAngularModule, Clock, Link, Scale, Github, Info, Share2, Download } from 'lucide-angular';
 import { ReleasesTabComponent } from './components/releases-tab/releases-tab';
 import { DiffTabComponent } from './components/diff-tab/diff-tab';
@@ -57,6 +58,9 @@ type Loaded<T> = { value: T } | { failure: unknown };
 
 const TABS: readonly TabType[] = ['releases', 'diff', 'versions', 'metadata'];
 
+// The releases tab shows this many at first; a longer list would only inflate the rendered page
+const INITIAL_VERSIONS = 10;
+
 @Component({
   selector: 'app-package',
   standalone: true,
@@ -85,6 +89,7 @@ export class PackageComponent {
   private toastService = inject(ToastService);
   private seo = inject(SeoService);
   private httpStatus = inject(HttpStatusService);
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly ClockIcon = Clock;
   readonly LinkIcon = Link;
@@ -252,13 +257,33 @@ export class PackageComponent {
       tap(() => this.resetForNewPackage()),
       switchMap(target => this.reload$.pipe(
         startWith(undefined),
-        switchMap(() => this.packageService.getPackageMetadata(target.registry, target.packageId).pipe(
-          map((value): Loaded<PackageMetadata> => ({ value })),
-          catchError((failure: unknown) => of<Loaded<PackageMetadata>>({ failure })),
-        )),
+        switchMap(() => this.loadMetadata(target)),
       )),
       takeUntilDestroyed(),
     ).subscribe(loaded => this.showMetadata(loaded));
+  }
+
+  // The first load is short and reused from the server render; the browser then fetches the rest
+  private loadMetadata(target: PackageTarget): Observable<Loaded<PackageMetadata>> {
+    const { registry, packageId, version } = target;
+    const first$ = this.metadata()
+      ? this.packageService.getPackageMetadata(registry, packageId)
+      : this.packageService.getPackageMetadata(registry, packageId, { versionLimit: INITIAL_VERSIONS, includeVersion: version });
+
+    return first$.pipe(
+      switchMap(metadata => concat(of(metadata), this.remainingVersions(metadata, target))),
+      map((value): Loaded<PackageMetadata> => ({ value })),
+      catchError((failure: unknown) => of<Loaded<PackageMetadata>>({ failure })),
+    );
+  }
+
+  private remainingVersions(metadata: PackageMetadata, target: PackageTarget): Observable<PackageMetadata> {
+    const isComplete = (metadata.totalVersions ?? metadata.versions.length) <= metadata.versions.length;
+    if (!this.isBrowser || isComplete) {
+      return EMPTY;
+    }
+    // The short list stays on screen if this fails
+    return this.packageService.getPackageMetadata(target.registry, target.packageId).pipe(catchError(() => EMPTY));
   }
 
   private followFragment(): void {
@@ -307,6 +332,9 @@ export class PackageComponent {
         this.seo.setNotFound(
           `${this.packageId()} — Package Not Found | pkgdiff`,
           `No package named ${this.packageId()} was found on ${this.registry()}.`);
+      } else {
+        this.httpStatus.serviceUnavailable();
+        this.seo.setUnavailable();
       }
       this.state.set(failure);
       return;

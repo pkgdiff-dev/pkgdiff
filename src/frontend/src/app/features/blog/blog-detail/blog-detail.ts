@@ -70,7 +70,10 @@ export class BlogDetailComponent {
       const failure = loadFailureOf(loaded.failure);
       if (failure === 'not-found') {
         this.httpStatus.notFound();
-        this.seo.setNotFound('Article Not Found — pkgdiff Blog', 'This blog post does not exist or has not been published yet.');
+        this.seo.setNotFound('Article Not Found — pkgdiff', 'This release digest does not exist or has not been published yet.');
+      } else {
+        this.httpStatus.serviceUnavailable();
+        this.seo.setUnavailable();
       }
       this.state.set(failure);
       return;
@@ -82,12 +85,14 @@ export class BlogDetailComponent {
 
     const excerpt = excerptOf(post.content);
     this.seo.updateMeta({
-      title: `${post.title} — pkgdiff Blog`,
+      title: `${post.title} — pkgdiff`,
       description: excerpt,
       url: `/blog/${post.slug}`,
       type: 'article',
       image: '/og-image/blog.png'
     });
+    // Posts are generated and unreviewed, so they stay out of search results
+    this.seo.setNoIndex();
 
     this.seo.setStructuredData({
       '@context': 'https://schema.org',
@@ -104,7 +109,7 @@ export class BlogDetailComponent {
 
     this.seo.setBreadcrumb([
       { name: 'Home', url: '/' },
-      { name: 'Blog', url: '/blog' },
+      { name: 'Release digests', url: '/blog' },
       { name: post.title, url: `/blog/${post.slug}` },
     ]);
   }

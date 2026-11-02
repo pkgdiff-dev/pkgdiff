@@ -1,12 +1,34 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Search, Box, Download, ExternalLink, Calendar, User, Info, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-angular';
 
 import { PackageService } from '../../core/services/package.service';
 import { PackageMetadata, RegistryInfo } from '../../core/models/package.models';
 import { SeoService } from '../../core/services/seo.service';
+import { HttpStatusService } from '../../core/services/http-status.service';
+import { pageWindow } from '../../core/utils/pagination.utils';
+
+const REGISTRY_LABELS: Record<string, string> = {
+    nuget: 'NuGet',
+    npm: 'npm',
+    pypi: 'PyPI',
+    maven: 'Maven',
+    'pub.dev': 'pub.dev',
+    packagist: 'Packagist',
+};
+
+const REGISTRY_ALIASES: Record<string, string> = {
+    pub: 'pub.dev',
+    composer: 'packagist',
+};
+
+function registryOf(value: string | null): string | null {
+    const registry = value?.toLowerCase() ?? '';
+    const canonical = Object.hasOwn(REGISTRY_ALIASES, registry) ? REGISTRY_ALIASES[registry] : registry;
+    return Object.hasOwn(REGISTRY_LABELS, canonical) ? canonical : null;
+}
 
 @Component({
     selector: 'app-packages-list',
@@ -22,6 +44,9 @@ import { SeoService } from '../../core/services/seo.service';
 export class PackagesListComponent {
     private packageService = inject(PackageService);
     private seo = inject(SeoService);
+    private httpStatus = inject(HttpStatusService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private destroyRef = inject(DestroyRef);
 
     readonly SearchIcon = Search;
@@ -39,10 +64,10 @@ export class PackagesListComponent {
     isLoading = signal(true);
     loadFailed = signal(false);
     searchQuery = signal('');
-    selectedRegistries = signal<Set<string>>(new Set());
+    selectedRegistry = signal<string | null>(null);
+    requestedPage = signal(1);
     sortBy = signal<'latest' | 'alphabetical'>('latest');
     sortOpen = signal(false);
-    visibleCount = signal(20);
 
     readonly PAGE_SIZE = 20;
 
@@ -51,14 +76,14 @@ export class PackagesListComponent {
         { value: 'alphabetical', label: 'Alphabetical' },
     ];
 
+    registryPackages = computed(() => {
+        const registry = this.selectedRegistry();
+        return registry ? this.packages().filter(p => p.registry === registry) : this.packages();
+    });
+
     filteredPackages = computed(() => {
         const query = this.searchQuery().toLowerCase();
-        const activeRegistries = this.selectedRegistries();
-        let result = this.packages();
-
-        if (activeRegistries.size > 0) {
-            result = result.filter(p => activeRegistries.has(p.registry));
-        }
+        let result = this.registryPackages();
 
         if (query) {
             result = result.filter(p =>
@@ -75,16 +100,29 @@ export class PackagesListComponent {
         return result;
     });
 
+    totalPages = computed(() => Math.max(1, Math.ceil(this.filteredPackages().length / this.PAGE_SIZE)));
+
+    currentPage = computed(() => Math.min(this.requestedPage(), this.totalPages()));
+
+    pages = computed(() => pageWindow(this.currentPage(), this.totalPages()));
+
     visiblePackages = computed(() => {
-        return this.filteredPackages().slice(0, this.visibleCount());
+        const start = (this.currentPage() - 1) * this.PAGE_SIZE;
+        return this.filteredPackages().slice(start, start + this.PAGE_SIZE);
     });
 
-    hasMore = computed(() => {
-        return this.visibleCount() < this.filteredPackages().length;
+    heading = computed(() => {
+        const registry = this.selectedRegistry();
+        return registry ? `${REGISTRY_LABELS[registry]} packages` : 'Browse packages';
     });
 
-    remainingCount = computed(() => {
-        return this.filteredPackages().length - this.visibleCount();
+    intro = computed(() => {
+        const registry = this.selectedRegistry();
+        const scope = registry ? `${REGISTRY_LABELS[registry]} packages` : 'packages across NuGet, npm, PyPI, Maven, pub.dev and Packagist';
+        const count = this.registryPackages().length;
+        return count > 0
+            ? `Release notes and version history for ${count} ${scope}.`
+            : `Release notes and version history for ${scope}.`;
     });
 
     currentSortLabel = computed(() => {
@@ -92,10 +130,11 @@ export class PackagesListComponent {
     });
 
     constructor() {
-        this.seo.updateMeta({
-            title: 'Browse Packages — Compare Versions Across NuGet, npm, PyPI, Maven, Pub & Packagist | pkgdiff',
-            description: 'Browse and compare packages from NuGet, npm, PyPI, Maven, Pub and Packagist registries. Search through thousands of packages, view detailed version history, track breaking changes, and analyze comprehensive release notes.',
-            url: '/packages',
+        // Registry and page live in the URL so every list page can be linked and crawled
+        this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+            this.selectedRegistry.set(registryOf(params.get('registry')));
+            this.requestedPage.set(Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1));
+            this.updateSeo();
         });
 
         this.loadPackages();
@@ -113,8 +152,11 @@ export class PackagesListComponent {
             next: (data) => {
                 this.packages.set(data);
                 this.isLoading.set(false);
+                this.updateSeo();
             },
             error: () => {
+                this.httpStatus.serviceUnavailable();
+                this.seo.setUnavailable();
                 this.loadFailed.set(true);
                 this.isLoading.set(false);
             }
@@ -132,34 +174,34 @@ export class PackagesListComponent {
     onSearch(event: Event) {
         const input = event.target as HTMLInputElement;
         this.searchQuery.set(input.value);
-    }
-
-    toggleRegistry(value: string) {
-        const current = new Set(this.selectedRegistries());
-        if (current.has(value)) {
-            current.delete(value);
-        } else {
-            current.add(value);
-        }
-        this.selectedRegistries.set(current);
+        this.returnToFirstPage();
     }
 
     isRegistrySelected(value: string): boolean {
-        return this.selectedRegistries().has(value);
+        return this.selectedRegistry() === value;
+    }
+
+    registryParams(value: string): Params {
+        return this.isRegistrySelected(value) ? {} : { registry: value };
+    }
+
+    pageParams(page: number): Params {
+        const params: Params = {};
+        const registry = this.selectedRegistry();
+        if (registry) params['registry'] = registry;
+        if (page > 1) params['page'] = page;
+        return params;
     }
 
     onSortChange(value: string) {
         this.sortBy.set(value as 'latest' | 'alphabetical');
         this.sortOpen.set(false);
+        this.returnToFirstPage();
     }
 
     toggleSortDropdown(event: Event) {
         event.stopPropagation();
         this.sortOpen.update(v => !v);
-    }
-
-    loadMore() {
-        this.visibleCount.update(c => c + this.PAGE_SIZE);
     }
 
     registryBadgeClass(registry: string): string {
@@ -181,5 +223,41 @@ export class PackagesListComponent {
             default:
                 return 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400';
         }
+    }
+
+    private returnToFirstPage() {
+        if (this.requestedPage() > 1) {
+            this.router.navigate([], { relativeTo: this.route, queryParams: this.pageParams(1), replaceUrl: true });
+        }
+    }
+
+    private updateSeo() {
+        if (this.loadFailed()) {
+            return;
+        }
+
+        const page = this.requestedPage();
+        const lastPage = Math.max(1, Math.ceil(this.registryPackages().length / this.PAGE_SIZE));
+
+        if (!this.isLoading() && page > lastPage) {
+            this.httpStatus.notFound();
+            this.seo.setNotFound('Page Not Found | pkgdiff', 'This page of the package list does not exist.');
+            return;
+        }
+
+        const registry = this.selectedRegistry();
+        const label = registry ? REGISTRY_LABELS[registry] : null;
+        const pageSuffix = page > 1 ? ` — Page ${page}` : '';
+        const query = new URLSearchParams(this.pageParams(page)).toString();
+
+        this.seo.updateMeta({
+            title: label
+                ? `${label} Packages: Release Notes and Versions${pageSuffix} | pkgdiff`
+                : `Browse Packages: Release Notes and Versions${pageSuffix} | pkgdiff`,
+            description: label
+                ? `Browse ${label} packages on pkgdiff. See version history, breaking changes and categorized release notes, and compare any two versions.`
+                : 'Browse packages from NuGet, npm, PyPI, Maven, pub.dev and Packagist. See version history, breaking changes and categorized release notes.',
+            url: query ? `/packages?${query}` : '/packages',
+        });
     }
 }

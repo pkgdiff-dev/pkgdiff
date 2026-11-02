@@ -38,6 +38,7 @@ export interface PackageMetadata {
   gitHubRepositoryUrl: string | null;
   sourceDirectory?: string | null;
   versions: VersionSummary[];
+  totalVersions?: number;
   trust?: PackageTrust | null;
 }
 

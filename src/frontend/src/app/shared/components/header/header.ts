@@ -38,8 +38,9 @@ export class HeaderComponent {
   ];
 
   readonly moreLinks = [
-    { path: '/blog', label: 'Blog' },
+    { path: '/blog', label: 'Release digests' },
     { path: '/contributors', label: 'Contributors' },
+    { path: '/about', label: 'About' },
   ];
 
   menuOpen = signal(false);

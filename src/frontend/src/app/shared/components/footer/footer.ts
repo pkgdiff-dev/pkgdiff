@@ -20,8 +20,9 @@ export class FooterComponent {
   readonly exploreLinks = [
     { path: '/packages', label: 'Packages' },
     { path: '/audit', label: 'Dependency audit' },
-    { path: '/blog', label: 'Blog' },
+    { path: '/blog', label: 'Release digests' },
     { path: '/contributors', label: 'Contributors' },
+    { path: '/about', label: 'About' },
   ];
 
   appName = APP_CONFIG.name;

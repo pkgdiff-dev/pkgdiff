@@ -1,0 +1,70 @@
+<div class="flex flex-col items-center min-h-full min-h-[calc(100vh-64px)]">
+  <div class="w-full max-w-[720px] px-6 py-12">
+    <div class="mb-10">
+      <h1 class="text-3xl font-bold tracking-tight text-[#111418] dark:text-white mb-2">About {{ appName }}</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-500">
+        Every release note between two versions of a package, with a security picture of the upgrade.
+      </p>
+    </div>
+
+    <div class="space-y-8 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">Who runs it</h2>
+        <p>
+          {{ appName }} is built and operated by {{ operatorName }}, an individual developer. It is free to use and
+          needs no account. The code is on
+          <a href="https://github.com/pkgdiff-dev/pkgdiff" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub</a>,
+          where you can report a problem. You can also write to
+          <a href="mailto:{{ contactEmail }}" class="text-primary hover:underline">{{ contactEmail }}</a> or find
+          {{ operatorName }} on
+          <a href="https://github.com/fleizean" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">Where the data comes from</h2>
+        <p class="mb-3">
+          Versions and package details come from the registries: NuGet, npm, PyPI, Maven Central, pub.dev and Packagist.
+          Release notes come from those registries and from each project's GitHub releases and changelogs. Every note
+          links back to its source, and it still belongs to its authors.
+        </p>
+        <p>The security information comes from these services:</p>
+        <ul class="list-disc pl-5 mt-2 space-y-1">
+          <li><a href="https://osv.dev/" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">OSV.dev</a> for known vulnerabilities</li>
+          <li><a href="https://deps.dev/" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">deps.dev</a> for package and project information</li>
+          <li><a href="https://scorecard.dev/" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">OpenSSF Scorecard</a> for project security practices</li>
+          <li><a href="https://socket.dev/" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Socket</a> for suspicious package behaviour</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">How changes are categorised</h2>
+        <p>
+          Changes are sorted into groups such as breaking changes, new features and bug fixes by matching the section
+          headings and keywords in the release notes. These are rules, not a reading of the code, so a change can land
+          in the wrong group, and a breaking change its authors did not mention will not appear.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">How fresh the data is</h2>
+        <p>
+          Package data is stored and refreshed by background jobs, so a very recent release or advisory can take time
+          to appear. Security checks run in the background too, and a page shows what was last retrieved.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold text-[#111418] dark:text-white mb-3">What it cannot tell you</h2>
+        <p>
+          No listed vulnerability does not prove a package is safe. It means the sources above report nothing for it
+          right now. Use {{ appName }} to prepare an upgrade, and still test the upgrade yourself. The
+          <a routerLink="/blog" class="text-primary hover:underline">release digests</a> are written by AI and not
+          reviewed by a person, so they are labelled as such and kept out of search results.
+        </p>
+      </section>
+
+    </div>
+  </div>
+</div>

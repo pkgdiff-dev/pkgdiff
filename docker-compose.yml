@@ -22,6 +22,7 @@ services:
       - AdminSettings__ViewerPassword=${VIEWER_PASSWORD:-}
       - ForwardedHeaders__TrustedNetworks=${FORWARDED_TRUSTED_NETWORKS:-172.28.0.0/16}
       - GitHubSettings__PersonalAccessToken=${GITHUB_PAT:-}
+      - RateLimiting__RenderServerKey=${RENDER_SERVER_KEY:-}
     cap_drop:
       - ALL
     security_opt:
@@ -72,6 +73,7 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - SSR_INTERNAL_ORIGIN=http://frontend
+      - RENDER_SERVER_KEY=${RENDER_SERVER_KEY:-}
     mem_limit: 512m
     cpus: 1.0
     pids_limit: 256

@@ -84,6 +84,16 @@ export class SeoService {
     this.clearPageData();
   }
 
+  // The page failed to load; the next successful updateMeta makes it indexable again
+  setUnavailable(): void {
+    this.setNoIndex();
+    this.clearPageData();
+  }
+
+  setNoIndex(): void {
+    this.meta.updateTag({ name: 'robots', content: 'noindex, follow' });
+  }
+
   setStructuredData(data: StructuredData): void {
     this.setJsonLd('page', data);
   }
@@ -128,7 +138,7 @@ export class SeoService {
   }
 
   setPackage(metadata: PackageMetadata, registry: string, version?: string): void {
-    const versionCount = metadata.versions.length;
+    const versionCount = metadata.totalVersions ?? metadata.versions.length;
     const latestVersion = metadata.latestVersion;
 
     let description = metadata.packageId;
